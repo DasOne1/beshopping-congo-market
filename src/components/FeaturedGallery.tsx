@@ -11,6 +11,7 @@ import { mockProducts } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Bookmark, ShoppingCart } from 'lucide-react';
 
 export function FeaturedGallery() {
   const [api, setApi] = useState<any>();
@@ -47,15 +48,15 @@ export function FeaturedGallery() {
   }, [api]);
 
   return (
-    <section className="py-4 bg-gradient-to-b from-accent/50 to-transparent">
-      <div className="container">
+    <section className="py-4 mb-6">
+      <div className="container px-2 sm:px-4">
         <motion.h2 
-          className="text-xl md:text-2xl font-semibold mb-4"
+          className="text-xl md:text-2xl font-semibold mb-4 pl-1 border-l-4 border-primary"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          Gallery Highlights
+          Explore New Fashion Trends
         </motion.h2>
         
         <div className="relative" 
@@ -72,16 +73,30 @@ export function FeaturedGallery() {
                 <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3">
                   <div className="p-1">
                     <Link to={`/product/${product.id}`} className="block">
-                      <div className="rounded-lg overflow-hidden relative group">
+                      <div className="glass-card overflow-hidden relative group rounded-2xl">
+                        <div className="absolute top-3 left-3 z-10 bg-white/80 dark:bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
+                          <span className="text-yellow-400 mr-1">★</span>
+                          <span className="text-sm font-medium">{(Math.random() * 2 + 3).toFixed(1)}</span>
+                        </div>
+                        
+                        <div className="absolute top-3 right-3 z-10">
+                          <div className="glass rounded-full p-2">
+                            <Bookmark size={16} className="text-primary" />
+                          </div>
+                        </div>
+                        
                         <img 
                           src={product.images[0]} 
                           alt={product.name}
                           className="w-full aspect-[4/3] object-cover transition-transform duration-300 group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-black/20 transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
-                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent text-white">
+                        <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/70 via-black/40 to-transparent text-white">
                           <h3 className="font-medium truncate">{product.name}</h3>
-                          <p className="text-sm opacity-80">{product.originalPrice.toLocaleString()} CDF</p>
+                          <p className="text-sm opacity-90">{product.originalPrice.toLocaleString()} CDF</p>
+                          
+                          <div className="absolute bottom-4 right-4 bg-white rounded-full p-2 shadow-lg">
+                            <ShoppingCart size={18} className="text-primary" />
+                          </div>
                         </div>
                       </div>
                     </Link>
@@ -89,8 +104,8 @@ export function FeaturedGallery() {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="absolute top-1/2 -left-4 -translate-y-1/2" />
-            <CarouselNext className="absolute top-1/2 -right-4 -translate-y-1/2" />
+            <CarouselPrevious className="absolute top-1/2 -left-4 -translate-y-1/2 hidden md:flex" />
+            <CarouselNext className="absolute top-1/2 -right-4 -translate-y-1/2 hidden md:flex" />
           </Carousel>
           
           <div className="flex justify-center mt-4 gap-2">
@@ -99,7 +114,7 @@ export function FeaturedGallery() {
                 key={index}
                 onClick={() => api?.scrollTo(index)}
                 className={cn(
-                  "w-3 h-3 rounded-full transition-colors duration-300",
+                  "w-2 h-2 rounded-full transition-colors duration-300",
                   current === index ? "bg-primary" : "bg-primary/30"
                 )}
                 aria-label={`Go to slide ${index + 1}`}

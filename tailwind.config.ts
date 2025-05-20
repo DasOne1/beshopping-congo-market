@@ -56,12 +56,19 @@ export default {
 				whatsapp: {
 					DEFAULT: '#25D366',
 					dark: '#075E54'
+				},
+				orange: {
+					light: '#FEA47F',
+					DEFAULT: '#FF9A5A',
+					dark: '#F97316'
 				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				sm: 'calc(var(--radius) - 4px)',
+				xl: '1rem',
+				'2xl': '1.5rem',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -79,11 +86,24 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' },
+				},
+				'pulse-gentle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.8' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float': 'float 3s ease-in-out infinite',
+				'pulse-gentle': 'pulse-gentle 2s ease-in-out infinite'
+			},
+			backdropBlur: {
+				'xs': '2px',
 			}
 		}
 	},

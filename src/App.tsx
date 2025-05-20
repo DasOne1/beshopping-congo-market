@@ -22,6 +22,7 @@ import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/Admin/Dashboard";
 import SplashScreen from "./components/SplashScreen";
+import { MobileNavBar } from "./components/MobileNavBar";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => {
                       {/* Catch-all */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    <MobileNavBar />
                   </BrowserRouter>
                 )}
               </AnimatePresence>

@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 30 33% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -14,56 +14,56 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 142 70% 29%;
+    --primary: 24 100% 63%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 32 98% 56%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 210 40% 96.1%;
+    --muted: 24 10% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 142 70% 95%;
-    --accent-foreground: 142 70% 29%;
+    --accent: 24 70% 95%;
+    --accent-foreground: 24 70% 55%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142 70% 29%;
+    --border: 24 5% 90%;
+    --input: 24 5% 90%;
+    --ring: 24 70% 60%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222.2 30% 10%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 222.2 25% 14%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222.2 25% 14%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 142 70% 50%;
+    --primary: 24 100% 60%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 32 98% 56%;
+    --secondary: 32 90% 50%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 142 70% 20%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 24 30% 20%;
+    --accent-foreground: 24 70% 70%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 142 70% 50%;
+    --ring: 24 70% 50%;
   }
 }
 
@@ -74,6 +74,32 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-lg;
+  }
+  
+  .glass-card {
+    @apply bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl shadow-lg;
+  }
+  
+  .glass-card-dark {
+    @apply dark:bg-black/40 dark:backdrop-blur-md dark:border-white/10 dark:shadow-lg;
+  }
+  
+  .mobile-bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white/70 dark:bg-black/70 backdrop-blur-lg border-t border-border flex justify-around items-center py-2 px-4 z-50;
+  }
+  
+  .nav-item {
+    @apply flex flex-col items-center justify-center p-3 rounded-full transition-all duration-200;
+  }
+  
+  .nav-item.active {
+    @apply bg-primary text-white;
   }
 }
 
