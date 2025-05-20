@@ -13,6 +13,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Logo } from '@/components/Logo';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Header = () => {
   const { getTotalQuantity } = useCart();
@@ -31,7 +34,7 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-background shadow-sm">
+    <header className="sticky top-0 z-40 w-full bg-background shadow-sm backdrop-blur-sm border-b border-border/40">
       <div className="container flex h-16 items-center justify-between">
         {/* Mobile Menu Button */}
         <Button 
@@ -46,7 +49,8 @@ const Header = () => {
 
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">
-          <span className="text-xl font-bold text-primary">BeShop</span>
+          <Logo size="small" asLink />
+          <span className="text-xl font-bold text-primary hidden sm:inline-block">BeShop</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -75,6 +79,8 @@ const Header = () => {
             <span className="sr-only">Search</span>
           </Button>
           
+          <ThemeToggle />
+          
           <Link to="/favorites">
             <Button variant="ghost" size="icon">
               <Heart className="h-5 w-5" />
@@ -86,7 +92,7 @@ const Header = () => {
             <Button variant="ghost" size="icon">
               <ShoppingBag className="h-5 w-5" />
               {getTotalQuantity() > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {getTotalQuantity()}
                 </span>
               )}
@@ -104,119 +110,144 @@ const Header = () => {
       </div>
 
       {/* Search Overlay */}
-      <div
-        className={cn(
-          "fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity z-50",
-          isSearchOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}
-      >
-        <div className="container py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium">Search products</h2>
-            <Button variant="ghost" size="icon" onClick={toggleSearch}>
-              <X className="h-5 w-5" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </div>
-          <form onSubmit={handleSearchSubmit}>
-            <div className="flex space-x-2">
-              <Input
-                placeholder="Search for products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1"
-                autoFocus
-              />
-              <Button type="submit">Search</Button>
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+          >
+            <div className="container py-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-medium">Search products</h2>
+                <Button variant="ghost" size="icon" onClick={toggleSearch}>
+                  <X className="h-5 w-5" />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </div>
+              <form onSubmit={handleSearchSubmit}>
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="Search for products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1"
+                    autoFocus
+                  />
+                  <Button type="submit">Search</Button>
+                </div>
+              </form>
             </div>
-          </form>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Menu */}
-      <div
-        className={cn(
-          "fixed inset-0 bg-background z-50 transition-transform transform md:hidden",
-          isMenuOpen ? "translate-x-0" : "-translate-x-full"
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            className="fixed inset-0 bg-background z-50 md:hidden"
+          >
+            <div className="flex flex-col h-full overflow-y-auto">
+              <div className="flex items-center justify-between p-4 border-b">
+                <Link to="/" className="flex items-center space-x-2" onClick={() => setIsMenuOpen(false)}>
+                  <Logo size="small" />
+                  <span className="text-xl font-bold text-primary">BeShop</span>
+                </Link>
+                <Button variant="ghost" size="icon" onClick={toggleMenu}>
+                  <X className="h-6 w-6" />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </div>
+              <nav className="flex-1 p-4">
+                <ul className="space-y-4">
+                  <li>
+                    <Link 
+                      to="/" 
+                      className="block py-2 text-lg font-medium hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Home
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/products" 
+                      className="block py-2 text-lg font-medium hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      All Products
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/categories" 
+                      className="block py-2 text-lg font-medium hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Categories
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/about" 
+                      className="block py-2 text-lg font-medium hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      About Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/contact" 
+                      className="block py-2 text-lg font-medium hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Contact
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/account" 
+                      className="block py-2 text-lg font-medium hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Account
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/admin" 
+                      className="block py-2 text-lg font-medium hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Admin Dashboard
+                    </Link>
+                  </li>
+                </ul>
+                
+                <div className="mt-6 flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Switch theme:</span>
+                  <ThemeToggle />
+                </div>
+              </nav>
+              <div className="p-4 border-t">
+                <Button asChild className="w-full" variant="outline">
+                  <Link to="/contact" onClick={() => setIsMenuOpen(false)}>
+                    Contact via WhatsApp
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </motion.div>
         )}
-      >
-        <div className="flex flex-col h-full overflow-y-auto">
-          <div className="flex items-center justify-between p-4 border-b">
-            <Link to="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold text-primary">BeShop</span>
-            </Link>
-            <Button variant="ghost" size="icon" onClick={toggleMenu}>
-              <X className="h-6 w-6" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </div>
-          <nav className="flex-1 p-4">
-            <ul className="space-y-4">
-              <li>
-                <Link 
-                  to="/" 
-                  className="block py-2 text-lg font-medium hover:text-primary"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/products" 
-                  className="block py-2 text-lg font-medium hover:text-primary"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  All Products
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/categories" 
-                  className="block py-2 text-lg font-medium hover:text-primary"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/about" 
-                  className="block py-2 text-lg font-medium hover:text-primary"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/contact" 
-                  className="block py-2 text-lg font-medium hover:text-primary"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/account" 
-                  className="block py-2 text-lg font-medium hover:text-primary"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Account
-                </Link>
-              </li>
-            </ul>
-          </nav>
-          <div className="p-4 border-t">
-            <Button asChild className="w-full" variant="outline">
-              <Link to="/contact" onClick={() => setIsMenuOpen(false)}>
-                Contact via WhatsApp
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
+      </AnimatePresence>
     </header>
   );
 };
