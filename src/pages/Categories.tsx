@@ -66,19 +66,20 @@ export default function Categories() {
     
     // Filter by price range
     result = result.filter(product => 
-      product.price >= priceRange[0] && product.price <= priceRange[1]
+      product.originalPrice >= priceRange[0] && product.originalPrice <= priceRange[1]
     );
     
     // Apply sorting
     switch (sortOption) {
       case 'price-low':
-        result.sort((a, b) => a.price - b.price);
+        result.sort((a, b) => a.originalPrice - b.originalPrice);
         break;
       case 'price-high':
-        result.sort((a, b) => b.price - a.price);
+        result.sort((a, b) => b.originalPrice - a.originalPrice);
         break;
       case 'newest':
-        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // Since createdAt isn't in our Product type, we'll sort by ID as a fallback
+        result.sort((a, b) => b.id.localeCompare(a.id));
         break;
       default: // 'popular'
         result.sort((a, b) => b.popular - a.popular);

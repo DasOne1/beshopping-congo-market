@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -25,12 +24,16 @@ import { Badge } from '@/components/ui/badge';
 import { mockProducts } from '@/data/mockData';
 import AdminLayout from '@/components/Admin/AdminLayout';
 import {
-  Chart,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { AreaChart, BarChart } from "recharts";
+  ResponsiveContainer,
+  AreaChart as RechartsAreaChart,
+  BarChart as RechartsBarChart,
+  Area,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
 
 export default function AdminDashboard() {
   const [timeRange, setTimeRange] = useState("7d");
@@ -218,27 +221,20 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
-                <ChartContainer
-                  data={salesData}
-                  tooltip={
-                    <ChartTooltip>
-                      <ChartTooltipContent />
-                    </ChartTooltip>
-                  }
-                >
-                  <Chart>
-                    <AreaChart
-                      data={salesData}
-                      margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
-                      name={"Total"}
-                      fill="rgb(var(--primary))"
-                      opacity={0.2}
-                      stroke="rgb(var(--primary))"
-                      strokeWidth={2}
-                      dataKey="total"
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsAreaChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Area 
+                      type="monotone" 
+                      dataKey="total" 
+                      stroke="rgb(var(--primary))" 
+                      fill="rgba(var(--primary), 0.2)" 
                     />
-                  </Chart>
-                </ChartContainer>
+                  </RechartsAreaChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
@@ -251,29 +247,21 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
-                <ChartContainer
-                  data={topProducts.map(product => ({
-                    name: product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name,
-                    sales: product.popular * 10
-                  }))}
-                  tooltip={
-                    <ChartTooltip>
-                      <ChartTooltipContent />
-                    </ChartTooltip>
-                  }
-                >
-                  <Chart>
-                    <BarChart
-                      data={topProducts.map(product => ({
-                        name: product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name,
-                        sales: product.popular * 10
-                      }))}
-                      name={"Sales"}
-                      fill="rgb(var(--primary))"
-                      dataKey="sales"
-                    />
-                  </Chart>
-                </ChartContainer>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsBarChart
+                    data={topProducts.map(product => ({
+                      name: product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name,
+                      sales: product.popular * 10
+                    }))}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="sales" fill="rgb(var(--primary))" />
+                  </RechartsBarChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>

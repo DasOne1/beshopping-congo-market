@@ -74,14 +74,14 @@ export function FeaturedGallery() {
                     <Link to={`/product/${product.id}`} className="block">
                       <div className="rounded-lg overflow-hidden relative group">
                         <img 
-                          src={product.image} 
+                          src={product.images[0]} 
                           alt={product.name}
                           className="w-full aspect-[4/3] object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-black/20 transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
                         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent text-white">
                           <h3 className="font-medium truncate">{product.name}</h3>
-                          <p className="text-sm opacity-80">{product.price.toLocaleString()} CDF</p>
+                          <p className="text-sm opacity-80">{product.originalPrice.toLocaleString()} CDF</p>
                         </div>
                       </div>
                     </Link>
