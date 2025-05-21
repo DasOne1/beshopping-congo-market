@@ -17,6 +17,7 @@ interface CartContextType {
   clearCart: () => void;
   updateVariant: (productId: string, selectedVariants: Record<string, string>) => void;
   isInCart: (productId: string) => boolean;
+  getTotalQuantity: () => number; // Add this function
 }
 
 // Create the context
@@ -94,6 +95,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return cart.some(item => item.productId === productId);
   };
   
+  // Get total quantity of items in cart
+  const getTotalQuantity = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+  
   return (
     <CartContext.Provider value={{ 
       cart, 
@@ -102,7 +108,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       updateQuantity, 
       clearCart,
       updateVariant,
-      isInCart 
+      isInCart,
+      getTotalQuantity
     }}>
       {children}
     </CartContext.Provider>

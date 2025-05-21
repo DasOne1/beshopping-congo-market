@@ -23,6 +23,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/Admin/Dashboard";
 import SplashScreen from "./components/SplashScreen";
 import { MobileNavBar } from "./components/MobileNavBar";
+import AdminAuth from "./components/AdminAuth";
 
 const queryClient = new QueryClient();
 
@@ -127,8 +128,12 @@ const App = () => {
                         </PageTransition>
                       } />
                       
-                      {/* Admin Routes - No page transitions for admin pages */}
-                      <Route path="/admin/*" element={<AdminDashboard />} />
+                      {/* Admin Routes - Protected with authentication */}
+                      <Route path="/admin/*" element={
+                        <AdminAuth>
+                          <AdminDashboard />
+                        </AdminAuth>
+                      } />
                       
                       {/* Catch-all */}
                       <Route path="*" element={

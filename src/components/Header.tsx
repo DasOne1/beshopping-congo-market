@@ -16,12 +16,14 @@ import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/Logo';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMobile } from '@/hooks/use-mobile';
 
 const Header = () => {
-  const { getTotalQuantity } = useCart();
+  const { cart, getTotalQuantity } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { isMobile } = useMobile();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
@@ -34,8 +36,8 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-background shadow-sm backdrop-blur-sm border-b border-border/40">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-40 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
+      <div className="container flex h-14 md:h-16 items-center justify-between">
         {/* Mobile Menu Button */}
         <Button 
           variant="ghost" 
@@ -43,14 +45,14 @@ const Header = () => {
           className="md:hidden"
           onClick={toggleMenu}
         >
-          <Menu className="h-6 w-6" />
+          <Menu className="h-5 w-5" />
           <span className="sr-only">Menu</span>
         </Button>
 
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">
           <Logo size="small" asLink />
-          <span className="text-xl font-bold text-primary hidden sm:inline-block">BeShop</span>
+          <span className="text-lg font-bold text-primary hidden sm:inline-block">BeShop</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -73,8 +75,8 @@ const Header = () => {
         </nav>
 
         {/* Right Icons */}
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon" onClick={toggleSearch}>
+        <div className="flex items-center space-x-1 md:space-x-2">
+          <Button variant="ghost" size="icon" onClick={toggleSearch} className="hidden sm:flex">
             <Search className="h-5 w-5" />
             <span className="sr-only">Search</span>
           </Button>
@@ -82,7 +84,7 @@ const Header = () => {
           <ThemeToggle />
           
           <Link to="/favorites">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="hidden sm:flex">
               <Heart className="h-5 w-5" />
               <span className="sr-only">Favorites</span>
             </Button>
@@ -100,8 +102,8 @@ const Header = () => {
             </Button>
           </Link>
 
-          <Link to="/account">
-            <Button variant="ghost" size="icon" className="hidden sm:flex">
+          <Link to="/account" className="hidden sm:block">
+            <Button variant="ghost" size="icon">
               <User className="h-5 w-5" />
               <span className="sr-only">Account</span>
             </Button>
@@ -117,7 +119,7 @@ const Header = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-background/90 backdrop-blur-md z-50"
           >
             <div className="container py-4">
               <div className="flex items-center justify-between mb-4">
@@ -161,16 +163,16 @@ const Header = () => {
                   <span className="text-xl font-bold text-primary">BeShop</span>
                 </Link>
                 <Button variant="ghost" size="icon" onClick={toggleMenu}>
-                  <X className="h-6 w-6" />
+                  <X className="h-5 w-5" />
                   <span className="sr-only">Close</span>
                 </Button>
               </div>
               <nav className="flex-1 p-4">
-                <ul className="space-y-4">
+                <ul className="space-y-3">
                   <li>
                     <Link 
                       to="/" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
+                      className="block py-2 text-base font-medium hover:text-primary"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Home
@@ -179,7 +181,7 @@ const Header = () => {
                   <li>
                     <Link 
                       to="/products" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
+                      className="block py-2 text-base font-medium hover:text-primary"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       All Products
@@ -188,7 +190,7 @@ const Header = () => {
                   <li>
                     <Link 
                       to="/categories" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
+                      className="block py-2 text-base font-medium hover:text-primary"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Categories
@@ -197,7 +199,7 @@ const Header = () => {
                   <li>
                     <Link 
                       to="/about" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
+                      className="block py-2 text-base font-medium hover:text-primary"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       About Us
@@ -206,7 +208,7 @@ const Header = () => {
                   <li>
                     <Link 
                       to="/contact" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
+                      className="block py-2 text-base font-medium hover:text-primary"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Contact
@@ -215,19 +217,10 @@ const Header = () => {
                   <li>
                     <Link 
                       to="/account" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
+                      className="block py-2 text-base font-medium hover:text-primary"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Account
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/admin" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Admin Dashboard
                     </Link>
                   </li>
                 </ul>

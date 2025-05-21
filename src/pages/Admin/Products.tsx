@@ -13,10 +13,11 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { toast } from "@/components/ui/use-toast"
-import { mockProducts, mockCategories } from '@/data/mockData';
+import { useToast } from "@/hooks/use-toast"
+import { mockCategories } from '@/data/mockData';
 import { ImageIcon, Pencil, Plus, Trash2 } from 'lucide-react';
 
+// Define the Product interface for admin usage
 interface Product {
   id: string;
   name: string;
@@ -34,7 +35,40 @@ interface Product {
 }
 
 const Products = () => {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const { toast } = useToast();
+  const [products, setProducts] = useState<Product[]>([
+    {
+      id: 'prod_1',
+      name: 'Smartphone X',
+      description: 'Latest smartphone with amazing features',
+      category: 'Electronics',
+      originalPrice: 999,
+      discountedPrice: 899,
+      stock: 50,
+      status: 'active',
+      images: ['https://placehold.co/600x400/png'],
+      variants: {
+        colors: ['Black', 'White', 'Blue'],
+        sizes: []
+      }
+    },
+    {
+      id: 'prod_2',
+      name: 'Designer T-Shirt',
+      description: 'Premium cotton t-shirt',
+      category: 'Clothing',
+      originalPrice: 49.99,
+      discountedPrice: 39.99,
+      stock: 100,
+      status: 'active',
+      images: ['https://placehold.co/600x400/png'],
+      variants: {
+        colors: ['Red', 'Green', 'Blue'],
+        sizes: ['S', 'M', 'L', 'XL']
+      }
+    }
+  ]);
+  
   const [categories] = useState(mockCategories);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({
@@ -42,7 +76,7 @@ const Products = () => {
     status: '',
     price: '',
   });
-  const [newProduct, setNewProduct] = useState({
+  const [newProduct, setNewProduct] = useState<Product>({
     id: '',
     name: '',
     description: '',
@@ -129,18 +163,22 @@ const Products = () => {
 
   const handleAddProduct = () => {
     if (!newProduct.name || !newProduct.category) {
-      toast.error('Please fill in all required fields');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please fill in all required fields"
+      });
       return;
     }
 
     // Generate a unique ID
     const productId = `prod_${Date.now()}`;
     
-    const productToAdd = {
+    const productToAdd: Product = {
       id: productId,
       name: newProduct.name,
       description: newProduct.description,
-      category: newProduct.category,  // Changed from categoryId to category
+      category: newProduct.category,
       originalPrice: newProduct.originalPrice,
       discountedPrice: newProduct.discountedPrice,
       stock: newProduct.stock,
@@ -166,7 +204,10 @@ const Products = () => {
         sizes: [],
       },
     });
-    toast.success('Product added successfully');
+    toast({
+      title: "Success",
+      description: "Product added successfully"
+    });
   };
 
   const handleEditProduct = (product: Product) => {
@@ -182,17 +223,24 @@ const Products = () => {
       )
     );
     setEditingProduct(null);
-    toast.success('Product updated successfully');
+    toast({
+      title: "Success",
+      description: "Product updated successfully"
+    });
   };
 
   const handleDeleteProduct = (id: string) => {
     setProducts((prev) => prev.filter((product) => product.id !== id));
-    toast.success('Product deleted successfully');
+    toast({
+      title: "Success",
+      description: "Product deleted successfully"
+    });
   };
 
+  // ... keep existing code (filteredProducts calculation and JSX return)
   const filteredProducts = products.filter((product) => {
     // Apply filters
-    const matchesCategory = !filters.category || product.category === filters.category;  // Changed from categoryId to category
+    const matchesCategory = !filters.category || product.category === filters.category;
     const matchesStatus = !filters.status || product.status === filters.status;
     const matchesPrice = !filters.price || (
       (filters.price === 'under50' && (product.discountedPrice || product.originalPrice) < 50) ||
@@ -423,7 +471,7 @@ const Products = () => {
       {/* Edit Product Modal */}
       {editingProduct && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-md max-w-md w-full">
+          <div className="bg-background p-6 rounded-md max-w-md w-full">
             <h2 className="text-lg font-semibold mb-4">Edit Product</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

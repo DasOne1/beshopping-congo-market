@@ -22,7 +22,7 @@ export function MobileNavBar() {
       animate={{ y: 0 }}
       transition={{ duration: 0.3, delay: 0.5 }}
     >
-      <div className="enhanced-glass-effect rounded-full mx-auto max-w-sm">
+      <div className="bg-background/95 backdrop-blur-md shadow-lg rounded-full mx-auto max-w-sm border border-border/50">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -40,7 +40,7 @@ export function MobileNavBar() {
                 {isActive && (
                   <motion.div
                     layoutId="bubble"
-                    className="absolute inset-0 bg-primary/30 dark:bg-primary/40 rounded-full z-0"
+                    className="absolute inset-0 bg-primary/20 dark:bg-primary/30 rounded-full z-0"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
