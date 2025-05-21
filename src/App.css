@@ -5,18 +5,34 @@
   max-width: 100%;
   margin: 0 auto;
   text-align: left;
+  overflow-x: hidden; /* Prevent horizontal overflow */
 }
 
+/* Enhanced glass effect with more opacity for better readability */
 .glass-effect {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .dark .glass-effect {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(30, 30, 40, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced glass effect specifically for navigation */
+.enhanced-glass-effect {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.dark .enhanced-glass-effect {
+  background: rgba(20, 20, 30, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -69,16 +85,34 @@
   }
 }
 
-/* Animated background */
+/* Improved animated background */
 .animated-bg {
   background: linear-gradient(
     45deg,
-    rgba(255, 154, 90, 0.2) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 115, 22, 0.2) 100%
+    rgba(255, 154, 90, 0.3) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 115, 22, 0.3) 100%
   );
   background-size: 400% 400%;
   animation: gradient 15s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add animated particles to the background */
+.animated-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(255, 154, 90, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 115, 22, 0.2) 0%, transparent 50%);
+  opacity: 0.7;
+  animation: pulse-gentle 10s ease-in-out infinite alternate;
+  z-index: -1;
 }
 
 @keyframes gradient {
@@ -106,15 +140,18 @@
 @media (max-width: 640px) {
   .product-card-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-  }
-  
-  .product-card {
+    gap: 0.75rem;
     padding: 0.5rem;
   }
   
+  .product-card {
+    padding: 0.75rem;
+    height: auto;
+  }
+  
   .product-card-image {
-    height: 120px;
+    height: 130px;
+    object-fit: cover;
   }
   
   .product-card-title {
@@ -124,20 +161,45 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    margin-bottom: 0.25rem;
   }
   
   .product-card-price {
     font-size: 0.875rem;
+    font-weight: 600;
   }
 }
 
-/* Fluid animations */
+/* Page transition animations */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Improved fluid animations */
 @keyframes float {
   0% {
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
   100% {
     transform: translateY(0px);
@@ -145,27 +207,42 @@
 }
 
 .animate-float {
-  animation: float 5s ease-in-out infinite;
+  animation: float 4s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+@keyframes pulse-gentle {
+  0% {
+    opacity: 0.6;
     transform: scale(1);
   }
   50% {
     opacity: 0.8;
-    transform: scale(1.05);
+    transform: scale(1.03);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
   }
 }
 
-.animate-pulse-slow {
-  animation: pulse 4s ease-in-out infinite;
+.animate-pulse-gentle {
+  animation: pulse-gentle 4s ease-in-out infinite;
+}
+
+/* Subtle hover effects */
+.subtle-hover {
+  transition: all 0.3s ease;
+}
+
+.subtle-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(249, 115, 22, 0.12);
 }
 
 /* Card hover effects */
 .card-hover {
   transition: all 0.3s ease;
+  will-change: transform;
 }
 
 .card-hover:hover {
@@ -173,7 +250,7 @@
   box-shadow: 0 10px 25px rgba(249, 115, 22, 0.15);
 }
 
-/* Hero section styling */
+/* Hero section styling with improved animation */
 .hero-section {
   position: relative;
   overflow: hidden;
@@ -191,6 +268,7 @@
   height: 400px;
   top: -100px;
   left: -100px;
+  animation: pulse-gentle 7s ease-in-out infinite;
 }
 
 .hero-bg-circle-2 {
@@ -198,25 +276,123 @@
   height: 300px;
   bottom: -50px;
   right: -50px;
+  animation: pulse-gentle 5s ease-in-out infinite reverse;
+  animation-delay: 1s;
 }
 
-/* Category cards */
+/* Category cards with improved animations */
 .category-card {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   border-radius: 1rem;
   overflow: hidden;
   height: 100%;
 }
 
 .category-card:hover {
-  transform: scale(1.03);
+  transform: scale(1.02);
+  box-shadow: 0 15px 30px rgba(249, 115, 22, 0.1);
 }
 
 .category-card-icon {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   transform-origin: center;
 }
 
 .category-card:hover .category-card-icon {
+  transform: scale(1.15) rotate(5deg);
+}
+
+/* Fix for layout stability */
+.layout-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  position: relative;
+}
+
+.content-wrapper {
+  flex: 1;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* Product variant options styling for cart page */
+.variant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.color-option {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.color-option.selected {
   transform: scale(1.2);
+  box-shadow: 0 0 0 2px #FF9A5A;
+}
+
+.size-option {
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: white;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.size-option.selected {
+  background: #FF9A5A;
+  color: white;
+  border-color: #FF9A5A;
+}
+
+/* Simplified footer styling */
+.footer-simple {
+  padding: 1.5rem 0;
+  font-size: 0.875rem;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.footer-link {
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: #FF9A5A;
+}
+
+/* Admin section improvements */
+.admin-card {
+  transition: all 0.3s ease;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.admin-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }

@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, ShoppingBag, ArrowRight, ShoppingCart } from 'lucide-react';
+import { Trash2, ShoppingBag, ShoppingCart } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppContact from '@/components/WhatsAppContact';
@@ -10,9 +10,10 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
 import { mockProducts } from '@/data/mockData';
+import { motion } from 'framer-motion';
 
 const Cart = () => {
-  const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { cart, removeFromCart, updateQuantity, clearCart, updateVariant } = useCart();
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -84,51 +85,128 @@ const Cart = () => {
     }, 1000);
   };
 
+  // Function to handle variant selection
+  const handleVariantChange = (productId: string, variantType: string, value: string) => {
+    const cartItem = cartItemsMap[productId];
+    if (cartItem) {
+      const updatedVariants = {
+        ...(cartItem.selectedVariants || {}),
+        [variantType]: value
+      };
+      updateVariant(productId, updatedVariants);
+    }
+  };
+
+  // Helper to render color options
+  const renderColorOptions = (product: any, cartItem: any) => {
+    if (!product.variants || !product.variants.colors) return null;
+    
+    return (
+      <div className="mt-2">
+        <div className="text-xs text-gray-500 mb-1">Color:</div>
+        <div className="variant-options">
+          {product.variants.colors.map((color: string) => (
+            <div
+              key={color}
+              className={`color-option ${cartItem.selectedVariants?.color === color ? 'selected' : ''}`}
+              style={{ backgroundColor: color.toLowerCase() }}
+              onClick={() => handleVariantChange(product.id, 'color', color)}
+              title={color}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+  
+  // Helper to render size options
+  const renderSizeOptions = (product: any, cartItem: any) => {
+    if (!product.variants || !product.variants.sizes) return null;
+    
+    return (
+      <div className="mt-2">
+        <div className="text-xs text-gray-500 mb-1">Size:</div>
+        <div className="variant-options">
+          {product.variants.sizes.map((size: string) => (
+            <div
+              key={size}
+              className={`size-option ${cartItem.selectedVariants?.size === size ? 'selected' : ''}`}
+              onClick={() => handleVariantChange(product.id, 'size', size)}
+            >
+              {size}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="layout-container">
       <Header />
       
-      <main className="flex-1">
-        <div className="container py-8">
-          <h1 className="text-2xl md:text-3xl font-bold mb-6 flex items-center">
+      <main className="content-wrapper">
+        <div className="container py-6 md:py-8">
+          <motion.h1 
+            className="text-2xl md:text-3xl font-bold mb-6 flex items-center"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             <ShoppingCart className="mr-2 h-6 w-6" />
             Your Shopping Cart
-          </h1>
+          </motion.h1>
           
           {cart.length === 0 ? (
-            <div className="text-center py-16">
-              <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+            <motion.div 
+              className="text-center py-12 md:py-16"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-4 animate-float" />
               <h2 className="text-xl font-medium mb-2">Your cart is empty</h2>
               <p className="text-gray-500 mb-6">
                 Looks like you haven't added any products to your cart yet.
               </p>
-              <Button asChild>
+              <Button asChild className="subtle-hover">
                 <Link to="/products">Start Shopping</Link>
               </Button>
-            </div>
+            </motion.div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
               {/* Cart Items */}
               <div className="lg:col-span-2">
-                <div className="bg-white rounded-lg shadow-sm border">
+                <motion.div 
+                  className="bg-white rounded-lg shadow-sm border"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
                   <div className="p-4 border-b">
                     <h2 className="font-medium">Cart Items ({cart.length})</h2>
                   </div>
                   
                   <ul className="divide-y">
-                    {cartProducts.map(product => {
+                    {cartProducts.map((product, index) => {
                       const cartItem = cartItemsMap[product.id];
                       const price = product.discountedPrice || product.originalPrice;
                       const itemTotal = price * cartItem.quantity;
                       
                       return (
-                        <li key={product.id} className="p-4 flex flex-col sm:flex-row">
+                        <motion.li 
+                          key={product.id} 
+                          className="p-4 flex flex-col sm:flex-row"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                        >
                           <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-md overflow-hidden mr-4 mb-3 sm:mb-0">
                             <Link to={`/product/${product.id}`}>
                               <img 
                                 src={product.images[0]} 
                                 alt={product.name} 
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover transition-transform hover:scale-105"
                               />
                             </Link>
                           </div>
@@ -148,15 +226,10 @@ const Cart = () => {
                             </div>
                             
                             {/* Show selected variants if any */}
-                            {cartItem.selectedVariants && Object.keys(cartItem.selectedVariants).length > 0 && (
-                              <div className="text-sm text-gray-500 mb-2">
-                                {Object.entries(cartItem.selectedVariants).map(([key, value]) => (
-                                  <span key={key} className="mr-3">{key}: {value}</span>
-                                ))}
-                              </div>
-                            )}
+                            {renderColorOptions(product, cartItem)}
+                            {renderSizeOptions(product, cartItem)}
                             
-                            <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center justify-between mt-3">
                               <div className="flex items-center border rounded-md">
                                 <button
                                   className="px-3 py-1 text-gray-600 hover:text-gray-800"
@@ -176,13 +249,13 @@ const Cart = () => {
                               
                               <button
                                 onClick={() => removeFromCart(product.id)}
-                                className="text-red-500 hover:text-red-600"
+                                className="text-red-500 hover:text-red-600 transition-colors"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
                           </div>
-                        </li>
+                        </motion.li>
                       );
                     })}
                   </ul>
@@ -191,21 +264,27 @@ const Cart = () => {
                     <Button 
                       variant="outline" 
                       onClick={clearCart}
+                      className="subtle-hover"
                     >
                       Clear Cart
                     </Button>
                     <Link to="/products">
-                      <Button variant="ghost">
+                      <Button variant="ghost" className="subtle-hover">
                         Continue Shopping
                       </Button>
                     </Link>
                   </div>
-                </div>
+                </motion.div>
               </div>
               
               {/* Order Summary */}
               <div>
-                <div className="bg-white rounded-lg shadow-sm border sticky top-20">
+                <motion.div 
+                  className="bg-white rounded-lg shadow-sm border sticky top-20"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
                   <div className="p-4 border-b">
                     <h2 className="font-medium">Order Summary</h2>
                   </div>
@@ -231,10 +310,10 @@ const Cart = () => {
                     <div className="pt-4">
                       <h3 className="font-medium mb-2">Checkout with WhatsApp</h3>
                       <p className="text-sm text-gray-500 mb-3">
-                        Enter your WhatsApp number to place your order via WhatsApp
+                        Enter your WhatsApp number to place your order
                       </p>
                       
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         <Input
                           type="tel"
                           placeholder="e.g., +243123456789"
@@ -244,7 +323,7 @@ const Cart = () => {
                         
                         <Button
                           onClick={handleWhatsAppCheckout}
-                          className="w-full bg-whatsapp hover:bg-whatsapp-dark"
+                          className="w-full bg-whatsapp hover:bg-whatsapp-dark transition-colors"
                           disabled={isSubmitting}
                         >
                           <WhatsAppIcon className="mr-2 h-4 w-4" />
@@ -266,7 +345,7 @@ const Cart = () => {
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
             </div>
           )}

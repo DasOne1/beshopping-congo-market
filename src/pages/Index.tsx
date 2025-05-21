@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -14,7 +14,7 @@ import { mockProducts, mockCategories } from '@/data/mockData';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 
-const HomePage = () => {
+const Index = () => {
   const [activeTab, setActiveTab] = useState("featured");
   const [categorizedProducts, setCategorizedProducts] = useState<{[key: string]: typeof mockProducts}>({});
   
@@ -28,7 +28,7 @@ const HomePage = () => {
   useEffect(() => {
     const groupedProducts = mockCategories.reduce((acc, category) => {
       const productsInCategory = mockProducts.filter(product => 
-        product.categoryId === category.id
+        product.category === category.id
       ).slice(0, 4); // Take only 4 products per category for display
       
       if (productsInCategory.length > 0) {
@@ -39,6 +39,12 @@ const HomePage = () => {
     
     setCategorizedProducts(groupedProducts);
   }, []);
+
+  const filterProductsByCategory = (categorySlug: string) => {
+    return mockProducts.filter(product => {
+      return product.category === categorySlug;  // Changed from categoryId to category
+    });
+  };
 
   const containerAnimation = {
     hidden: { opacity: 0 },
@@ -409,4 +415,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default Index;

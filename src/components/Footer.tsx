@@ -5,94 +5,45 @@ import { Separator } from '@/components/ui/separator';
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-50 dark:bg-gray-900/40 py-6">
+    <footer className="bg-gray-50 dark:bg-gray-900/40 py-4">
       <div className="container">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <div>
-            <h3 className="text-base font-semibold mb-3">BeShop Congo</h3>
-            <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
-              Your trusted online shopping destination in Congo.
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="text-center md:text-left mb-4 md:mb-0">
+            <h3 className="text-base font-semibold mb-1">BeShop Congo</h3>
+            <p className="text-xs text-gray-600 dark:text-gray-300">
+              Your trusted online shopping destination
             </p>
           </div>
           
-          <div>
-            <h3 className="text-base font-semibold mb-3">Quick Links</h3>
-            <ul className="space-y-1.5 text-xs">
-              <li>
-                <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/products" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
-                  Products
-                </Link>
-              </li>
-              <li>
-                <Link to="/categories" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link to="/about" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
-                  About Us
-                </Link>
-              </li>
-            </ul>
+          <div className="flex flex-wrap justify-center gap-4 md:gap-6 mb-4 md:mb-0">
+            <Link to="/" className="text-xs text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
+              Home
+            </Link>
+            <Link to="/products" className="text-xs text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
+              Products
+            </Link>
+            <Link to="/about" className="text-xs text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
+              About
+            </Link>
+            <Link to="/contact" className="text-xs text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
+              Contact
+            </Link>
           </div>
           
-          <div>
-            <h3 className="text-base font-semibold mb-3">Info</h3>
-            <ul className="space-y-1.5 text-xs">
-              <li>
-                <Link to="/shipping" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
-                  Shipping
-                </Link>
-              </li>
-              <li>
-                <Link to="/returns" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
-                  Returns
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
-                  Terms
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
-                  Privacy
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 className="text-base font-semibold mb-3">Contact</h3>
-            <div className="space-y-2">
-              <WhatsAppContact 
-                phoneNumber="243978100940" 
-                message="Hello! I would like to know more about your products."
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
-              >
-                +243 978 100 940
-              </WhatsAppContact>
-              <WhatsAppContact 
-                phoneNumber="243974984449" 
-                message="Hello! I would like to know more about your products."
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
-              >
-                +243 974 984 449
-              </WhatsAppContact>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <WhatsAppContact 
+              phoneNumber="243978100940" 
+              message="Hello! I would like to know more about your products."
+              variant="outline"
+              size="sm"
+              className="text-xs"
+            >
+              +243 978 100 940
+            </WhatsAppContact>
           </div>
         </div>
         
-        <Separator className="my-4" />
+        <Separator className="my-2" />
         
         <div className="text-center text-xs text-gray-600 dark:text-gray-400">
           <p>© {new Date().getFullYear()} BeShop Congo. All rights reserved.</p>

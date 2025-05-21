@@ -1,104 +1,115 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CartItem } from '@/types';
-import { toast } from '@/components/ui/use-toast';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
+// Define cart item structure
+export interface CartItem {
+  productId: string;
+  quantity: number;
+  selectedVariants?: Record<string, string>;
+}
+
+// Define cart context shape
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (productId: string, quantity?: number, selectedVariants?: {[key: string]: string}) => void;
+  addToCart: (productId: string, quantity: number, selectedVariants?: Record<string, string>) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  getTotalQuantity: () => number;
+  updateVariant: (productId: string, selectedVariants: Record<string, string>) => void;
+  isInCart: (productId: string) => boolean;
 }
 
+// Create the context
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Provider component
+export const CartProvider = ({ children }: { children: ReactNode }) => {
+  // Initialize cart state from localStorage if available
   const [cart, setCart] = useState<CartItem[]>(() => {
-    const savedCart = localStorage.getItem('beshopping-cart');
+    const savedCart = localStorage.getItem('cart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
-
+  
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('beshopping-cart', JSON.stringify(cart));
+    localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
-
-  const addToCart = (productId: string, quantity = 1, selectedVariants?: {[key: string]: string}) => {
+  
+  // Add item to cart or update quantity if already exists
+  const addToCart = (productId: string, quantity: number, selectedVariants?: Record<string, string>) => {
     setCart(prevCart => {
-      const existingItemIndex = prevCart.findIndex(item => item.productId === productId);
+      const existingItem = prevCart.find(item => item.productId === productId);
       
-      if (existingItemIndex >= 0) {
-        // Product exists in cart, update quantity
-        const updatedCart = [...prevCart];
-        updatedCart[existingItemIndex].quantity += quantity;
-        
-        // Update variants if provided
-        if (selectedVariants) {
-          updatedCart[existingItemIndex].selectedVariants = selectedVariants;
-        }
-        
-        toast({
-          title: "Product updated",
-          description: "The quantity has been updated in your cart",
-        });
-        
-        return updatedCart;
+      if (existingItem) {
+        // Update existing item
+        return prevCart.map(item => 
+          item.productId === productId 
+            ? { ...item, 
+                quantity: item.quantity + quantity,
+                selectedVariants: selectedVariants || item.selectedVariants 
+              } 
+            : item
+        );
       } else {
-        // Add new item to cart
-        toast({
-          title: "Product added",
-          description: "The product has been added to your cart",
-        });
-        
+        // Add new item
         return [...prevCart, { productId, quantity, selectedVariants }];
       }
     });
   };
-
+  
+  // Remove item from cart
   const removeFromCart = (productId: string) => {
     setCart(prevCart => prevCart.filter(item => item.productId !== productId));
-    toast({
-      title: "Product removed",
-      description: "The product has been removed from your cart",
-    });
   };
-
+  
+  // Update quantity of item in cart
   const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-
     setCart(prevCart => 
       prevCart.map(item => 
-        item.productId === productId ? { ...item, quantity } : item
+        item.productId === productId 
+          ? { ...item, quantity } 
+          : item
       )
     );
   };
-
+  
+  // Update variant selections for an item
+  const updateVariant = (productId: string, selectedVariants: Record<string, string>) => {
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.productId === productId
+          ? { ...item, selectedVariants }
+          : item
+      )
+    );
+  };
+  
+  // Clear the entire cart
   const clearCart = () => {
     setCart([]);
   };
-
-  const getTotalQuantity = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
+  
+  // Check if product is in cart
+  const isInCart = (productId: string) => {
+    return cart.some(item => item.productId === productId);
   };
-
+  
   return (
     <CartContext.Provider value={{ 
       cart, 
       addToCart, 
       removeFromCart, 
-      updateQuantity,
+      updateQuantity, 
       clearCart,
-      getTotalQuantity
+      updateVariant,
+      isInCart 
     }}>
       {children}
     </CartContext.Provider>
   );
 };
 
+// Custom hook to use the cart context
 export const useCart = () => {
   const context = useContext(CartContext);
   if (context === undefined) {

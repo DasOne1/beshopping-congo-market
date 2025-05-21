@@ -22,7 +22,7 @@ export function MobileNavBar() {
       animate={{ y: 0 }}
       transition={{ duration: 0.3, delay: 0.5 }}
     >
-      <div className="glass-effect rounded-full mx-auto max-w-sm">
+      <div className="enhanced-glass-effect rounded-full mx-auto max-w-sm">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -33,14 +33,14 @@ export function MobileNavBar() {
                 key={item.path} 
                 to={item.path}
                 className={cn(
-                  "relative flex flex-col items-center justify-center p-3",
+                  "relative flex flex-col items-center justify-center p-3 transition-all duration-300",
                   isActive ? "text-primary" : "text-foreground/60"
                 )}
               >
                 {isActive && (
                   <motion.div
                     layoutId="bubble"
-                    className="absolute inset-0 bg-primary/10 dark:bg-primary/20 rounded-full z-0"
+                    className="absolute inset-0 bg-primary/30 dark:bg-primary/40 rounded-full z-0"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}

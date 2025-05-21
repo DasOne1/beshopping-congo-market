@@ -4,11 +4,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 import Index from "./pages/Index";
 import ProductDetails from "./pages/ProductDetails";
@@ -26,6 +26,26 @@ import { MobileNavBar } from "./components/MobileNavBar";
 
 const queryClient = new QueryClient();
 
+// Page transition component
+const PageTransition = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.3 }}
+        className="layout-container"
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   
@@ -38,6 +58,12 @@ const App = () => {
     } else {
       sessionStorage.setItem("hasSeenSplash", "true");
     }
+    
+    // Prevent body scroll issues
+    document.body.style.overflow = "auto";
+    document.body.style.position = "relative";
+    document.body.style.width = "100%";
+    document.body.style.height = "100%";
   }, []);
   
   return (
@@ -55,21 +81,61 @@ const App = () => {
                 ) : (
                   <BrowserRouter>
                     <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/products" element={<Products />} />
-                      <Route path="/categories" element={<Categories />} />
-                      <Route path="/product/:productId" element={<ProductDetails />} />
-                      <Route path="/cart" element={<Cart />} />
-                      <Route path="/favorites" element={<Favorites />} />
-                      <Route path="/about" element={<AboutUs />} />
-                      <Route path="/contact" element={<Contact />} />
-                      <Route path="/account" element={<Account />} />
+                      <Route path="/" element={
+                        <PageTransition>
+                          <Index />
+                        </PageTransition>
+                      } />
+                      <Route path="/products" element={
+                        <PageTransition>
+                          <Products />
+                        </PageTransition>
+                      } />
+                      <Route path="/categories" element={
+                        <PageTransition>
+                          <Categories />
+                        </PageTransition>
+                      } />
+                      <Route path="/product/:productId" element={
+                        <PageTransition>
+                          <ProductDetails />
+                        </PageTransition>
+                      } />
+                      <Route path="/cart" element={
+                        <PageTransition>
+                          <Cart />
+                        </PageTransition>
+                      } />
+                      <Route path="/favorites" element={
+                        <PageTransition>
+                          <Favorites />
+                        </PageTransition>
+                      } />
+                      <Route path="/about" element={
+                        <PageTransition>
+                          <AboutUs />
+                        </PageTransition>
+                      } />
+                      <Route path="/contact" element={
+                        <PageTransition>
+                          <Contact />
+                        </PageTransition>
+                      } />
+                      <Route path="/account" element={
+                        <PageTransition>
+                          <Account />
+                        </PageTransition>
+                      } />
                       
-                      {/* Admin Routes */}
-                      <Route path="/admin" element={<AdminDashboard />} />
+                      {/* Admin Routes - No page transitions for admin pages */}
+                      <Route path="/admin/*" element={<AdminDashboard />} />
                       
                       {/* Catch-all */}
-                      <Route path="*" element={<NotFound />} />
+                      <Route path="*" element={
+                        <PageTransition>
+                          <NotFound />
+                        </PageTransition>
+                      } />
                     </Routes>
                     <MobileNavBar />
                   </BrowserRouter>
