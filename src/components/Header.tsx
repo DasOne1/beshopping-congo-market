@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/Logo';
@@ -21,6 +22,7 @@ import Sidebar from './Sidebar';
 
 const Header = () => {
   const { cart, getTotalQuantity } = useCart();
+  const { favorites } = useFavorites();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,6 +39,7 @@ const Header = () => {
   };
 
   const cartQuantity = getTotalQuantity();
+  const favoriteQuantity = favorites.length;
 
   return (
     <header className="sticky top-0 z-40 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
@@ -86,9 +89,14 @@ const Header = () => {
           
           <ThemeToggle />
           
-          <Link to="/favorites">
-            <Button variant="ghost" size="icon" className="hidden sm:flex">
+          <Link to="/favorites" className="relative">
+            <Button variant="ghost" size="icon">
               <Heart className="h-5 w-5" />
+              {favoriteQuantity > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {favoriteQuantity}
+                </span>
+              )}
               <span className="sr-only">Favorites</span>
             </Button>
           </Link>

@@ -54,7 +54,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
             <button 
               onClick={(e) => {
                 e.preventDefault();
-                favoriteStatus ? removeFromFavorites(product.id) : addToFavorites(product);
+                favoriteStatus ? removeFromFavorites(product.id) : addToFavorites(product.id);
               }}
               className={cn(
                 "absolute top-2 right-2 p-1.5 rounded-full transition-colors",

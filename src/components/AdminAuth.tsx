@@ -1,92 +1,68 @@
 
-import React, { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Logo } from "./Logo";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { toast } from '@/components/ui/use-toast';
 
-// Mock credentials for admin access
-const ADMIN_USER = "admin";
-const ADMIN_PASSWORD = "admin123";
+interface AdminAuthProps {
+  children: React.ReactNode;
+}
 
-const AdminAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    localStorage.getItem('admin-auth') === 'true'
+  );
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
-  // Check if admin is already logged in
-  useEffect(() => {
-    const adminAuth = localStorage.getItem("adminAuthenticated");
-    if (adminAuth === "true") {
-      setIsAuthenticated(true);
-    } else {
-      setIsAuthenticated(false);
-    }
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    // Simulate API request
-    setTimeout(() => {
-      if (username === ADMIN_USER && password === ADMIN_PASSWORD) {
-        localStorage.setItem("adminAuthenticated", "true");
-        setIsAuthenticated(true);
-        toast({
-          title: "Authentication successful",
-          description: "Welcome to the admin dashboard",
-        });
-      } else {
-        toast({
-          title: "Authentication failed",
-          description: "Invalid username or password",
-          variant: "destructive",
-        });
-      }
-      setIsLoading(false);
-    }, 1000);
+    
+    // Simple admin authentication - in a real app, this would be on the server
+    if (username === 'admin' && password === 'admin123') {
+      localStorage.setItem('admin-auth', 'true');
+      setIsAuthenticated(true);
+      toast({
+        title: 'Login successful',
+        description: 'Welcome to admin dashboard',
+      });
+    } else {
+      toast({
+        title: 'Login failed',
+        description: 'Invalid username or password',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("adminAuthenticated");
+    localStorage.removeItem('admin-auth');
     setIsAuthenticated(false);
+    navigate('/');
   };
 
-  // Show login form if not authenticated
-  if (isAuthenticated === false) {
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1 flex flex-col items-center">
-            <Logo size="medium" className="mb-4" />
-            <CardTitle className="text-2xl">Admin Login</CardTitle>
-            <CardDescription>
-              Enter your credentials to access the admin dashboard
-            </CardDescription>
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="username" className="text-sm font-medium">
                   Username
                 </label>
                 <Input
                   id="username"
-                  placeholder="Enter your username"
+                  type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  placeholder="admin"
                   required
                 />
               </div>
@@ -97,39 +73,38 @@ const AdminAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="•••••••"
                   required
                 />
               </div>
-            </CardContent>
-            <CardFooter>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading || !username || !password}
-              >
-                {isLoading ? "Authenticating..." : "Login"}
+              <Button type="submit" className="w-full">
+                Login
               </Button>
-            </CardFooter>
-          </form>
+            </form>
+          </CardContent>
+          <CardFooter className="text-center text-sm text-muted-foreground">
+            <p className="w-full">Default credentials: admin / admin123</p>
+          </CardFooter>
         </Card>
       </div>
     );
   }
 
-  // Show admin content if authenticated
-  return (
-    <div>
-      <div className="absolute top-4 right-4 z-50">
-        <Button variant="outline" onClick={handleLogout}>
-          Logout
-        </Button>
-      </div>
-      {children}
-    </div>
-  );
+  // Add logout button to admin layout
+  React.useEffect(() => {
+    const adminHeader = document.querySelector('.admin-header-logout');
+    if (adminHeader && !adminHeader.querySelector('.admin-logout-btn')) {
+      const logoutBtn = document.createElement('button');
+      logoutBtn.className = 'admin-logout-btn ml-auto px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded';
+      logoutBtn.textContent = 'Logout';
+      logoutBtn.addEventListener('click', handleLogout);
+      adminHeader.appendChild(logoutBtn);
+    }
+  }, []);
+
+  return <>{children}</>;
 };
 
 export default AdminAuth;
