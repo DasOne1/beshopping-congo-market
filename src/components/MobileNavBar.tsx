@@ -33,8 +33,8 @@ export function MobileNavBar() {
                 key={item.path} 
                 to={item.path}
                 className={cn(
-                  "relative flex items-center justify-center p-3",
-                  isActive && "text-primary"
+                  "relative flex flex-col items-center justify-center p-3",
+                  isActive ? "text-primary" : "text-foreground/60"
                 )}
               >
                 {isActive && (
@@ -48,6 +48,12 @@ export function MobileNavBar() {
                   "relative z-10 w-5 h-5",
                   isActive ? "text-primary" : "text-foreground/60"
                 )} />
+                <span className={cn(
+                  "text-xs mt-1 relative z-10",
+                  isActive ? "font-medium text-primary" : "text-foreground/60"
+                )}>
+                  {item.label}
+                </span>
               </Link>
             );
           })}

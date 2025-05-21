@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -25,14 +26,14 @@ import { mockProducts } from '@/data/mockData';
 import AdminLayout from '@/components/Admin/AdminLayout';
 import {
   ResponsiveContainer,
-  AreaChart as RechartsAreaChart,
-  BarChart as RechartsBarChart,
+  AreaChart,
+  BarChart,
   Area,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
 } from "recharts";
 
 export default function AdminDashboard() {
@@ -163,6 +164,12 @@ export default function AdminDashboard() {
     },
   ];
 
+  // Prepare data for product chart
+  const productChartData = topProducts.map(product => ({
+    name: product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name,
+    sales: product.popular * 10
+  }));
+
   return (
     <AdminLayout>
       <div className="flex flex-col gap-5">
@@ -222,18 +229,18 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RechartsAreaChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <AreaChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip />
+                    <RechartsTooltip />
                     <Area 
                       type="monotone" 
                       dataKey="total" 
                       stroke="rgb(var(--primary))" 
                       fill="rgba(var(--primary), 0.2)" 
                     />
-                  </RechartsAreaChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
@@ -248,19 +255,16 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RechartsBarChart
-                    data={topProducts.map(product => ({
-                      name: product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name,
-                      sales: product.popular * 10
-                    }))}
+                  <BarChart
+                    data={productChartData}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip />
+                    <RechartsTooltip />
                     <Bar dataKey="sales" fill="rgb(var(--primary))" />
-                  </RechartsBarChart>
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>

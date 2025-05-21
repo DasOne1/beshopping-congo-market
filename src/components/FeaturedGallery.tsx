@@ -73,14 +73,14 @@ export function FeaturedGallery() {
                 <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3">
                   <div className="p-1">
                     <Link to={`/product/${product.id}`} className="block">
-                      <div className="glass-card overflow-hidden relative group rounded-2xl">
+                      <div className="glass-effect overflow-hidden relative group rounded-2xl">
                         <div className="absolute top-3 left-3 z-10 bg-white/80 dark:bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
                           <span className="text-yellow-400 mr-1">★</span>
                           <span className="text-sm font-medium">{(Math.random() * 2 + 3).toFixed(1)}</span>
                         </div>
                         
                         <div className="absolute top-3 right-3 z-10">
-                          <div className="glass rounded-full p-2">
+                          <div className="glass-effect rounded-full p-2">
                             <Bookmark size={16} className="text-primary" />
                           </div>
                         </div>
@@ -94,8 +94,8 @@ export function FeaturedGallery() {
                           <h3 className="font-medium truncate">{product.name}</h3>
                           <p className="text-sm opacity-90">{product.originalPrice.toLocaleString()} CDF</p>
                           
-                          <div className="absolute bottom-4 right-4 bg-white rounded-full p-2 shadow-lg">
-                            <ShoppingCart size={18} className="text-primary" />
+                          <div className="absolute bottom-4 right-4 bg-primary rounded-full p-2 shadow-lg">
+                            <ShoppingCart size={18} className="text-white" />
                           </div>
                         </div>
                       </div>
