@@ -5,6 +5,7 @@ import { Filter, Search, X } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import CategoryCard from '@/components/CategoryCard';
 import { mockProducts, mockCategories } from '@/data/mockData';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 
 export default function Categories() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -42,6 +42,7 @@ export default function Categories() {
   const [filteredProducts, setFilteredProducts] = useState(mockProducts);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [openAccordion, setOpenAccordion] = useState<string | null>("category");
   
   // Price range for the filter
   const maxPrice = 500000; // CDF
@@ -120,6 +121,11 @@ export default function Categories() {
     }
   };
 
+  // Toggle accordion automatically
+  const handleAccordionChange = (value: string) => {
+    setOpenAccordion(value === openAccordion ? null : value);
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -142,32 +148,40 @@ export default function Categories() {
         </section>
         
         {/* Categories Navigation */}
-        <section className="py-4 border-b border-border/40">
+        <section className="py-4 border-b border-border/40 overflow-hidden">
           <div className="container">
             <div className="overflow-x-auto pb-2">
               <motion.div 
-                className="flex whitespace-nowrap gap-2"
+                className="flex items-center gap-4 snap-x snap-mandatory overflow-x-auto pb-2"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <Button 
-                  variant={selectedCategory === null ? "default" : "outline"} 
-                  className="rounded-full"
+                <div
+                  className={`snap-start flex-shrink-0 ${selectedCategory === null ? "scale-105" : ""}`}
                   onClick={() => setSelectedCategory(null)}
                 >
-                  All Categories
-                </Button>
+                  <CategoryCard
+                    id="all"
+                    name="All Categories"
+                    image="/placeholder.svg"
+                    className={selectedCategory === null ? "ring-2 ring-primary" : ""}
+                  />
+                </div>
                 
                 {mockCategories.map((category) => (
-                  <Button 
-                    key={category.id} 
-                    variant={selectedCategory === category.id ? "default" : "outline"}
-                    className="rounded-full"
+                  <div
+                    key={category.id}
+                    className={`snap-start flex-shrink-0 w-32 ${selectedCategory === category.id ? "scale-105" : ""}`}
                     onClick={() => setSelectedCategory(category.id)}
                   >
-                    {category.name}
-                  </Button>
+                    <CategoryCard
+                      id={category.id}
+                      name={category.name}
+                      image="/placeholder.svg"
+                      className={selectedCategory === category.id ? "ring-2 ring-primary" : ""}
+                    />
+                  </div>
                 ))}
               </motion.div>
             </div>
@@ -406,7 +420,7 @@ export default function Categories() {
           <div className="container">
             <h2 className="text-2xl font-semibold mb-6">Featured Categories</h2>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {mockCategories.slice(0, 4).map((category, index) => (
                 <motion.div
                   key={category.id}
@@ -415,17 +429,12 @@ export default function Categories() {
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                   onClick={() => setSelectedCategory(category.id)}
                 >
-                  <Card className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
-                    <div className="aspect-[3/2] bg-muted rounded-t-lg flex items-center justify-center">
-                      <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-2xl font-bold text-primary">{category.name.charAt(0)}</span>
-                      </div>
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-lg mb-1">{category.name}</h3>
-                      <p className="text-sm text-muted-foreground">{category.description}</p>
-                    </CardContent>
-                  </Card>
+                  <CategoryCard
+                    id={category.id}
+                    name={category.name}
+                    description={category.description}
+                    image="/placeholder.svg"
+                  />
                 </motion.div>
               ))}
             </div>
@@ -437,26 +446,20 @@ export default function Categories() {
           <div className="container">
             <h2 className="text-2xl font-semibold mb-6">Browse All Categories</h2>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {mockCategories.map((category) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {mockCategories.map((category, index) => (
                 <motion.div
                   key={category.id}
-                  whileHover={{ scale: 1.03 }}
-                  transition={{ duration: 0.2 }}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className="cursor-pointer"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
                 >
-                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/40 transition-colors">
-                    <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-base font-medium text-primary">{category.name.charAt(0)}</span>
-                    </div>
-                    <div>
-                      <h3 className="font-medium">{category.name}</h3>
-                      <p className="text-xs text-muted-foreground">
-                        {mockProducts.filter(p => p.category === category.id).length} products
-                      </p>
-                    </div>
-                  </div>
+                  <CategoryCard
+                    id={category.id}
+                    name={category.name}
+                    image="/placeholder.svg"
+                    onClick={() => setSelectedCategory(category.id)}
+                  />
                 </motion.div>
               ))}
             </div>

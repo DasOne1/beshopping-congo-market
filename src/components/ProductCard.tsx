@@ -95,7 +95,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
               disabled={product.stock <= 0}
               onClick={(e) => {
                 e.stopPropagation();
-                addToCart(product.id);
+                addToCart(product.id, 1);
               }}
             >
               <ShoppingCart className="h-3.5 w-3.5 mr-1" />

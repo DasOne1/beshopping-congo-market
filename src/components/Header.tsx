@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -16,13 +17,14 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/Logo';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useIsMobile } from '@/hooks/use-mobile';
+import Sidebar from './Sidebar';
 
 const Header = () => {
   const { cart, getTotalQuantity } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { isMobile } = useIsMobile();
+  const isMobile = useIsMobile();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
@@ -33,6 +35,8 @@ const Header = () => {
     console.log('Search for:', searchQuery);
     setIsSearchOpen(false);
   };
+
+  const cartQuantity = getTotalQuantity();
 
   return (
     <header className="sticky top-0 z-40 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
@@ -92,9 +96,9 @@ const Header = () => {
           <Link to="/cart" className="relative">
             <Button variant="ghost" size="icon">
               <ShoppingBag className="h-5 w-5" />
-              {getTotalQuantity() > 0 && (
+              {cartQuantity > 0 && (
                 <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {getTotalQuantity()}
+                  {cartQuantity}
                 </span>
               )}
               <span className="sr-only">Cart</span>
@@ -145,101 +149,8 @@ const Header = () => {
         )}
       </AnimatePresence>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-            className="fixed inset-0 bg-background z-50 md:hidden"
-          >
-            <div className="flex flex-col h-full overflow-y-auto">
-              <div className="flex items-center justify-between p-4 border-b">
-                <Link to="/" className="flex items-center space-x-2" onClick={() => setIsMenuOpen(false)}>
-                  <Logo size="small" />
-                  <span className="text-xl font-bold text-primary">BeShop</span>
-                </Link>
-                <Button variant="ghost" size="icon" onClick={toggleMenu}>
-                  <X className="h-5 w-5" />
-                  <span className="sr-only">Close</span>
-                </Button>
-              </div>
-              <nav className="flex-1 p-4">
-                <ul className="space-y-3">
-                  <li>
-                    <Link 
-                      to="/" 
-                      className="block py-2 text-base font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Home
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/products" 
-                      className="block py-2 text-base font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      All Products
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/categories" 
-                      className="block py-2 text-base font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Categories
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/about" 
-                      className="block py-2 text-base font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      About Us
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/contact" 
-                      className="block py-2 text-base font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Contact
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/account" 
-                      className="block py-2 text-base font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Account
-                    </Link>
-                  </li>
-                </ul>
-                
-                <div className="mt-6 flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Switch theme:</span>
-                  <ThemeToggle />
-                </div>
-              </nav>
-              <div className="p-4 border-t">
-                <Button asChild className="w-full" variant="outline">
-                  <Link to="/contact" onClick={() => setIsMenuOpen(false)}>
-                    Contact via WhatsApp
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Sidebar for mobile navigation */}
+      <Sidebar isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
     </header>
   );
 };
