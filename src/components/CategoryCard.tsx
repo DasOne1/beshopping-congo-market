@@ -10,6 +10,7 @@ interface CategoryCardProps {
   name: string;
   description?: string;
   image?: string;
+  slug?: string;
   className?: string;
   onClick?: () => void;
 }
@@ -19,6 +20,7 @@ const CategoryCard = ({
   name, 
   description, 
   image, 
+  slug,
   className,
   onClick 
 }: CategoryCardProps) => {

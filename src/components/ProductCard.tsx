@@ -1,5 +1,7 @@
 
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +10,6 @@ import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { Product } from '@/types';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 
 interface ProductCardProps {
   product: Product;
@@ -33,7 +34,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
       whileHover={{ y: -5 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className={cn("overflow-hidden transition-all hover:shadow-lg glass-effect border-0", className)}>
+      <Card className={cn("overflow-hidden transition-all hover:shadow-lg border-0", className)}>
         <Link to={`/product/${product.id}`} className="block relative">
           {product.discount && product.discount > 0 && (
             <div className="absolute top-2 left-2 bg-secondary text-secondary-foreground px-2 py-1 text-xs font-semibold rounded-full">
@@ -45,11 +46,11 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
               <span className="text-white font-semibold">Out of Stock</span>
             </div>
           )}
-          <div className="relative overflow-hidden">
+          <div className="relative aspect-square overflow-hidden">
             <img 
               src={product.images[0]} 
               alt={product.name} 
-              className="h-48 w-full object-cover transition-transform duration-300 hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
             />
             <button 
               onClick={(e) => {
