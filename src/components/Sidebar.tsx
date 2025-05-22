@@ -25,7 +25,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { theme, setTheme } = useTheme();
-  const { cartItems } = useCart();
+  const { cart } = useCart();
   const { favorites } = useFavorites();
   
   const toggleTheme = () => {

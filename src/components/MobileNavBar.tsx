@@ -8,13 +8,13 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 
 export function MobileNavBar() {
   const location = useLocation();
-  const { cartItems } = useCart();
+  const { cart } = useCart();
   const { favorites } = useFavorites();
   
   const navItems = [
     { icon: Home, path: '/', label: 'Home' },
     { icon: Search, path: '/products', label: 'Search' },
-    { icon: ShoppingCart, path: '/cart', label: 'Cart', count: cartItems.length },
+    { icon: ShoppingCart, path: '/cart', label: 'Cart', count: cart.length },
     { icon: Heart, path: '/favorites', label: 'Favorites', count: favorites.length },
     { icon: User, path: '/account', label: 'Account' },
   ];

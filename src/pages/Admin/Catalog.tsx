@@ -46,7 +46,7 @@ export default function Catalog() {
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-md overflow-hidden bg-muted">
                           <img 
-                            src={product.image} 
+                            src={product.images[0]} 
                             alt={product.name} 
                             className="h-full w-full object-cover"
                           />
@@ -54,7 +54,7 @@ export default function Catalog() {
                         <div>
                           <div className="font-medium">{product.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {product.price.toLocaleString()} CDF
+                            {(product.discountedPrice || product.originalPrice).toLocaleString()} CDF
                           </div>
                         </div>
                       </div>

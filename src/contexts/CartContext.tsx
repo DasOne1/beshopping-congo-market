@@ -11,13 +11,14 @@ export interface CartItem {
 // Define cart context shape
 interface CartContextType {
   cart: CartItem[];
+  cartItems: CartItem[]; // Add this line to fix the error
   addToCart: (productId: string, quantity: number, selectedVariants?: Record<string, string>) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   updateVariant: (productId: string, selectedVariants: Record<string, string>) => void;
   isInCart: (productId: string) => boolean;
-  getTotalQuantity: () => number; // Add this function
+  getTotalQuantity: () => number;
 }
 
 // Create the context
@@ -103,6 +104,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   return (
     <CartContext.Provider value={{ 
       cart, 
+      cartItems: cart, // Add this line to fix the error
       addToCart, 
       removeFromCart, 
       updateQuantity, 
