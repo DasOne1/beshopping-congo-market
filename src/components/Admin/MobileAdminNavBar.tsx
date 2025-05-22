@@ -32,13 +32,8 @@ export function MobileAdminNavBar() {
   };
 
   return (
-    <motion.div 
-      className="fixed bottom-0 left-0 right-0 z-50 px-2 pb-2 md:hidden"
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="bg-background shadow-lg rounded-xl mx-auto border border-border/50">
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+      <div className="bg-background shadow-lg border-t border-border/50">
         <div className="grid grid-cols-6 items-center">
           {navItems.map((item) => {
             const active = isActive(item.path);
@@ -75,7 +70,7 @@ export function MobileAdminNavBar() {
           })}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

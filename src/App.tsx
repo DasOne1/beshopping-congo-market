@@ -27,6 +27,7 @@ import AdminCustomers from "./pages/Admin/Customers";
 import AdminSettings from "./pages/Admin/Settings";
 import SplashScreen from "./components/SplashScreen";
 import { MobileNavBar } from "./components/MobileNavBar";
+import MobileAdminNavBar from "./components/Admin/MobileAdminNavBar";
 import AdminAuth from "./components/AdminAuth";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,14 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => {
       </motion.div>
     </AnimatePresence>
   );
+};
+
+// Navigation component that conditionally renders appropriate navbar
+const ConditionalNavigation = () => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  
+  return isAdminRoute ? <MobileAdminNavBar /> : <MobileNavBar />;
 };
 
 const App = () => {
@@ -166,7 +175,7 @@ const App = () => {
                         </PageTransition>
                       } />
                     </Routes>
-                    <MobileNavBar />
+                    <ConditionalNavigation />
                   </BrowserRouter>
                 )}
               </AnimatePresence>

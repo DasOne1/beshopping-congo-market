@@ -20,13 +20,8 @@ export function MobileNavBar() {
   ];
 
   return (
-    <motion.div 
-      className="fixed bottom-4 left-0 right-0 z-50 px-4 md:hidden"
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.3, delay: 0.5 }}
-    >
-      <div className="bg-background/95 backdrop-blur-md shadow-lg rounded-full mx-auto max-w-sm border border-border/50">
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+      <div className="bg-background/95 backdrop-blur-md shadow-lg border-t border-border/50">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -71,6 +66,6 @@ export function MobileNavBar() {
           })}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
