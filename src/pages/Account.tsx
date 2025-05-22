@@ -141,247 +141,250 @@ const AccountPage = () => {
               </div>
               
               <div className="w-full md:w-2/3">
-                <TabsContent value="profile" className="mt-0">
-                  <Card className="glass-effect">
-                    <CardHeader>
-                      <CardTitle>Personal Information</CardTitle>
-                      <CardDescription>Update your personal details</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <form onSubmit={handleProfileUpdate} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="name">Full Name</Label>
-                            <Input id="name" defaultValue={user.name} />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" defaultValue={user.email} />
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="phone">Phone</Label>
-                            <Input id="phone" defaultValue={user.phone} />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="avatar">Profile Picture</Label>
-                            <Input id="avatar" type="file" />
-                          </div>
-                        </div>
-                        
-                        <Button type="submit">Save Changes</Button>
-                      </form>
-                      
-                      <Separator />
-                      
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Address Information</h3>
-                        <form onSubmit={handleAddressUpdate} className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="address">Address</Label>
-                            <Input id="address" defaultValue={user.address} />
+                {/* Here's the critical fix: We need to wrap all TabsContent components within a parent Tabs component */}
+                <Tabs value={activeTab}>
+                  <TabsContent value="profile" className="mt-0">
+                    <Card className="glass-effect">
+                      <CardHeader>
+                        <CardTitle>Personal Information</CardTitle>
+                        <CardDescription>Update your personal details</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <form onSubmit={handleProfileUpdate} className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="name">Full Name</Label>
+                              <Input id="name" defaultValue={user.name} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="email">Email</Label>
+                              <Input id="email" type="email" defaultValue={user.email} />
+                            </div>
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label htmlFor="city">City</Label>
-                              <Input id="city" defaultValue="Kinshasa" />
+                              <Label htmlFor="phone">Phone</Label>
+                              <Input id="phone" defaultValue={user.phone} />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="province">Province</Label>
-                              <Input id="province" defaultValue="Kinshasa" />
+                              <Label htmlFor="avatar">Profile Picture</Label>
+                              <Input id="avatar" type="file" />
                             </div>
                           </div>
                           
-                          <Button type="submit">Update Address</Button>
+                          <Button type="submit">Save Changes</Button>
                         </form>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Security</h3>
-                        <form onSubmit={handlePasswordChange} className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="currentPassword">Current Password</Label>
-                            <Input id="currentPassword" type="password" />
-                          </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <Separator />
+                        
+                        <div>
+                          <h3 className="text-lg font-medium mb-4">Address Information</h3>
+                          <form onSubmit={handleAddressUpdate} className="space-y-4">
                             <div className="space-y-2">
-                              <Label htmlFor="newPassword">New Password</Label>
-                              <Input id="newPassword" type="password" />
+                              <Label htmlFor="address">Address</Label>
+                              <Input id="address" defaultValue={user.address} />
                             </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="city">City</Label>
+                                <Input id="city" defaultValue="Kinshasa" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="province">Province</Label>
+                                <Input id="province" defaultValue="Kinshasa" />
+                              </div>
+                            </div>
+                            
+                            <Button type="submit">Update Address</Button>
+                          </form>
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div>
+                          <h3 className="text-lg font-medium mb-4">Security</h3>
+                          <form onSubmit={handlePasswordChange} className="space-y-4">
                             <div className="space-y-2">
-                              <Label htmlFor="confirmPassword">Confirm Password</Label>
-                              <Input id="confirmPassword" type="password" />
+                              <Label htmlFor="currentPassword">Current Password</Label>
+                              <Input id="currentPassword" type="password" />
                             </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="newPassword">New Password</Label>
+                                <Input id="newPassword" type="password" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                <Input id="confirmPassword" type="password" />
+                              </div>
+                            </div>
+                            
+                            <Button type="submit">Change Password</Button>
+                          </form>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="orders" className="mt-0">
+                    <Card className="glass-effect">
+                      <CardHeader>
+                        <CardTitle>Order History</CardTitle>
+                        <CardDescription>Track and manage your orders</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {orderHistory.length > 0 ? (
+                          <div className="space-y-4">
+                            {orderHistory.map((order) => (
+                              <Card key={order.id}>
+                                <CardHeader className="py-3">
+                                  <div className="flex justify-between items-center">
+                                    <div>
+                                      <CardTitle className="text-sm font-medium">{order.id}</CardTitle>
+                                      <CardDescription>{new Date(order.date).toLocaleDateString()}</CardDescription>
+                                    </div>
+                                    <div className="text-right">
+                                      <span className={`inline-block px-2 py-1 rounded-full text-xs ${
+                                        order.status === 'Delivered' 
+                                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                      }`}>
+                                        {order.status}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="py-2">
+                                  <div className="flex justify-between items-center">
+                                    <p className="text-sm">{order.items} item{order.items !== 1 ? 's' : ''}</p>
+                                    <p className="font-medium">{order.total.toLocaleString()} FC</p>
+                                  </div>
+                                </CardContent>
+                                <CardFooter className="pt-0 pb-3 flex justify-end">
+                                  <Button variant="outline" size="sm">
+                                    View Details
+                                  </Button>
+                                </CardFooter>
+                              </Card>
+                            ))}
                           </div>
-                          
-                          <Button type="submit">Change Password</Button>
-                        </form>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                
-                <TabsContent value="orders" className="mt-0">
-                  <Card className="glass-effect">
-                    <CardHeader>
-                      <CardTitle>Order History</CardTitle>
-                      <CardDescription>Track and manage your orders</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {orderHistory.length > 0 ? (
-                        <div className="space-y-4">
-                          {orderHistory.map((order) => (
-                            <Card key={order.id}>
-                              <CardHeader className="py-3">
-                                <div className="flex justify-between items-center">
-                                  <div>
-                                    <CardTitle className="text-sm font-medium">{order.id}</CardTitle>
-                                    <CardDescription>{new Date(order.date).toLocaleDateString()}</CardDescription>
-                                  </div>
-                                  <div className="text-right">
-                                    <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                                      order.status === 'Delivered' 
-                                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                    }`}>
-                                      {order.status}
-                                    </span>
-                                  </div>
-                                </div>
-                              </CardHeader>
-                              <CardContent className="py-2">
-                                <div className="flex justify-between items-center">
-                                  <p className="text-sm">{order.items} item{order.items !== 1 ? 's' : ''}</p>
-                                  <p className="font-medium">{order.total.toLocaleString()} FC</p>
-                                </div>
-                              </CardContent>
-                              <CardFooter className="pt-0 pb-3 flex justify-end">
-                                <Button variant="outline" size="sm">
-                                  View Details
-                                </Button>
-                              </CardFooter>
-                            </Card>
+                        ) : (
+                          <div className="text-center py-8">
+                            <ShoppingBag className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
+                            <h3 className="mt-2 text-lg font-medium">No orders yet</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">When you place orders, they will appear here</p>
+                            <Button className="mt-4" asChild>
+                              <a href="/products">Start Shopping</a>
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="favorites" className="mt-0">
+                    <Card className="glass-effect">
+                      <CardHeader>
+                        <CardTitle>Favorites</CardTitle>
+                        <CardDescription>Products you've saved</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {recentlyViewed.map((product) => (
+                            <ProductCard key={product.id} product={product} />
                           ))}
                         </div>
-                      ) : (
-                        <div className="text-center py-8">
-                          <ShoppingBag className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
-                          <h3 className="mt-2 text-lg font-medium">No orders yet</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">When you place orders, they will appear here</p>
-                          <Button className="mt-4" asChild>
-                            <a href="/products">Start Shopping</a>
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                
-                <TabsContent value="favorites" className="mt-0">
-                  <Card className="glass-effect">
-                    <CardHeader>
-                      <CardTitle>Favorites</CardTitle>
-                      <CardDescription>Products you've saved</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {recentlyViewed.map((product) => (
-                          <ProductCard key={product.id} product={product} />
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                
-                <TabsContent value="settings" className="mt-0">
-                  <Card className="glass-effect">
-                    <CardHeader>
-                      <CardTitle>Account Settings</CardTitle>
-                      <CardDescription>Manage your account preferences</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">Theme Preferences</h3>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className={`p-1 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-orange-100'}`}>
-                              {darkMode ? (
-                                <Moon className="h-5 w-5 text-white" />
-                              ) : (
-                                <Sun className="h-5 w-5 text-orange-600" />
-                              )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="settings" className="mt-0">
+                    <Card className="glass-effect">
+                      <CardHeader>
+                        <CardTitle>Account Settings</CardTitle>
+                        <CardDescription>Manage your account preferences</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-medium">Theme Preferences</h3>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className={`p-1 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-orange-100'}`}>
+                                {darkMode ? (
+                                  <Moon className="h-5 w-5 text-white" />
+                                ) : (
+                                  <Sun className="h-5 w-5 text-orange-600" />
+                                )}
+                              </div>
+                              <div>
+                                <Label>Dark Mode</Label>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  {darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <Label>Dark Mode</Label>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-                              </p>
-                            </div>
-                          </div>
-                          <Switch checked={darkMode} onCheckedChange={setDarkMode} />
-                        </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">Notification Preferences</h3>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label>Push Notifications</Label>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Receive notifications for orders and promotions
-                            </p>
-                          </div>
-                          <Switch checked={notifications} onCheckedChange={setNotifications} />
-                        </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">Communication Preferences</h3>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4" />
-                            <span className="text-sm">Email: {user.email}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            <span className="text-sm">Phone: {user.phone}</span>
+                            <Switch checked={darkMode} onCheckedChange={setDarkMode} />
                           </div>
                         </div>
                         
-                        <div className="flex flex-wrap gap-2">
-                          <Button variant="outline" size="sm" className="mt-2">
-                            <Mail className="h-4 w-4 mr-2" />
-                            Update Email
-                          </Button>
-                          <Button variant="outline" size="sm" className="mt-2">
-                            <Phone className="h-4 w-4 mr-2" />
-                            Update Phone
-                          </Button>
+                        <Separator />
+                        
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-medium">Notification Preferences</h3>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label>Push Notifications</Label>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Receive notifications for orders and promotions
+                              </p>
+                            </div>
+                            <Switch checked={notifications} onCheckedChange={setNotifications} />
+                          </div>
                         </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div>
-                        <h3 className="text-lg font-medium text-red-600 dark:text-red-400">Danger Zone</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                          Permanently delete your account and all data
-                        </p>
-                        <Button variant="destructive">Delete Account</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                        
+                        <Separator />
+                        
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-medium">Communication Preferences</h3>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              <span className="text-sm">Email: {user.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              <span className="text-sm">Phone: {user.phone}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2">
+                            <Button variant="outline" size="sm" className="mt-2">
+                              <Mail className="h-4 w-4 mr-2" />
+                              Update Email
+                            </Button>
+                            <Button variant="outline" size="sm" className="mt-2">
+                              <Phone className="h-4 w-4 mr-2" />
+                              Update Phone
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div>
+                          <h3 className="text-lg font-medium text-red-600 dark:text-red-400">Danger Zone</h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            Permanently delete your account and all data
+                          </p>
+                          <Button variant="destructive">Delete Account</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
               </div>
             </div>
             
