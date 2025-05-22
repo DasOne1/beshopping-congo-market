@@ -31,10 +31,10 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
 
   return (
     <motion.div
-      whileHover={{ y: -5 }}
+      whileHover={{ scale: 1.03 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className={cn("overflow-hidden transition-all hover:shadow-lg border-0", className)}>
+      <Card className={cn("overflow-hidden transition-shadow hover:shadow-lg", className)}>
         <Link to={`/product/${product.id}`} className="block relative">
           {product.discount && product.discount > 0 && (
             <div className="absolute top-2 left-2 bg-secondary text-secondary-foreground px-2 py-1 text-xs font-semibold rounded-full">
@@ -67,22 +67,20 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
           </div>
         </Link>
         
-        <CardContent className="p-3">
-          <div className="mb-2">
-            <Link to={`/product/${product.id}`}>
-              <h3 className="font-medium text-sm leading-tight line-clamp-2 hover:text-primary transition-colors h-10">
-                {product.name}
-              </h3>
-            </Link>
-          </div>
+        <CardContent className="p-3 text-center">
+          <Link to={`/product/${product.id}`}>
+            <h3 className="font-medium line-clamp-2 hover:text-primary transition-colors min-h-[2.5rem]">
+              {product.name}
+            </h3>
+          </Link>
           
-          <div className="flex items-baseline mb-2">
+          <div className="flex items-center justify-center gap-2 mt-2 mb-3">
             <span className="font-semibold text-primary">
               {formatPrice(productPrice)} FC
             </span>
             
             {product.discountedPrice && (
-              <span className="ml-2 text-xs text-gray-400 line-through">
+              <span className="text-xs text-gray-400 line-through">
                 {formatPrice(product.originalPrice)} FC
               </span>
             )}
