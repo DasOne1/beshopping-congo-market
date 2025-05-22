@@ -47,6 +47,8 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+import MobileAdminNavBar from './MobileAdminNavBar';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -55,6 +57,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const [open, setOpen] = useState(true);
+  const { theme, setTheme } = useTheme();
   
   const menuItems = [
     {
@@ -101,10 +104,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     },
   ];
 
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
   return (
     <SidebarProvider defaultOpen={open}>
       <div className="flex w-full min-h-screen">
-        <Sidebar>
+        <Sidebar className="hidden md:flex">
           <SidebarHeader className="flex flex-col items-center justify-center py-6">
             <Logo size="medium" />
             <h1 className="font-bold mt-2 text-lg">BeShop Admin</h1>
@@ -144,13 +151,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 Exit Admin
               </Link>
             </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={toggleTheme}
+            >
+              <ThemeToggle />
+              <span className="ml-2">Toggle Theme</span>
+            </Button>
           </SidebarFooter>
         </Sidebar>
         
         <SidebarInset>
-          <div className="p-4">
-            <header className="flex items-center justify-between mb-8">
-              <SidebarTrigger />
+          <div className="p-4 pb-20 md:pb-4">
+            <header className="flex items-center justify-between mb-8 admin-header-logout">
+              <div className="md:flex items-center hidden">
+                <SidebarTrigger />
+                <h1 className="text-xl font-bold ml-2">BeShop Admin</h1>
+              </div>
+              
+              <div className="md:hidden">
+                <h1 className="text-xl font-bold">BeShop Admin</h1>
+              </div>
               
               <div className="ml-auto flex items-center gap-2">
                 <div className="relative hidden md:block">
@@ -229,8 +252,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       <span>Settings</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
                       <ThemeToggle />
+                      <span className="ml-2">Toggle Theme</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild className="cursor-pointer">
@@ -250,6 +274,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </SidebarInset>
       </div>
+      
+      {/* Mobile Admin Navigation Bar */}
+      <MobileAdminNavBar />
     </SidebarProvider>
   );
 }

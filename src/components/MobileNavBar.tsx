@@ -1,17 +1,21 @@
 
-import { Home, Search, ShoppingCart, Bookmark, User } from 'lucide-react';
+import { Home, Search, ShoppingCart, Heart, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 export function MobileNavBar() {
   const location = useLocation();
+  const { cartItems } = useCart();
+  const { favorites } = useFavorites();
   
   const navItems = [
     { icon: Home, path: '/', label: 'Home' },
     { icon: Search, path: '/products', label: 'Search' },
-    { icon: ShoppingCart, path: '/cart', label: 'Cart' },
-    { icon: Bookmark, path: '/favorites', label: 'Favorites' },
+    { icon: ShoppingCart, path: '/cart', label: 'Cart', count: cartItems.length },
+    { icon: Heart, path: '/favorites', label: 'Favorites', count: favorites.length },
     { icon: User, path: '/account', label: 'Account' },
   ];
 
@@ -44,10 +48,18 @@ export function MobileNavBar() {
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
-                <ItemIcon className={cn(
-                  "relative z-10 w-5 h-5",
-                  isActive ? "text-primary" : "text-foreground/60"
-                )} />
+                <div className="relative">
+                  <ItemIcon className={cn(
+                    "relative z-10 w-5 h-5",
+                    isActive ? "text-primary" : "text-foreground/60"
+                  )} />
+                  
+                  {item.count && item.count > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center z-20">
+                      {item.count}
+                    </span>
+                  )}
+                </div>
                 <span className={cn(
                   "text-xs mt-1 relative z-10",
                   isActive ? "font-medium text-primary" : "text-foreground/60"

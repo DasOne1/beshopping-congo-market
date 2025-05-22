@@ -15,6 +15,8 @@ import {
   DrawerHeader,
   DrawerFooter,
 } from '@/components/ui/drawer';
+import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -22,12 +24,18 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  const { cartItems } = useCart();
+  const { favorites } = useFavorites();
+  
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
   
   const menuItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: ShoppingBag, label: 'Products', path: '/products' },
-    { icon: Heart, label: 'Favorites', path: '/favorites' },
+    { icon: Heart, label: 'Favorites', path: '/favorites', badge: favorites.length },
     { icon: User, label: 'Account', path: '/account' },
     { icon: Info, label: 'About Us', path: '/about' },
     { icon: Phone, label: 'Contact', path: '/contact' },
@@ -55,11 +63,18 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent/50 transition-colors"
+                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-md hover:bg-accent/50 transition-colors"
                   onClick={onClose}
                 >
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
+                  <div className="flex items-center gap-3">
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && item.badge > 0 && (
+                    <span className="bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               </li>
             ))}
@@ -69,7 +84,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           
           <div className="flex items-center justify-between px-3 py-2">
             <span>Theme mode</span>
-            <ThemeToggle />
+            <button onClick={toggleTheme} className="p-1">
+              <ThemeToggle />
+            </button>
           </div>
         </nav>
         

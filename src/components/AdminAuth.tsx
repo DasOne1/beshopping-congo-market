@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
+import { Logo } from './Logo';
 
 interface AdminAuthProps {
   children: React.ReactNode;
@@ -44,11 +45,23 @@ const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
     navigate('/');
   };
 
+  useEffect(() => {
+    const adminHeader = document.querySelector('.admin-header-logout');
+    if (isAuthenticated && adminHeader && !adminHeader.querySelector('.admin-logout-btn')) {
+      const logoutBtn = document.createElement('button');
+      logoutBtn.className = 'admin-logout-btn ml-auto px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded';
+      logoutBtn.textContent = 'Logout';
+      logoutBtn.addEventListener('click', handleLogout);
+      adminHeader.appendChild(logoutBtn);
+    }
+  }, [isAuthenticated]);
+
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
-          <CardHeader>
+          <CardHeader className="space-y-4 flex flex-col items-center">
+            <Logo size="medium" />
             <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
           </CardHeader>
           <CardContent>
@@ -91,18 +104,6 @@ const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
       </div>
     );
   }
-
-  // Add logout button to admin layout
-  React.useEffect(() => {
-    const adminHeader = document.querySelector('.admin-header-logout');
-    if (adminHeader && !adminHeader.querySelector('.admin-logout-btn')) {
-      const logoutBtn = document.createElement('button');
-      logoutBtn.className = 'admin-logout-btn ml-auto px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded';
-      logoutBtn.textContent = 'Logout';
-      logoutBtn.addEventListener('click', handleLogout);
-      adminHeader.appendChild(logoutBtn);
-    }
-  }, []);
 
   return <>{children}</>;
 };

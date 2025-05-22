@@ -21,6 +21,10 @@ import Cart from "./pages/Cart";
 import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/Admin/Dashboard";
+import AdminOrders from "./pages/Admin/Orders";
+import AdminCatalog from "./pages/Admin/Catalog";
+import AdminCustomers from "./pages/Admin/Customers";
+import AdminSettings from "./pages/Admin/Settings";
 import SplashScreen from "./components/SplashScreen";
 import { MobileNavBar } from "./components/MobileNavBar";
 import AdminAuth from "./components/AdminAuth";
@@ -129,9 +133,29 @@ const App = () => {
                       } />
                       
                       {/* Admin Routes - Protected with authentication */}
-                      <Route path="/admin/*" element={
+                      <Route path="/admin" element={
                         <AdminAuth>
                           <AdminDashboard />
+                        </AdminAuth>
+                      } />
+                      <Route path="/admin/orders" element={
+                        <AdminAuth>
+                          <AdminOrders />
+                        </AdminAuth>
+                      } />
+                      <Route path="/admin/products" element={
+                        <AdminAuth>
+                          <AdminCatalog />
+                        </AdminAuth>
+                      } />
+                      <Route path="/admin/customers" element={
+                        <AdminAuth>
+                          <AdminCustomers />
+                        </AdminAuth>
+                      } />
+                      <Route path="/admin/settings" element={
+                        <AdminAuth>
+                          <AdminSettings />
                         </AdminAuth>
                       } />
                       
