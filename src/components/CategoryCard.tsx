@@ -32,7 +32,7 @@ const CategoryCard = ({
       className={cn("cursor-pointer", className)}
     >
       <Card className="overflow-hidden transition-shadow hover:shadow-lg">
-        <div className="relative aspect-square overflow-hidden bg-gray-100">
+        <div className="relative aspect-square overflow-hidden">
           <img 
             src={image || `/placeholder.svg`} 
             alt={name}
@@ -40,9 +40,9 @@ const CategoryCard = ({
           />
         </div>
         <CardContent className="p-3 text-center">
-          <h3 className="text-lg font-medium">{name}</h3>
+          <h3 className="font-medium">{name}</h3>
           {description && (
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
               {description}
             </p>
           )}
