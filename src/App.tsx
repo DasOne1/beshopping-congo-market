@@ -27,6 +27,10 @@ import AdminLayout from '@/components/Admin/AdminLayout';
 import Dashboard from '@/pages/Admin/Dashboard';
 import AdminProducts from '@/pages/Admin/Products';
 import AdminCategories from '@/pages/Admin/Categories';
+import Orders from '@/pages/Admin/Orders';
+import Customers from '@/pages/Admin/Customers';
+import Analytics from '@/pages/Admin/Analytics';
+import Settings from '@/pages/Admin/Settings';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -71,6 +75,34 @@ function App() {
                     <AdminAuth>
                       <AdminLayout>
                         <AdminCategories />
+                      </AdminLayout>
+                    </AdminAuth>
+                  } />
+                  <Route path="/admin/orders" element={
+                    <AdminAuth>
+                      <AdminLayout>
+                        <Orders />
+                      </AdminLayout>
+                    </AdminAuth>
+                  } />
+                  <Route path="/admin/customers" element={
+                    <AdminAuth>
+                      <AdminLayout>
+                        <Customers />
+                      </AdminLayout>
+                    </AdminAuth>
+                  } />
+                  <Route path="/admin/analytics" element={
+                    <AdminAuth>
+                      <AdminLayout>
+                        <Analytics />
+                      </AdminLayout>
+                    </AdminAuth>
+                  } />
+                  <Route path="/admin/settings" element={
+                    <AdminAuth>
+                      <AdminLayout>
+                        <Settings />
                       </AdminLayout>
                     </AdminAuth>
                   } />
