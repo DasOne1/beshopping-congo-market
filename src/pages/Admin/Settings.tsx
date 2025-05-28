@@ -10,12 +10,34 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings, Save, Building, Mail, Smartphone, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useAppSettings } from '@/hooks/useAppSettings';
+import { useAppSettings, AppSettings } from '@/hooks/useAppSettings';
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const { settings, isLoading, updateSettings } = useAppSettings();
-  const [formData, setFormData] = useState(settings || {});
+  
+  const defaultSettings: AppSettings = {
+    id: '1',
+    company_name: 'BeShop',
+    company_description: 'Votre boutique en ligne moderne',
+    company_address: 'Kinshasa, RDC',
+    company_phone: '+243 978 100 940',
+    company_email: 'contact@beshop.com',
+    company_logo: '',
+    currency: 'CDF',
+    tax_rate: 0,
+    shipping_cost: 0,
+    free_shipping_threshold: 50000,
+    enable_whatsapp: true,
+    whatsapp_number: '243978100940',
+    enable_email_notifications: false,
+    smtp_host: '',
+    smtp_port: 587,
+    smtp_username: '',
+    smtp_password: '',
+  };
+
+  const [formData, setFormData] = useState<AppSettings>(settings || defaultSettings);
 
   React.useEffect(() => {
     if (settings) {
@@ -43,7 +65,7 @@ export default function SettingsPage() {
     );
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: keyof AppSettings, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -97,7 +119,7 @@ export default function SettingsPage() {
                     <Label htmlFor="company_name">Nom de l'entreprise</Label>
                     <Input
                       id="company_name"
-                      value={formData?.company_name || ''}
+                      value={formData.company_name || ''}
                       onChange={(e) => handleInputChange('company_name', e.target.value)}
                       placeholder="BeShop"
                     />
@@ -107,7 +129,7 @@ export default function SettingsPage() {
                     <Input
                       id="company_email"
                       type="email"
-                      value={formData?.company_email || ''}
+                      value={formData.company_email || ''}
                       onChange={(e) => handleInputChange('company_email', e.target.value)}
                       placeholder="contact@beshop.com"
                     />
@@ -116,7 +138,7 @@ export default function SettingsPage() {
                     <Label htmlFor="company_phone">Téléphone</Label>
                     <Input
                       id="company_phone"
-                      value={formData?.company_phone || ''}
+                      value={formData.company_phone || ''}
                       onChange={(e) => handleInputChange('company_phone', e.target.value)}
                       placeholder="+243 978 100 940"
                     />
@@ -125,7 +147,7 @@ export default function SettingsPage() {
                     <Label htmlFor="currency">Devise</Label>
                     <Input
                       id="currency"
-                      value={formData?.currency || 'CDF'}
+                      value={formData.currency || 'CDF'}
                       onChange={(e) => handleInputChange('currency', e.target.value)}
                       placeholder="CDF"
                     />
@@ -136,7 +158,7 @@ export default function SettingsPage() {
                   <Label htmlFor="company_description">Description</Label>
                   <Textarea
                     id="company_description"
-                    value={formData?.company_description || ''}
+                    value={formData.company_description || ''}
                     onChange={(e) => handleInputChange('company_description', e.target.value)}
                     placeholder="Description de votre entreprise..."
                     rows={3}
@@ -147,7 +169,7 @@ export default function SettingsPage() {
                   <Label htmlFor="company_address">Adresse</Label>
                   <Textarea
                     id="company_address"
-                    value={formData?.company_address || ''}
+                    value={formData.company_address || ''}
                     onChange={(e) => handleInputChange('company_address', e.target.value)}
                     placeholder="Adresse complète de votre entreprise..."
                     rows={2}
@@ -158,7 +180,7 @@ export default function SettingsPage() {
                   <Label htmlFor="company_logo">Logo (URL)</Label>
                   <Input
                     id="company_logo"
-                    value={formData?.company_logo || ''}
+                    value={formData.company_logo || ''}
                     onChange={(e) => handleInputChange('company_logo', e.target.value)}
                     placeholder="https://..."
                   />
@@ -182,7 +204,7 @@ export default function SettingsPage() {
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="enable_whatsapp"
-                    checked={formData?.enable_whatsapp || false}
+                    checked={formData.enable_whatsapp || false}
                     onCheckedChange={(checked) => handleInputChange('enable_whatsapp', checked)}
                   />
                   <Label htmlFor="enable_whatsapp">Activer WhatsApp</Label>
@@ -192,7 +214,7 @@ export default function SettingsPage() {
                   <Label htmlFor="whatsapp_number">Numéro WhatsApp</Label>
                   <Input
                     id="whatsapp_number"
-                    value={formData?.whatsapp_number || ''}
+                    value={formData.whatsapp_number || ''}
                     onChange={(e) => handleInputChange('whatsapp_number', e.target.value)}
                     placeholder="243978100940"
                   />
@@ -214,7 +236,7 @@ export default function SettingsPage() {
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="enable_email_notifications"
-                    checked={formData?.enable_email_notifications || false}
+                    checked={formData.enable_email_notifications || false}
                     onCheckedChange={(checked) => handleInputChange('enable_email_notifications', checked)}
                   />
                   <Label htmlFor="enable_email_notifications">Activer les notifications email</Label>
@@ -225,7 +247,7 @@ export default function SettingsPage() {
                     <Label htmlFor="smtp_host">Serveur SMTP</Label>
                     <Input
                       id="smtp_host"
-                      value={formData?.smtp_host || ''}
+                      value={formData.smtp_host || ''}
                       onChange={(e) => handleInputChange('smtp_host', e.target.value)}
                       placeholder="smtp.gmail.com"
                     />
@@ -235,7 +257,7 @@ export default function SettingsPage() {
                     <Input
                       id="smtp_port"
                       type="number"
-                      value={formData?.smtp_port || ''}
+                      value={formData.smtp_port || ''}
                       onChange={(e) => handleInputChange('smtp_port', parseInt(e.target.value))}
                       placeholder="587"
                     />
@@ -244,7 +266,7 @@ export default function SettingsPage() {
                     <Label htmlFor="smtp_username">Nom d'utilisateur</Label>
                     <Input
                       id="smtp_username"
-                      value={formData?.smtp_username || ''}
+                      value={formData.smtp_username || ''}
                       onChange={(e) => handleInputChange('smtp_username', e.target.value)}
                       placeholder="votre@email.com"
                     />
@@ -254,7 +276,7 @@ export default function SettingsPage() {
                     <Input
                       id="smtp_password"
                       type="password"
-                      value={formData?.smtp_password || ''}
+                      value={formData.smtp_password || ''}
                       onChange={(e) => handleInputChange('smtp_password', e.target.value)}
                       placeholder="••••••••"
                     />
@@ -275,21 +297,21 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="shipping_cost">Coût de livraison ({formData?.currency || 'CDF'})</Label>
+                    <Label htmlFor="shipping_cost">Coût de livraison ({formData.currency || 'CDF'})</Label>
                     <Input
                       id="shipping_cost"
                       type="number"
-                      value={formData?.shipping_cost || 0}
+                      value={formData.shipping_cost || 0}
                       onChange={(e) => handleInputChange('shipping_cost', parseFloat(e.target.value) || 0)}
                       placeholder="0"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="free_shipping_threshold">Seuil livraison gratuite ({formData?.currency || 'CDF'})</Label>
+                    <Label htmlFor="free_shipping_threshold">Seuil livraison gratuite ({formData.currency || 'CDF'})</Label>
                     <Input
                       id="free_shipping_threshold"
                       type="number"
-                      value={formData?.free_shipping_threshold || ''}
+                      value={formData.free_shipping_threshold || ''}
                       onChange={(e) => handleInputChange('free_shipping_threshold', parseFloat(e.target.value) || null)}
                       placeholder="50000"
                     />
@@ -317,7 +339,7 @@ export default function SettingsPage() {
                     id="tax_rate"
                     type="number"
                     step="0.01"
-                    value={formData?.tax_rate || 0}
+                    value={formData.tax_rate || 0}
                     onChange={(e) => handleInputChange('tax_rate', parseFloat(e.target.value) || 0)}
                     placeholder="0"
                   />
