@@ -1,100 +1,53 @@
 
-import { useEffect, useState } from 'react';
-import { User } from '@supabase/supabase-js';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-
-interface AdminUser {
-  id: string;
-  email: string;
-  full_name?: string;
-  role: 'admin' | 'manager' | 'support';
-  avatar_url?: string;
-  is_active: boolean;
-}
+import { useNavigate } from 'react-router-dom';
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchAdminUser(session.user.id);
-      }
-      setLoading(false);
-    });
+  // Query pour obtenir l'utilisateur actuel
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['auth-user'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+    retry: false,
+  });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchAdminUser(session.user.id);
-        } else {
-          setAdminUser(null);
-        }
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const fetchAdminUser = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching admin user:', error);
-        return;
-      }
-      
-      console.log('Admin user fetched:', data);
-      setAdminUser(data);
-    } catch (error) {
-      console.error('Error fetching admin user:', error);
-    }
-  };
-
-  const signIn = async (email: string, password: string) => {
-    try {
-      console.log('Attempting to sign in with:', email);
-      
+  // Mutation pour la connexion
+  const signIn = useMutation({
+    mutationFn: async ({ email, password }: { email: string; password: string }) => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
       if (error) throw error;
-
-      console.log('Sign in successful:', data.user?.email);
-      
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['auth-user'] });
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       toast({
         title: "Connexion réussie",
-        description: "Bienvenue !",
+        description: "Vous êtes maintenant connecté",
       });
-    } catch (error: any) {
-      console.error('Sign in error:', error);
+    },
+    onError: (error: any) => {
       toast({
         title: "Erreur de connexion",
         description: error.message,
         variant: "destructive",
       });
-      throw error;
-    }
-  };
+    },
+  });
 
-  const signUp = async (email: string, password: string, fullName: string) => {
-    try {
+  // Mutation pour l'inscription
+  const signUp = useMutation({
+    mutationFn: async ({ email, password, fullName }: { email: string; password: string; fullName?: string }) => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -104,51 +57,54 @@ export const useAuth = () => {
           },
         },
       });
-
       if (error) throw error;
-
-      toast({
-        title: "Compte créé",
-        description: "Votre compte a été créé avec succès",
-      });
-      
       return data;
-    } catch (error: any) {
+    },
+    onSuccess: () => {
       toast({
-        title: "Erreur lors de la création",
+        title: "Inscription réussie",
+        description: "Vérifiez votre email pour confirmer votre compte",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur d'inscription",
         description: error.message,
         variant: "destructive",
       });
-      throw error;
-    }
-  };
+    },
+  });
 
-  const signOut = async () => {
-    try {
+  // Mutation pour la déconnexion
+  const signOut = useMutation({
+    mutationFn: async () => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['auth-user'] });
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['user-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['user-favorites'] });
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",
       });
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       toast({
         title: "Erreur de déconnexion",
         description: error.message,
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
   return {
     user,
-    adminUser,
-    loading,
+    isLoading,
     signIn,
     signUp,
     signOut,
-    isAuthenticated: !!user,
-    isAdmin: adminUser?.role === 'admin',
   };
 };
