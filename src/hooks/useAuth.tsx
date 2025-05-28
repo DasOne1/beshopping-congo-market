@@ -31,6 +31,7 @@ export const useAuth = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
         setUser(session?.user ?? null);
         if (session?.user) {
           fetchAdminUser(session.user.id);
@@ -52,7 +53,12 @@ export const useAuth = () => {
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching admin user:', error);
+        return;
+      }
+      
+      console.log('Admin user fetched:', data);
       setAdminUser(data);
     } catch (error) {
       console.error('Error fetching admin user:', error);
@@ -61,18 +67,23 @@ export const useAuth = () => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting to sign in with:', email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
 
+      console.log('Sign in successful:', data.user?.email);
+      
       toast({
         title: "Connexion réussie",
         description: "Bienvenue dans le panneau d'administration",
       });
     } catch (error: any) {
+      console.error('Sign in error:', error);
       toast({
         title: "Erreur de connexion",
         description: error.message,

@@ -22,6 +22,9 @@ export interface Product {
   status?: string;
   created_at?: string;
   updated_at?: string;
+  // Computed fields for compatibility
+  originalPrice?: number;
+  category?: string;
 }
 
 export const useProducts = () => {
@@ -39,7 +42,13 @@ export const useProducts = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Product[];
+      
+      // Transform data to match both interfaces
+      return data.map(product => ({
+        ...product,
+        originalPrice: product.original_price,
+        category: product.categories?.name || ''
+      })) as Product[];
     },
   });
 
@@ -48,13 +57,21 @@ export const useProducts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          categories(name, slug)
+        `)
         .eq('featured', true)
         .eq('status', 'active')
         .limit(6);
 
       if (error) throw error;
-      return data as Product[];
+      
+      return data.map(product => ({
+        ...product,
+        originalPrice: product.original_price,
+        category: product.categories?.name || ''
+      })) as Product[];
     },
   });
 
@@ -63,13 +80,21 @@ export const useProducts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          categories(name, slug)
+        `)
         .eq('status', 'active')
         .order('popular', { ascending: false })
         .limit(8);
 
       if (error) throw error;
-      return data as Product[];
+      
+      return data.map(product => ({
+        ...product,
+        originalPrice: product.original_price,
+        category: product.categories?.name || ''
+      })) as Product[];
     },
   });
 
@@ -77,7 +102,23 @@ export const useProducts = () => {
     mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('products')
-        .insert([product])
+        .insert([{
+          name: product.name,
+          description: product.description,
+          original_price: product.original_price || product.originalPrice || 0,
+          discounted_price: product.discounted_price,
+          discount: product.discount,
+          images: product.images,
+          stock: product.stock,
+          category_id: product.category_id,
+          tags: product.tags,
+          featured: product.featured,
+          popular: product.popular || 0,
+          sku: product.sku,
+          weight: product.weight,
+          dimensions: product.dimensions,
+          status: product.status || 'active'
+        }])
         .select()
         .single();
 
@@ -102,9 +143,18 @@ export const useProducts = () => {
 
   const updateProduct = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
+      const updateData: any = { ...updates };
+      
+      // Convert compatibility fields
+      if (updates.originalPrice && !updates.original_price) {
+        updateData.original_price = updates.originalPrice;
+        delete updateData.originalPrice;
+      }
+      delete updateData.category; // Remove computed field
+      
       const { data, error } = await supabase
         .from('products')
-        .update(updates)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();

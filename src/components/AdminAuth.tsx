@@ -1,60 +1,49 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { toast } from '@/components/ui/use-toast';
 import { Logo } from './Logo';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AdminAuthProps {
   children: React.ReactNode;
 }
 
 const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    localStorage.getItem('admin-auth') === 'true'
-  );
-  const [username, setUsername] = useState('');
+  const { isAuthenticated, signIn, loading } = useAuth();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simple admin authentication - in a real app, this would be on the server
-    if (username === 'admin' && password === 'admin123') {
-      localStorage.setItem('admin-auth', 'true');
-      setIsAuthenticated(true);
-      toast({
-        title: 'Login successful',
-        description: 'Welcome to admin dashboard',
-      });
-    } else {
-      toast({
-        title: 'Login failed',
-        description: 'Invalid username or password',
-        variant: 'destructive',
-      });
+    if (!email || !password) return;
+    
+    setIsSigningIn(true);
+    try {
+      await signIn(email, password);
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setIsSigningIn(false);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('admin-auth');
-    setIsAuthenticated(false);
     navigate('/');
   };
 
-  useEffect(() => {
-    const adminHeader = document.querySelector('.admin-header-logout');
-    if (isAuthenticated && adminHeader && !adminHeader.querySelector('.admin-logout-btn')) {
-      const logoutBtn = document.createElement('button');
-      logoutBtn.className = 'admin-logout-btn ml-auto px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded';
-      logoutBtn.textContent = 'Logout';
-      logoutBtn.addEventListener('click', handleLogout);
-      adminHeader.appendChild(logoutBtn);
-    }
-  }, [isAuthenticated]);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p>Chargement...</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -62,26 +51,26 @@ const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-4 flex flex-col items-center">
             <Logo size="medium" />
-            <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
+            <CardTitle className="text-2xl text-center">Connexion Admin</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="username" className="text-sm font-medium">
-                  Username
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email
                 </label>
                 <Input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin"
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@example.com"
                   required
                 />
               </div>
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium">
-                  Password
+                  Mot de passe
                 </label>
                 <Input
                   id="password"
@@ -92,13 +81,17 @@ const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Login
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={isSigningIn || !email || !password}
+              >
+                {isSigningIn ? 'Connexion...' : 'Se connecter'}
               </Button>
             </form>
           </CardContent>
           <CardFooter className="text-center text-sm text-muted-foreground">
-            <p className="w-full">Default credentials: admin / admin123</p>
+            <p className="w-full">Utilisez vos identifiants Supabase pour vous connecter</p>
           </CardFooter>
         </Card>
       </div>
