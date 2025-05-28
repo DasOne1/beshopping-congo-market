@@ -1,36 +1,54 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/components/ui/use-toast';
+
+export interface OrderItem {
+  id: string;
+  product_id?: string;
+  product_name: string;
+  product_image?: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+}
 
 export interface Order {
   id: string;
   order_number: string;
+  customer_id?: string;
   customer_name: string;
   customer_email?: string;
-  customer_phone: string;
-  shipping_address: string;
-  city: string;
-  payment_method: string;
-  notes?: string;
+  customer_phone?: string;
+  whatsapp_number?: string;
+  shipping_address?: any;
   total_amount: number;
+  subtotal: number;
+  tax_amount?: number;
+  shipping_amount?: number;
+  discount_amount?: number;
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  created_at: string;
-  updated_at: string;
+  payment_method?: string;
+  payment_status?: string;
+  notes?: string;
+  tracking_number?: string;
+  created_at?: string;
+  updated_at?: string;
+  order_items?: OrderItem[];
 }
 
 export const useOrders = () => {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Get all orders (admin)
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          order_items(*)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -38,43 +56,69 @@ export const useOrders = () => {
     },
   });
 
-  // Get user orders
-  const { data: userOrders = [] } = useQuery({
-    queryKey: ['user-orders', user?.id],
+  const { data: recentOrders = [] } = useQuery({
+    queryKey: ['orders', 'recent'],
     queryFn: async () => {
-      if (!user) return [];
-
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('customer_email', user.email)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(5);
 
       if (error) throw error;
       return data as Order[];
     },
-    enabled: !!user,
   });
 
-  // Create order
   const createOrder = useMutation({
-    mutationFn: async (orderData: Omit<Order, 'id' | 'order_number' | 'created_at' | 'updated_at'> & { items: any[] }) => {
-      const orderNumber = `ORD-${Date.now()}`;
+    mutationFn: async ({ order, items }: { order: Omit<Order, 'id' | 'order_number' | 'created_at' | 'updated_at'>, items: Omit<OrderItem, 'id' | 'order_id'>[] }) => {
+      // Générer le numéro de commande
+      const { data: orderNumber } = await supabase.rpc('generate_order_number');
       
+      const { data: newOrder, error: orderError } = await supabase
+        .from('orders')
+        .insert([{ ...order, order_number: orderNumber }])
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Ajouter les articles de la commande
+      const orderItemsWithOrderId = items.map(item => ({
+        ...item,
+        order_id: newOrder.id,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItemsWithOrderId);
+
+      if (itemsError) throw itemsError;
+
+      return newOrder;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast({
+        title: "Commande créée",
+        description: "La commande a été créée avec succès",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateOrderStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: Order['status'] }) => {
       const { data, error } = await supabase
         .from('orders')
-        .insert({
-          order_number: orderNumber,
-          customer_name: orderData.customer_name,
-          customer_email: orderData.customer_email,
-          customer_phone: orderData.customer_phone,
-          shipping_address: orderData.shipping_address,
-          city: orderData.city,
-          payment_method: orderData.payment_method,
-          notes: orderData.notes,
-          total_amount: orderData.total_amount,
-          status: orderData.status,
-        })
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', id)
         .select()
         .single();
 
@@ -84,32 +128,19 @@ export const useOrders = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast({
-        title: "Commande créée",
-        description: "La commande a été créée avec succès",
-      });
-    },
-  });
-
-  // Update order status
-  const updateOrderStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: Order['status'] }) => {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      toast({
         title: "Statut mis à jour",
         description: "Le statut de la commande a été mis à jour",
       });
     },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
-  // Delete order
   const deleteOrder = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -123,14 +154,21 @@ export const useOrders = () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast({
         title: "Commande supprimée",
-        description: "La commande a été supprimée",
+        description: "La commande a été supprimée avec succès",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
 
   return {
     orders,
-    userOrders,
+    recentOrders,
     isLoading,
     createOrder,
     updateOrderStatus,

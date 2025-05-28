@@ -13,13 +13,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/components/ui/use-toast';
 
 export default function Orders() {
-  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { orders, isLoading, updateOrderStatus, deleteOrder } = useOrders();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  if (!user) {
+  if (!isAuthenticated) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-96">

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/Admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,44 +8,42 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Save, Building, Mail, Smartphone, CreditCard } from 'lucide-react';
+import { Settings as SettingsIcon, Building, CreditCard, Bell, Shield, Save } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useAppSettings, AppSettings } from '@/hooks/useAppSettings';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
-export default function SettingsPage() {
-  const { user } = useAuth();
-  const { settings, isLoading, updateSettings } = useAppSettings();
-  
-  const defaultSettings: AppSettings = {
-    id: '1',
-    company_name: 'BeShop',
-    company_description: 'Votre boutique en ligne moderne',
-    company_address: 'Kinshasa, RDC',
-    company_phone: '+243 978 100 940',
-    company_email: 'contact@beshop.com',
-    company_logo: '',
+interface AppSettings {
+  company_name: string;
+  company_email: string;
+  company_phone: string;
+  company_address: string;
+  currency: string;
+  tax_rate: number;
+  shipping_fee: number;
+  free_shipping_threshold: number;
+  whatsapp_support: string;
+  whatsapp_sales: string;
+}
+
+export default function Settings() {
+  const { isAuthenticated, adminUser } = useAuth();
+  const [settings, setSettings] = useState<AppSettings>({
+    company_name: 'BeShop Congo',
+    company_email: 'contact@beshop.cd',
+    company_phone: '+243978100940',
+    company_address: 'Kinshasa, République Démocratique du Congo',
     currency: 'CDF',
-    tax_rate: 0,
-    shipping_cost: 0,
+    tax_rate: 0.16,
+    shipping_fee: 5000,
     free_shipping_threshold: 50000,
-    enable_whatsapp: true,
-    whatsapp_number: '243978100940',
-    enable_email_notifications: false,
-    smtp_host: '',
-    smtp_port: 587,
-    smtp_username: '',
-    smtp_password: '',
-  };
+    whatsapp_support: '+243978100940',
+    whatsapp_sales: '+243974984449',
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [formData, setFormData] = useState<AppSettings>(settings || defaultSettings);
-
-  React.useEffect(() => {
-    if (settings) {
-      setFormData(settings);
-    }
-  }, [settings]);
-
-  if (!user) {
+  if (!isAuthenticated) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-96">
@@ -54,6 +52,83 @@ export default function SettingsPage() {
       </AdminLayout>
     );
   }
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('key, value');
+
+      if (error) throw error;
+
+      if (data) {
+        const settingsObj = data.reduce((acc, setting) => {
+          acc[setting.key] = typeof setting.value === 'string' 
+            ? JSON.parse(setting.value) 
+            : setting.value;
+          return acc;
+        }, {} as any);
+
+        setSettings(prev => ({ ...prev, ...settingsObj }));
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les paramètres",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    setIsSaving(true);
+    try {
+      const settingsArray = Object.entries(settings).map(([key, value]) => ({
+        key,
+        value: JSON.stringify(value),
+      }));
+
+      for (const setting of settingsArray) {
+        const { error } = await supabase
+          .from('app_settings')
+          .upsert(
+            { 
+              key: setting.key, 
+              value: setting.value,
+              updated_at: new Date().toISOString()
+            },
+            { onConflict: 'key' }
+          );
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Paramètres sauvegardés",
+        description: "Les paramètres ont été mis à jour avec succès",
+      });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder les paramètres",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleInputChange = (key: keyof AppSettings, value: string | number) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
 
   if (isLoading) {
     return (
@@ -65,284 +140,273 @@ export default function SettingsPage() {
     );
   }
 
-  const handleInputChange = (field: keyof AppSettings, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSave = () => {
-    updateSettings.mutate(formData);
-  };
-
   return (
     <AdminLayout>
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold flex items-center">
-              <Settings className="mr-2 h-6 w-6" />
+              <SettingsIcon className="mr-2 h-6 w-6" />
               Paramètres
             </h1>
-            <p className="text-muted-foreground">Gérer les paramètres de votre application</p>
+            <p className="text-muted-foreground">Configurer les paramètres de l'application</p>
           </div>
           
-          <Button onClick={handleSave} disabled={updateSettings.isPending}>
+          <Button onClick={saveSettings} disabled={isSaving}>
             <Save className="mr-2 h-4 w-4" />
-            {updateSettings.isPending ? 'Enregistrement...' : 'Enregistrer'}
+            {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
         </div>
 
         <Tabs defaultValue="company" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="company">Entreprise</TabsTrigger>
+            <TabsTrigger value="commerce">Commerce</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="shipping">Livraison</TabsTrigger>
-            <TabsTrigger value="payments">Paiements</TabsTrigger>
+            <TabsTrigger value="security">Sécurité</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="company" className="space-y-6">
+
+          <TabsContent value="company">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Building className="mr-2 h-5 w-5" />
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="h-5 w-5" />
                   Informations de l'entreprise
                 </CardTitle>
                 <CardDescription>
-                  Gérez les informations de base de votre entreprise
+                  Configurer les informations de base de votre entreprise
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="company_name">Nom de l'entreprise</Label>
                     <Input
                       id="company_name"
-                      value={formData.company_name || ''}
+                      value={settings.company_name}
                       onChange={(e) => handleInputChange('company_name', e.target.value)}
-                      placeholder="BeShop"
+                      placeholder="Nom de l'entreprise"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="company_email">Email</Label>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="company_email">Email de contact</Label>
                     <Input
                       id="company_email"
                       type="email"
-                      value={formData.company_email || ''}
+                      value={settings.company_email}
                       onChange={(e) => handleInputChange('company_email', e.target.value)}
-                      placeholder="contact@beshop.com"
+                      placeholder="contact@entreprise.com"
                     />
                   </div>
-                  <div>
+                  
+                  <div className="space-y-2">
                     <Label htmlFor="company_phone">Téléphone</Label>
                     <Input
                       id="company_phone"
-                      value={formData.company_phone || ''}
+                      value={settings.company_phone}
                       onChange={(e) => handleInputChange('company_phone', e.target.value)}
-                      placeholder="+243 978 100 940"
+                      placeholder="+243..."
                     />
                   </div>
-                  <div>
+                  
+                  <div className="space-y-2">
                     <Label htmlFor="currency">Devise</Label>
                     <Input
                       id="currency"
-                      value={formData.currency || 'CDF'}
+                      value={settings.currency}
                       onChange={(e) => handleInputChange('currency', e.target.value)}
                       placeholder="CDF"
                     />
                   </div>
                 </div>
                 
-                <div>
-                  <Label htmlFor="company_description">Description</Label>
-                  <Textarea
-                    id="company_description"
-                    value={formData.company_description || ''}
-                    onChange={(e) => handleInputChange('company_description', e.target.value)}
-                    placeholder="Description de votre entreprise..."
-                    rows={3}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="company_address">Adresse</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="company_address">Adresse complète</Label>
                   <Textarea
                     id="company_address"
-                    value={formData.company_address || ''}
+                    value={settings.company_address}
                     onChange={(e) => handleInputChange('company_address', e.target.value)}
-                    placeholder="Adresse complète de votre entreprise..."
-                    rows={2}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="company_logo">Logo (URL)</Label>
-                  <Input
-                    id="company_logo"
-                    value={formData.company_logo || ''}
-                    onChange={(e) => handleInputChange('company_logo', e.target.value)}
-                    placeholder="https://..."
+                    placeholder="Adresse complète de l'entreprise"
+                    className="min-h-20"
                   />
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
-          
-          <TabsContent value="notifications" className="space-y-6">
+
+          <TabsContent value="commerce">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Smartphone className="mr-2 h-5 w-5" />
-                  WhatsApp
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Paramètres commerciaux
                 </CardTitle>
                 <CardDescription>
-                  Configuration du contact WhatsApp
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="enable_whatsapp"
-                    checked={formData.enable_whatsapp || false}
-                    onCheckedChange={(checked) => handleInputChange('enable_whatsapp', checked)}
-                  />
-                  <Label htmlFor="enable_whatsapp">Activer WhatsApp</Label>
-                </div>
-                
-                <div>
-                  <Label htmlFor="whatsapp_number">Numéro WhatsApp</Label>
-                  <Input
-                    id="whatsapp_number"
-                    value={formData.whatsapp_number || ''}
-                    onChange={(e) => handleInputChange('whatsapp_number', e.target.value)}
-                    placeholder="243978100940"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Mail className="mr-2 h-5 w-5" />
-                  Email
-                </CardTitle>
-                <CardDescription>
-                  Configuration des notifications email
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="enable_email_notifications"
-                    checked={formData.enable_email_notifications || false}
-                    onCheckedChange={(checked) => handleInputChange('enable_email_notifications', checked)}
-                  />
-                  <Label htmlFor="enable_email_notifications">Activer les notifications email</Label>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="smtp_host">Serveur SMTP</Label>
-                    <Input
-                      id="smtp_host"
-                      value={formData.smtp_host || ''}
-                      onChange={(e) => handleInputChange('smtp_host', e.target.value)}
-                      placeholder="smtp.gmail.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="smtp_port">Port SMTP</Label>
-                    <Input
-                      id="smtp_port"
-                      type="number"
-                      value={formData.smtp_port || ''}
-                      onChange={(e) => handleInputChange('smtp_port', parseInt(e.target.value))}
-                      placeholder="587"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="smtp_username">Nom d'utilisateur</Label>
-                    <Input
-                      id="smtp_username"
-                      value={formData.smtp_username || ''}
-                      onChange={(e) => handleInputChange('smtp_username', e.target.value)}
-                      placeholder="votre@email.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="smtp_password">Mot de passe</Label>
-                    <Input
-                      id="smtp_password"
-                      type="password"
-                      value={formData.smtp_password || ''}
-                      onChange={(e) => handleInputChange('smtp_password', e.target.value)}
-                      placeholder="••••••••"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="shipping" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Livraison</CardTitle>
-                <CardDescription>
-                  Gérer les paramètres de livraison
+                  Configurer les prix, taxes et frais de livraison
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="shipping_cost">Coût de livraison ({formData.currency || 'CDF'})</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="tax_rate">Taux de taxe (%)</Label>
                     <Input
-                      id="shipping_cost"
+                      id="tax_rate"
                       type="number"
-                      value={formData.shipping_cost || 0}
-                      onChange={(e) => handleInputChange('shipping_cost', parseFloat(e.target.value) || 0)}
-                      placeholder="0"
+                      step="0.01"
+                      min="0"
+                      max="1"
+                      value={settings.tax_rate}
+                      onChange={(e) => handleInputChange('tax_rate', parseFloat(e.target.value))}
+                      placeholder="0.16"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Entrez le taux en décimal (ex: 0.16 pour 16%)
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="shipping_fee">Frais de livraison (CDF)</Label>
+                    <Input
+                      id="shipping_fee"
+                      type="number"
+                      min="0"
+                      value={settings.shipping_fee}
+                      onChange={(e) => handleInputChange('shipping_fee', parseInt(e.target.value))}
+                      placeholder="5000"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="free_shipping_threshold">Seuil livraison gratuite ({formData.currency || 'CDF'})</Label>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="free_shipping_threshold">Seuil livraison gratuite (CDF)</Label>
                     <Input
                       id="free_shipping_threshold"
                       type="number"
-                      value={formData.free_shipping_threshold || ''}
-                      onChange={(e) => handleInputChange('free_shipping_threshold', parseFloat(e.target.value) || null)}
+                      min="0"
+                      value={settings.free_shipping_threshold}
+                      onChange={(e) => handleInputChange('free_shipping_threshold', parseInt(e.target.value))}
                       placeholder="50000"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Montant minimum pour bénéficier de la livraison gratuite
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp_support">WhatsApp Support</Label>
+                    <Input
+                      id="whatsapp_support"
+                      value={settings.whatsapp_support}
+                      onChange={(e) => handleInputChange('whatsapp_support', e.target.value)}
+                      placeholder="+243..."
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp_sales">WhatsApp Ventes</Label>
+                    <Input
+                      id="whatsapp_sales"
+                      value={settings.whatsapp_sales}
+                      onChange={(e) => handleInputChange('whatsapp_sales', e.target.value)}
+                      placeholder="+243..."
                     />
                   </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
-          
-          <TabsContent value="payments" className="space-y-6">
+
+          <TabsContent value="notifications">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <CreditCard className="mr-2 h-5 w-5" />
-                  Taxes et frais
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Notifications
                 </CardTitle>
                 <CardDescription>
-                  Configuration des taxes et frais
+                  Gérer les notifications et alertes
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="tax_rate">Taux de taxe (%)</Label>
-                  <Input
-                    id="tax_rate"
-                    type="number"
-                    step="0.01"
-                    value={formData.tax_rate || 0}
-                    onChange={(e) => handleInputChange('tax_rate', parseFloat(e.target.value) || 0)}
-                    placeholder="0"
-                  />
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Notifications de nouvelles commandes</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Recevoir une notification pour chaque nouvelle commande
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Alertes de stock faible</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Être alerté quand le stock d'un produit est faible
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Rapport quotidien des ventes</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Recevoir un résumé quotidien des ventes
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="security">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Sécurité
+                </CardTitle>
+                <CardDescription>
+                  Paramètres de sécurité et accès
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-base font-medium">Profil utilisateur</Label>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Informations du compte connecté
+                    </p>
+                    <div className="bg-muted p-4 rounded-lg space-y-2">
+                      <div><strong>Email:</strong> {adminUser?.email}</div>
+                      <div><strong>Rôle:</strong> {adminUser?.role}</div>
+                      <div><strong>Nom:</strong> {adminUser?.full_name || 'Non défini'}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Authentification à deux facteurs</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Ajouter une couche de sécurité supplémentaire
+                      </p>
+                    </div>
+                    <Switch />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Sessions multiples</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Autoriser plusieurs connexions simultanées
+                      </p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
                 </div>
               </CardContent>
             </Card>

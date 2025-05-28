@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -19,19 +20,13 @@ export const useCategories = () => {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      console.log('Fetching categories...');
       const { data, error } = await supabase
         .from('categories')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching categories:', error);
-        throw error;
-      }
-      
-      console.log('Categories fetched:', data?.length || 0);
-      return data as Category[] || [];
+      if (error) throw error;
+      return data as Category[];
     },
   });
 

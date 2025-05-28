@@ -12,7 +12,7 @@ interface AdminAuthProps {
 }
 
 const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
-  const { user, isLoading, signIn } = useAuth();
+  const { isAuthenticated, signIn, loading } = useAuth();
   const [email, setEmail] = useState('admin@beshop.com');
   const [password, setPassword] = useState('admin123');
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -25,7 +25,7 @@ const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
     
     setIsSigningIn(true);
     try {
-      await signIn.mutateAsync({ email, password });
+      await signIn(email, password);
     } catch (error) {
       console.error('Login error:', error);
     } finally {
@@ -37,7 +37,7 @@ const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
     navigate('/');
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <p>Chargement...</p>
@@ -45,7 +45,7 @@ const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
     );
   }
 
-  if (!user) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">

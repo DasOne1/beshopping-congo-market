@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -32,7 +33,6 @@ export const useProducts = () => {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      console.log('Fetching products...');
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -41,19 +41,14 @@ export const useProducts = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching products:', error);
-        throw error;
-      }
-      
-      console.log('Products fetched:', data?.length || 0);
+      if (error) throw error;
       
       // Transform data to match both interfaces
-      return data?.map(product => ({
+      return data.map(product => ({
         ...product,
         originalPrice: product.original_price,
         category: product.categories?.name || ''
-      })) as Product[] || [];
+      })) as Product[];
     },
   });
 
@@ -67,15 +62,16 @@ export const useProducts = () => {
           categories(name, slug)
         `)
         .eq('featured', true)
+        .eq('status', 'active')
         .limit(6);
 
       if (error) throw error;
       
-      return data?.map(product => ({
+      return data.map(product => ({
         ...product,
         originalPrice: product.original_price,
         category: product.categories?.name || ''
-      })) as Product[] || [];
+      })) as Product[];
     },
   });
 
@@ -88,16 +84,17 @@ export const useProducts = () => {
           *,
           categories(name, slug)
         `)
+        .eq('status', 'active')
         .order('popular', { ascending: false })
         .limit(8);
 
       if (error) throw error;
       
-      return data?.map(product => ({
+      return data.map(product => ({
         ...product,
         originalPrice: product.original_price,
         category: product.categories?.name || ''
-      })) as Product[] || [];
+      })) as Product[];
     },
   });
 
