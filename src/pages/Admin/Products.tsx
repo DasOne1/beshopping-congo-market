@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Upload, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useAuth } from '@/hooks/useAuth';
 
 const Products = () => {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { products, isLoading, createProduct, updateProduct, deleteProduct } = useProducts();
   const { categories } = useCategories();
   
@@ -45,7 +44,7 @@ const Products = () => {
   const [newImage, setNewImage] = useState('');
   const [newTag, setNewTag] = useState('');
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-96">
