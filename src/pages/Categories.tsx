@@ -1,473 +1,158 @@
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, Search, X } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Package, ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import ProductCard from '@/components/ProductCard';
 import CategoryCard from '@/components/CategoryCard';
-import { mockProducts, mockCategories } from '@/data/mockData';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from '@/components/ui/badge';
+import { useCategories } from '@/hooks/useCategories';
+import { useProducts } from '@/hooks/useProducts';
+import { useNavigate } from 'react-router-dom';
 
-export default function Categories() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState('popular');
-  const [priceRange, setPriceRange] = useState([0, 500000]); // In CDF
-  const [filteredProducts, setFilteredProducts] = useState(mockProducts);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [openAccordion, setOpenAccordion] = useState<string | null>("category");
-  
-  // Price range for the filter
-  const maxPrice = 500000; // CDF
-  
-  // Apply filters and sorting
-  useEffect(() => {
-    let result = [...mockProducts];
-    
-    // Filter by search query
-    if (searchQuery) {
-      result = result.filter(product => 
-        product.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    // Filter by category
-    if (selectedCategory) {
-      result = result.filter(product => 
-        product.category === selectedCategory
-      );
-    }
-    
-    // Filter by price range
-    result = result.filter(product => 
-      product.originalPrice >= priceRange[0] && product.originalPrice <= priceRange[1]
-    );
-    
-    // Apply sorting
-    switch (sortOption) {
-      case 'price-low':
-        result.sort((a, b) => a.originalPrice - b.originalPrice);
-        break;
-      case 'price-high':
-        result.sort((a, b) => b.originalPrice - a.originalPrice);
-        break;
-      case 'newest':
-        // Since createdAt isn't in our Product type, we'll sort by ID as a fallback
-        result.sort((a, b) => b.id.localeCompare(a.id));
-        break;
-      default: // 'popular'
-        result.sort((a, b) => b.popular - a.popular);
-        break;
-    }
-    
-    setFilteredProducts(result);
-  }, [selectedCategory, searchQuery, sortOption, priceRange]);
-  
-  // Update active filters for display
-  useEffect(() => {
-    const filters = [];
-    
-    if (selectedCategory) {
-      const category = mockCategories.find(c => c.id === selectedCategory);
-      if (category) {
-        filters.push(`Category: ${category.name}`);
-      }
-    }
-    
-    if (priceRange[0] > 0 || priceRange[1] < maxPrice) {
-      filters.push(`Price: ${priceRange[0].toLocaleString()} - ${priceRange[1].toLocaleString()} CDF`);
-    }
-    
-    setActiveFilters(filters);
-  }, [selectedCategory, priceRange]);
-  
-  const clearAllFilters = () => {
-    setSelectedCategory(null);
-    setPriceRange([0, maxPrice]);
-  };
-  
-  const removeFilter = (filter: string) => {
-    if (filter.startsWith('Category:')) {
-      setSelectedCategory(null);
-    } else if (filter.startsWith('Price:')) {
-      setPriceRange([0, maxPrice]);
-    }
+const Categories = () => {
+  const navigate = useNavigate();
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { products } = useProducts();
+
+  const getCategoryProductCount = (categoryId: string) => {
+    return products?.filter(p => p.category_id === categoryId && p.status === 'active').length || 0;
   };
 
-  // Toggle accordion automatically
-  const handleAccordionChange = (value: string) => {
-    setOpenAccordion(value === openAccordion ? null : value);
+  const handleCategoryClick = (categoryId: string) => {
+    navigate(`/products?category=${categoryId}`);
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="py-8 bg-accent/30">
-          <div className="container">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="text-3xl md:text-4xl font-bold mb-4">Product Categories</h1>
-              <p className="text-muted-foreground">
-                Browse our wide selection of products by category
-              </p>
-            </motion.div>
-          </div>
-        </section>
-        
-        {/* Categories Navigation */}
-        <section className="py-4 border-b border-border/40 overflow-hidden">
-          <div className="container">
-            <div className="overflow-x-auto pb-2">
-              <motion.div 
-                className="flex items-center gap-4 snap-x snap-mandatory overflow-x-auto pb-2"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <div
-                  className={`snap-start flex-shrink-0 ${selectedCategory === null ? "scale-105" : ""}`}
-                  onClick={() => setSelectedCategory(null)}
-                >
-                  <CategoryCard
-                    id="all"
-                    name="All Categories"
-                    image="/placeholder.svg"
-                    className={selectedCategory === null ? "ring-2 ring-primary" : ""}
-                  />
-                </div>
-                
-                {mockCategories.map((category) => (
-                  <div
-                    key={category.id}
-                    className={`snap-start flex-shrink-0 w-32 ${selectedCategory === category.id ? "scale-105" : ""}`}
-                    onClick={() => setSelectedCategory(category.id)}
-                  >
-                    <CategoryCard
-                      id={category.id}
-                      name={category.name}
-                      image="/placeholder.svg"
-                      className={selectedCategory === category.id ? "ring-2 ring-primary" : ""}
-                    />
-                  </div>
-                ))}
-              </motion.div>
-            </div>
-          </div>
-        </section>
-        
-        {/* Search and Filters */}
-        <section className="py-4 bg-background sticky top-16 z-10 border-b border-border/40">
-          <div className="container">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-                {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
-                    onClick={() => setSearchQuery('')}
-                  >
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Clear search</span>
-                  </Button>
-                )}
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            Explorez nos catégories
+          </h1>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Découvrez notre large sélection de produits organisés par catégories pour vous faciliter la recherche
+          </p>
+        </motion.div>
+
+        {/* Categories Grid */}
+        {categoriesLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-200 aspect-square rounded-lg mb-3"></div>
+                <div className="bg-gray-200 h-4 rounded mb-2"></div>
+                <div className="bg-gray-200 h-3 rounded"></div>
               </div>
+            ))}
+          </div>
+        ) : categories && categories.length > 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+          >
+            {categories.map((category, index) => {
+              const productCount = getCategoryProductCount(category.id);
               
-              <div className="flex gap-2 items-center">
-                <Select value={sortOption} onValueChange={setSortOption}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="popular">Most Popular</SelectItem>
-                    <SelectItem value="newest">Newest</SelectItem>
-                    <SelectItem value="price-low">Price: Low to High</SelectItem>
-                    <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Sheet open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="gap-2">
-                      <Filter className="h-4 w-4" />
-                      Filters
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent className="sm:max-w-md">
-                    <SheetHeader>
-                      <SheetTitle>Filter Products</SheetTitle>
-                    </SheetHeader>
-                    
-                    <div className="py-6 space-y-6">
-                      <Accordion type="single" collapsible className="w-full" defaultValue="category">
-                        <AccordionItem value="category">
-                          <AccordionTrigger>Categories</AccordionTrigger>
-                          <AccordionContent>
-                            <div className="space-y-2 pt-1">
-                              {mockCategories.map((category) => (
-                                <div key={category.id} className="flex items-center">
-                                  <Checkbox 
-                                    id={`category-${category.id}`} 
-                                    checked={selectedCategory === category.id}
-                                    onCheckedChange={(checked) => {
-                                      setSelectedCategory(checked ? category.id : null);
-                                    }}
-                                  />
-                                  <label
-                                    htmlFor={`category-${category.id}`}
-                                    className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                  >
-                                    {category.name}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                        
-                        <AccordionItem value="price">
-                          <AccordionTrigger>Price Range</AccordionTrigger>
-                          <AccordionContent>
-                            <div className="space-y-4 pt-1">
-                              <Slider
-                                defaultValue={[0, maxPrice]}
-                                min={0}
-                                max={maxPrice}
-                                step={10000}
-                                value={priceRange}
-                                onValueChange={setPriceRange}
-                              />
-                              <div className="flex items-center justify-between">
-                                <div className="border border-input rounded-md p-2 w-24 text-center">
-                                  {priceRange[0].toLocaleString()}
-                                </div>
-                                <span className="text-muted-foreground">to</span>
-                                <div className="border border-input rounded-md p-2 w-24 text-center">
-                                  {priceRange[1].toLocaleString()}
-                                </div>
-                              </div>
-                              <p className="text-xs text-muted-foreground text-center">
-                                Price in Congolese Francs (CDF)
-                              </p>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                    </div>
-                    
-                    <div className="flex gap-4 mt-2">
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => {
-                          clearAllFilters();
-                          setIsFiltersOpen(false);
-                        }}
-                      >
-                        Reset Filters
-                      </Button>
-                      <Button 
-                        className="w-full"
-                        onClick={() => setIsFiltersOpen(false)}
-                      >
-                        Apply Filters
-                      </Button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </div>
-            
-            {/* Active Filters */}
-            {activeFilters.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 mt-4">
-                <span className="text-sm text-muted-foreground">Active filters:</span>
-                {activeFilters.map((filter) => (
-                  <Badge
-                    key={filter}
-                    variant="secondary"
-                    className="pl-2 pr-1 py-1 flex items-center gap-1"
-                  >
-                    {filter}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4 ml-1 hover:bg-transparent"
-                      onClick={() => removeFilter(filter)}
-                    >
-                      <X className="h-3 w-3" />
-                      <span className="sr-only">Remove {filter} filter</span>
-                    </Button>
-                  </Badge>
-                ))}
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs hover:bg-transparent hover:underline p-0 h-auto"
-                  onClick={clearAllFilters}
-                >
-                  Clear all
-                </Button>
-              </div>
-            )}
-          </div>
-        </section>
-        
-        {/* Products Grid */}
-        <section className="py-8">
-          <div className="container">
-            {selectedCategory && (
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold mb-2">
-                  {mockCategories.find(c => c.id === selectedCategory)?.name || 'Category'}
-                </h2>
-                <p className="text-muted-foreground">
-                  {mockCategories.find(c => c.id === selectedCategory)?.description || 'Browse products in this category.'}
-                </p>
-              </div>
-            )}
-            
-            <AnimatePresence mode="wait">
-              {filteredProducts.length > 0 ? (
-                <motion.div
-                  key="products"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-                >
-                  {filteredProducts.map((product) => (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <ProductCard product={product} />
-                    </motion.div>
-                  ))}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="no-products"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col items-center justify-center py-16"
-                >
-                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                    <Search className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">No products found</h3>
-                  <p className="text-muted-foreground text-center max-w-md mb-6">
-                    We couldn't find any products matching your criteria.
-                    Try adjusting your filters or search term.
-                  </p>
-                  <Button onClick={clearAllFilters}>
-                    Clear all filters
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </section>
-        
-        {/* Featured Categories */}
-        <section className="py-8 bg-muted/30">
-          <div className="container">
-            <h2 className="text-2xl font-semibold mb-6">Featured Categories</h2>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              {mockCategories.slice(0, 4).map((category, index) => (
+              return (
                 <motion.div
                   key={category.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  onClick={() => setSelectedCategory(category.id)}
+                  transition={{ duration: 0.4, delay: 0.1 * index }}
+                  className="group"
                 >
-                  <CategoryCard
-                    id={category.id}
-                    name={category.name}
-                    description={category.description}
-                    image="/placeholder.svg"
-                  />
+                  <div 
+                    onClick={() => handleCategoryClick(category.id)}
+                    className="relative overflow-hidden rounded-lg border bg-card transition-all hover:shadow-lg cursor-pointer"
+                  >
+                    <div className="aspect-square overflow-hidden">
+                      <img 
+                        src={category.image || '/placeholder.svg'} 
+                        alt={category.name}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-lg">{category.name}</h3>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
+                      
+                      {category.description && (
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {category.description}
+                        </p>
+                      )}
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Package className="h-4 w-4" />
+                          <span>{productCount} produit{productCount !== 1 ? 's' : ''}</span>
+                        </div>
+                        
+                        <motion.div
+                          whileHover={{ x: 5 }}
+                          className="text-primary"
+                        >
+                          <ArrowRight className="h-4 w-4" />
+                        </motion.div>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
-              ))}
+              );
+            })}
+          </motion.div>
+        ) : (
+          <div className="text-center py-16">
+            <div className="w-24 h-24 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
+              <Package className="h-12 w-12 text-muted-foreground" />
             </div>
+            <h3 className="text-xl font-semibold mb-2">Aucune catégorie disponible</h3>
+            <p className="text-muted-foreground">
+              Les catégories seront bientôt disponibles. Revenez plus tard!
+            </p>
           </div>
-        </section>
-        
-        {/* Browse All Categories */}
-        <section className="py-8">
-          <div className="container">
-            <h2 className="text-2xl font-semibold mb-6">Browse All Categories</h2>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {mockCategories.map((category, index) => (
-                <motion.div
-                  key={category.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                >
-                  <CategoryCard
-                    id={category.id}
-                    name={category.name}
-                    image="/placeholder.svg"
-                    onClick={() => setSelectedCategory(category.id)}
-                  />
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-      </main>
-      
+        )}
+
+        {/* Call to Action */}
+        {categories && categories.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="text-center mt-16 p-8 bg-muted/30 rounded-lg"
+          >
+            <h2 className="text-2xl font-bold mb-4">Vous ne trouvez pas ce que vous cherchez ?</h2>
+            <p className="text-muted-foreground mb-6">
+              Contactez-nous directement via WhatsApp pour toute demande spéciale
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => window.open('https://wa.me/243978100940?text=Bonjour! Je cherche un produit spécifique...', '_blank')}
+              className="bg-whatsapp hover:bg-whatsapp-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              Contactez-nous sur WhatsApp
+            </motion.button>
+          </motion.div>
+        )}
+      </div>
+
       <Footer />
     </div>
   );
-}
+};
+
+export default Categories;
