@@ -28,7 +28,7 @@ export const useUserFavorites = () => {
       if (!user?.id) return [];
       
       const { data, error } = await supabase
-        .from('user_favorites')
+        .from('favorites')
         .select(`
           *,
           products (
@@ -53,7 +53,7 @@ export const useUserFavorites = () => {
       if (!user?.id) throw new Error('Utilisateur non connecté');
       
       const { data, error } = await supabase
-        .from('user_favorites')
+        .from('favorites')
         .insert([{ user_id: user.id, product_id: productId }])
         .select()
         .single();
@@ -90,7 +90,7 @@ export const useUserFavorites = () => {
       if (!user?.id) throw new Error('Utilisateur non connecté');
       
       const { error } = await supabase
-        .from('user_favorites')
+        .from('favorites')
         .delete()
         .eq('user_id', user.id)
         .eq('product_id', productId);

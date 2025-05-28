@@ -17,13 +17,11 @@ export interface AnalyticsStats {
 
 export interface AnalyticsEvent {
   id?: string;
-  event_type: string;
-  user_id?: string;
+  event_type: 'view_product' | 'add_to_cart' | 'purchase' | 'search';
+  customer_id?: string;
   session_id?: string;
   product_id?: string;
-  category_id?: string;
-  order_id?: string;
-  event_data?: any;
+  metadata?: any;
   ip_address?: string;
   user_agent?: string;
   created_at?: string;
@@ -32,14 +30,38 @@ export interface AnalyticsEvent {
 export const useAnalytics = () => {
   const queryClient = useQueryClient();
 
+  // For now, we'll create a mock analytics stats query until we have the RPC function
   const { data: analytics, isLoading } = useQuery({
     queryKey: ['analytics-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_analytics_stats');
+      // Get basic stats from existing tables
+      const [ordersData, customersData] = await Promise.all([
+        supabase.from('orders').select('total_amount, status'),
+        supabase.from('customers').select('id')
+      ]);
       
-      if (error) throw error;
+      const orders = ordersData.data || [];
+      const customers = customersData.data || [];
       
-      return data as AnalyticsStats;
+      const totalOrders = orders.length;
+      const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
+      const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+      const totalCustomers = customers.length;
+      
+      // Count orders by status
+      const ordersByStatus = orders.reduce((acc, order) => {
+        acc[order.status || 'unknown'] = (acc[order.status || 'unknown'] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      return {
+        total_orders: totalOrders,
+        total_revenue: totalRevenue,
+        average_order_value: averageOrderValue,
+        total_customers: totalCustomers,
+        top_products: [],
+        orders_by_status: ordersByStatus
+      } as AnalyticsStats;
     },
   });
 
@@ -48,9 +70,12 @@ export const useAnalytics = () => {
       const { data, error } = await supabase
         .from('analytics_events')
         .insert([{
-          ...event,
+          event_type: event.event_type,
+          customer_id: event.customer_id,
+          product_id: event.product_id,
           session_id: event.session_id || crypto.randomUUID(),
-          user_agent: navigator.userAgent,
+          user_agent: event.user_agent || navigator.userAgent,
+          metadata: event.metadata,
         }])
         .select()
         .single();
@@ -59,7 +84,6 @@ export const useAnalytics = () => {
       return data;
     },
     onSuccess: () => {
-      // Optionnellement invalider les stats pour les mettre à jour
       queryClient.invalidateQueries({ queryKey: ['analytics-stats'] });
     },
   });
