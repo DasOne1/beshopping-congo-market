@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, ShoppingBag, ShoppingCart } from 'lucide-react';
+import { Trash2, ShoppingBag, ShoppingCart, Plus, Minus } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppContact from '@/components/WhatsAppContact';
@@ -9,30 +9,29 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
-import { mockProducts } from '@/data/mockData';
+import { useProducts } from '@/hooks/useProducts';
 import { motion } from 'framer-motion';
 
 const Cart = () => {
-  const { cart, removeFromCart, updateQuantity, clearCart, updateVariant } = useCart();
+  const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { products } = useProducts();
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Create a lookup map of cart items by productId for easy access
-  const cartItemsMap = cart.reduce((acc, item) => {
-    acc[item.productId] = item;
-    return acc;
-  }, {} as Record<string, typeof cart[0]>);
-  
   // Get product details for all cart items
-  const cartProducts = mockProducts.filter(product => 
-    cart.some(item => item.productId === product.id)
-  );
+  const cartProducts = cart.map(cartItem => {
+    const product = products.find(p => p.id === cartItem.productId);
+    return {
+      ...cartItem,
+      product
+    };
+  }).filter(item => item.product);
   
   // Calculate subtotal
-  const subtotal = cartProducts.reduce((total, product) => {
-    const cartItem = cartItemsMap[product.id];
-    const price = product.discountedPrice || product.originalPrice;
-    return total + price * (cartItem?.quantity || 0);
+  const subtotal = cartProducts.reduce((total, item) => {
+    if (!item.product) return total;
+    const price = item.product.discounted_price || item.product.original_price;
+    return total + price * item.quantity;
   }, 0);
   
   // Format price to include thousands separator
@@ -43,35 +42,23 @@ const Cart = () => {
   // Handle WhatsApp checkout
   const handleWhatsAppCheckout = () => {
     if (!whatsappNumber.trim()) {
-      alert('Please enter your WhatsApp number');
+      alert('Veuillez entrer votre numéro WhatsApp');
       return;
     }
     
     setIsSubmitting(true);
     
     // Create order message
-    let message = "Hello! I would like to place an order for the following items:\n\n";
+    let message = "Bonjour! Je voudrais passer commande pour les articles suivants:\n\n";
     
-    cartProducts.forEach(product => {
-      const cartItem = cartItemsMap[product.id];
-      const price = product.discountedPrice || product.originalPrice;
+    cartProducts.forEach(item => {
+      if (!item.product) return;
+      const price = item.product.discounted_price || item.product.original_price;
       
-      message += `${product.name} x ${cartItem.quantity} = ${formatPrice(price * cartItem.quantity)} FC\n`;
-      
-      if (cartItem.selectedVariants) {
-        const variants = Object.entries(cartItem.selectedVariants)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join(', ');
-        
-        if (variants) {
-          message += `Options: ${variants}\n`;
-        }
-      }
-      
-      message += '\n';
+      message += `${item.product.name} x ${item.quantity} = ${formatPrice(price * item.quantity)} FC\n\n`;
     });
     
-    message += `\nTotal: ${formatPrice(subtotal)} FC\n\nPlease let me know how to proceed with the payment and delivery.`;
+    message += `\nTotal: ${formatPrice(subtotal)} FC\n\nMerci de me faire savoir comment procéder au paiement et à la livraison.`;
     
     // Format phone number
     const phone = whatsappNumber.replace(/\D/g, ''); // Remove non-digits
@@ -85,271 +72,211 @@ const Cart = () => {
     }, 1000);
   };
 
-  // Function to handle variant selection
-  const handleVariantChange = (productId: string, variantType: string, value: string) => {
-    const cartItem = cartItemsMap[productId];
-    if (cartItem) {
-      const updatedVariants = {
-        ...(cartItem.selectedVariants || {}),
-        [variantType]: value
-      };
-      updateVariant(productId, updatedVariants);
-    }
-  };
-
-  // Helper to render color options
-  const renderColorOptions = (product: any, cartItem: any) => {
-    if (!product.variants || !product.variants.colors) return null;
-    
-    return (
-      <div className="mt-2">
-        <div className="text-xs text-gray-500 mb-1">Color:</div>
-        <div className="variant-options">
-          {product.variants.colors.map((color: string) => (
-            <div
-              key={color}
-              className={`color-option ${cartItem.selectedVariants?.color === color ? 'selected' : ''}`}
-              style={{ backgroundColor: color.toLowerCase() }}
-              onClick={() => handleVariantChange(product.id, 'color', color)}
-              title={color}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  };
-  
-  // Helper to render size options
-  const renderSizeOptions = (product: any, cartItem: any) => {
-    if (!product.variants || !product.variants.sizes) return null;
-    
-    return (
-      <div className="mt-2">
-        <div className="text-xs text-gray-500 mb-1">Size:</div>
-        <div className="variant-options">
-          {product.variants.sizes.map((size: string) => (
-            <div
-              key={size}
-              className={`size-option ${cartItem.selectedVariants?.size === size ? 'selected' : ''}`}
-              onClick={() => handleVariantChange(product.id, 'size', size)}
-            >
-              {size}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="layout-container">
+    <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="content-wrapper">
-        <div className="container py-6 md:py-8">
-          <motion.h1 
-            className="text-2xl md:text-3xl font-bold mb-6 flex items-center"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
+      <main className="container mx-auto px-4 py-8 pb-20 md:pb-8">
+        <motion.h1 
+          className="text-2xl md:text-3xl font-bold mb-6 flex items-center text-foreground"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ShoppingCart className="mr-2 h-6 w-6" />
+          Votre Panier
+        </motion.h1>
+        
+        {cart.length === 0 ? (
+          <motion.div 
+            className="text-center py-12 md:py-16"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
           >
-            <ShoppingCart className="mr-2 h-6 w-6" />
-            Your Shopping Cart
-          </motion.h1>
-          
-          {cart.length === 0 ? (
-            <motion.div 
-              className="text-center py-12 md:py-16"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-            >
-              <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-4 animate-float" />
-              <h2 className="text-xl font-medium mb-2">Your cart is empty</h2>
-              <p className="text-gray-500 mb-6">
-                Looks like you haven't added any products to your cart yet.
-              </p>
-              <Button asChild className="subtle-hover">
-                <Link to="/products">Start Shopping</Link>
-              </Button>
-            </motion.div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
-              {/* Cart Items */}
-              <div className="lg:col-span-2">
-                <motion.div 
-                  className="bg-white rounded-lg shadow-sm border"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="p-4 border-b">
-                    <h2 className="font-medium">Cart Items ({cart.length})</h2>
-                  </div>
-                  
-                  <ul className="divide-y">
-                    {cartProducts.map((product, index) => {
-                      const cartItem = cartItemsMap[product.id];
-                      const price = product.discountedPrice || product.originalPrice;
-                      const itemTotal = price * cartItem.quantity;
-                      
-                      return (
-                        <motion.li 
-                          key={product.id} 
-                          className="p-4 flex flex-col sm:flex-row"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
-                        >
-                          <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-md overflow-hidden mr-4 mb-3 sm:mb-0">
-                            <Link to={`/product/${product.id}`}>
-                              <img 
-                                src={product.images[0]} 
-                                alt={product.name} 
-                                className="w-full h-full object-cover transition-transform hover:scale-105"
-                              />
-                            </Link>
-                          </div>
-                          
-                          <div className="flex-1">
-                            <div className="flex flex-wrap justify-between mb-2">
-                              <Link 
-                                to={`/product/${product.id}`}
-                                className="font-medium hover:text-primary transition-colors"
-                              >
-                                {product.name}
-                              </Link>
-                              
-                              <div className="font-medium text-primary">
-                                {formatPrice(itemTotal)} FC
-                              </div>
-                            </div>
-                            
-                            {/* Show selected variants if any */}
-                            {renderColorOptions(product, cartItem)}
-                            {renderSizeOptions(product, cartItem)}
-                            
-                            <div className="flex items-center justify-between mt-3">
-                              <div className="flex items-center border rounded-md">
-                                <button
-                                  className="px-3 py-1 text-gray-600 hover:text-gray-800"
-                                  onClick={() => updateQuantity(product.id, Math.max(1, cartItem.quantity - 1))}
-                                >
-                                  -
-                                </button>
-                                <span className="px-3 py-1 border-x">{cartItem.quantity}</span>
-                                <button
-                                  className="px-3 py-1 text-gray-600 hover:text-gray-800"
-                                  onClick={() => updateQuantity(product.id, Math.min(product.stock, cartItem.quantity + 1))}
-                                  disabled={cartItem.quantity >= product.stock}
-                                >
-                                  +
-                                </button>
-                              </div>
-                              
-                              <button
-                                onClick={() => removeFromCart(product.id)}
-                                className="text-red-500 hover:text-red-600 transition-colors"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-                        </motion.li>
-                      );
-                    })}
-                  </ul>
-                  
-                  <div className="p-4 border-t flex justify-between">
-                    <Button 
-                      variant="outline" 
-                      onClick={clearCart}
-                      className="subtle-hover"
-                    >
-                      Clear Cart
-                    </Button>
-                    <Link to="/products">
-                      <Button variant="ghost" className="subtle-hover">
-                        Continue Shopping
-                      </Button>
-                    </Link>
-                  </div>
-                </motion.div>
-              </div>
-              
-              {/* Order Summary */}
-              <div>
-                <motion.div 
-                  className="bg-white rounded-lg shadow-sm border sticky top-20"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  <div className="p-4 border-b">
-                    <h2 className="font-medium">Order Summary</h2>
-                  </div>
-                  
-                  <div className="p-4 space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Subtotal</span>
-                      <span>{formatPrice(subtotal)} FC</span>
-                    </div>
+            <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-xl font-medium mb-2 text-foreground">Votre panier est vide</h2>
+            <p className="text-muted-foreground mb-6">
+              Il semble que vous n'ayez pas encore ajouté de produits à votre panier.
+            </p>
+            <Button asChild>
+              <Link to="/products">Commencer les achats</Link>
+            </Button>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+            {/* Cart Items */}
+            <div className="lg:col-span-2">
+              <motion.div 
+                className="bg-card rounded-lg shadow-sm border border-border"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="p-4 border-b border-border">
+                  <h2 className="font-medium text-foreground">Articles du panier ({cart.length})</h2>
+                </div>
+                
+                <div className="divide-y divide-border">
+                  {cartProducts.map((item, index) => {
+                    if (!item.product) return null;
+                    const price = item.product.discounted_price || item.product.original_price;
+                    const itemTotal = price * item.quantity;
                     
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Shipping</span>
-                      <span>Calculated at checkout</span>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div className="flex justify-between font-medium text-lg">
-                      <span>Total</span>
-                      <span>{formatPrice(subtotal)} FC</span>
-                    </div>
-                    
-                    <div className="pt-4">
-                      <h3 className="font-medium mb-2">Checkout with WhatsApp</h3>
-                      <p className="text-sm text-gray-500 mb-3">
-                        Enter your WhatsApp number to place your order
-                      </p>
-                      
-                      <div className="space-y-3">
-                        <Input
-                          type="tel"
-                          placeholder="e.g., +243123456789"
-                          value={whatsappNumber}
-                          onChange={(e) => setWhatsappNumber(e.target.value)}
-                        />
-                        
-                        <Button
-                          onClick={handleWhatsAppCheckout}
-                          className="w-full bg-whatsapp hover:bg-whatsapp-dark transition-colors"
-                          disabled={isSubmitting}
-                        >
-                          <WhatsAppIcon className="mr-2 h-4 w-4" />
-                          {isSubmitting ? 'Processing...' : 'Place Order via WhatsApp'}
-                        </Button>
-                        
-                        <div className="text-center">
-                          <span className="text-sm text-gray-500">or</span>
+                    return (
+                      <motion.div 
+                        key={item.productId} 
+                        className="p-4 flex flex-col sm:flex-row gap-4"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                      >
+                        <div className="flex-shrink-0 w-20 h-20 bg-muted rounded-md overflow-hidden">
+                          <Link to={`/product/${item.product.id}`}>
+                            <img 
+                              src={item.product.images[0] || '/placeholder.svg'} 
+                              alt={item.product.name} 
+                              className="w-full h-full object-cover transition-transform hover:scale-105"
+                            />
+                          </Link>
                         </div>
                         
-                        <WhatsAppContact
-                          phoneNumber="243123456789"
-                          message="Hello! I need assistance with completing my order."
-                          variant="outline"
-                          className="w-full"
-                        >
-                          Request Assistance
-                        </WhatsAppContact>
+                        <div className="flex-1">
+                          <div className="flex flex-wrap justify-between mb-2">
+                            <Link 
+                              to={`/product/${item.product.id}`}
+                              className="font-medium hover:text-primary transition-colors text-foreground"
+                            >
+                              {item.product.name}
+                            </Link>
+                            
+                            <div className="font-medium text-primary">
+                              {formatPrice(itemTotal)} FC
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between mt-3">
+                            <div className="flex items-center border border-border rounded-md bg-background">
+                              <button
+                                className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              <span className="px-3 py-2 border-x border-border bg-muted/50 text-foreground min-w-[50px] text-center">
+                                {item.quantity}
+                              </span>
+                              <button
+                                className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={() => updateQuantity(item.productId, Math.min(item.product.stock, item.quantity + 1))}
+                                disabled={item.quantity >= item.product.stock}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
+                            
+                            <button
+                              onClick={() => removeFromCart(item.productId)}
+                              className="text-red-500 hover:text-red-600 transition-colors p-2"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+                
+                <div className="p-4 border-t border-border flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={clearCart}
+                  >
+                    Vider le panier
+                  </Button>
+                  <Link to="/products">
+                    <Button variant="ghost">
+                      Continuer les achats
+                    </Button>
+                  </Link>
+                </div>
+              </motion.div>
+            </div>
+            
+            {/* Order Summary */}
+            <div>
+              <motion.div 
+                className="bg-card rounded-lg shadow-sm border border-border sticky top-20"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <div className="p-4 border-b border-border">
+                  <h2 className="font-medium text-foreground">Résumé de la commande</h2>
+                </div>
+                
+                <div className="p-4 space-y-4">
+                  <div className="flex justify-between text-foreground">
+                    <span className="text-muted-foreground">Sous-total</span>
+                    <span>{formatPrice(subtotal)} FC</span>
+                  </div>
+                  
+                  <div className="flex justify-between text-foreground">
+                    <span className="text-muted-foreground">Livraison</span>
+                    <span>Calculé à la commande</span>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="flex justify-between font-medium text-lg text-foreground">
+                    <span>Total</span>
+                    <span>{formatPrice(subtotal)} FC</span>
+                  </div>
+                  
+                  <div className="pt-4">
+                    <h3 className="font-medium mb-2 text-foreground">Commander via WhatsApp</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Entrez votre numéro WhatsApp pour passer votre commande
+                    </p>
+                    
+                    <div className="space-y-3">
+                      <Input
+                        type="tel"
+                        placeholder="ex: +243123456789"
+                        value={whatsappNumber}
+                        onChange={(e) => setWhatsappNumber(e.target.value)}
+                        className="bg-background border-border"
+                      />
+                      
+                      <Button
+                        onClick={handleWhatsAppCheckout}
+                        className="w-full bg-[#25D366] hover:bg-[#075E54] text-white"
+                        disabled={isSubmitting}
+                      >
+                        <WhatsAppIcon className="mr-2 h-4 w-4" />
+                        {isSubmitting ? 'Traitement...' : 'Commander via WhatsApp'}
+                      </Button>
+                      
+                      <div className="text-center">
+                        <span className="text-sm text-muted-foreground">ou</span>
                       </div>
+                      
+                      <WhatsAppContact
+                        phoneNumber="243123456789"
+                        message="Bonjour! J'ai besoin d'aide pour finaliser ma commande."
+                        variant="outline"
+                        className="w-full"
+                      >
+                        Demander de l'aide
+                      </WhatsAppContact>
                     </div>
                   </div>
-                </motion.div>
-              </div>
+                </div>
+              </motion.div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
       
       <Footer />

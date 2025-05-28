@@ -26,20 +26,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
 
-  const currentPrice = product.discounted_price || product.original_price || product.originalPrice || 0;
-  const originalPrice = product.original_price || product.originalPrice || 0;
+  const currentPrice = product.discounted_price || product.original_price || 0;
+  const originalPrice = product.original_price || 0;
   const hasDiscount = product.discounted_price && product.discounted_price < originalPrice;
-  const isFavorite = favorites.some(fav => fav.id === product.id);
+  const isFavorite = favorites.includes(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: currentPrice,
-      image: product.images[0] || '/placeholder.svg',
-      quantity: 1
-    });
+    addToCart(product.id, 1);
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
@@ -47,12 +41,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
     if (isFavorite) {
       removeFromFavorites(product.id);
     } else {
-      addToFavorites({
-        id: product.id,
-        name: product.name,
-        price: currentPrice,
-        image: product.images[0] || '/placeholder.svg'
-      });
+      addToFavorites(product.id);
     }
   };
 
@@ -66,8 +55,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
       transition={{ duration: 0.2 }}
       className={cn("group", className)}
     >
-      <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300">
-        <div className="relative aspect-square overflow-hidden bg-gray-50">
+      <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-card">
+        <div className="relative aspect-square overflow-hidden bg-muted/50">
           <img
             src={product.images[0] || '/placeholder.svg'}
             alt={product.name}
