@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,7 +19,7 @@ import { useCategories, Category } from '@/hooks/useCategories';
 import { useAuth } from '@/hooks/useAuth';
 
 const Categories = () => {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { categories, isLoading, createCategory, updateCategory, deleteCategory } = useCategories();
   
   const [newCategory, setNewCategory] = useState({
@@ -31,7 +30,7 @@ const Categories = () => {
   
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-96">

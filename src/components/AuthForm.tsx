@@ -30,9 +30,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
 
     try {
       if (isLogin) {
-        await signIn(formData.email, formData.password);
+        await signIn.mutateAsync({ email: formData.email, password: formData.password });
       } else {
-        await signUp(formData.email, formData.password, formData.fullName);
+        await signUp.mutateAsync({ 
+          email: formData.email, 
+          password: formData.password, 
+          fullName: formData.fullName 
+        });
       }
       onSuccess?.();
     } catch (error) {

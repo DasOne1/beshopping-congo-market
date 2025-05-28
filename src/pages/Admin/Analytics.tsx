@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AdminLayout from '@/components/Admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,10 +9,10 @@ import { useAuth } from '@/hooks/useAuth';
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 export default function Analytics() {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { analytics, isLoading } = useAnalytics();
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-96">
