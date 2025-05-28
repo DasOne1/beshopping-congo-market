@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Heart, Star, Eye } from 'lucide-react';
+import { ShoppingCart, Heart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -45,7 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
     }
   };
 
-  const handleViewProduct = () => {
+  const handleProductClick = () => {
     navigate(`/product/${product.id}`);
   };
 
@@ -53,7 +53,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
     <motion.div
       whileHover={{ y: -5 }}
       transition={{ duration: 0.2 }}
-      className={cn("group", className)}
+      className={cn("group cursor-pointer", className)}
+      onClick={handleProductClick}
     >
       <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-card">
         <div className="relative aspect-square overflow-hidden bg-muted/50">
@@ -75,25 +76,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
             </Badge>
           )}
 
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={handleViewProduct}
-              className="opacity-90 hover:opacity-100"
-            >
-              <Eye className="h-4 w-4 mr-1" />
-              Voir
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleToggleFavorite}
-              variant={isFavorite ? "default" : "secondary"}
-              className="opacity-90 hover:opacity-100"
-            >
-              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-            </Button>
-          </div>
+          {/* Heart icon always visible */}
+          <Button
+            size="sm"
+            onClick={handleToggleFavorite}
+            variant="ghost"
+            className={`absolute top-2 right-10 h-8 w-8 p-0 bg-white/80 hover:bg-white/90 ${
+              isFavorite ? 'text-red-500' : 'text-gray-600'
+            }`}
+          >
+            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+          </Button>
         </div>
 
         <CardContent className="p-4">

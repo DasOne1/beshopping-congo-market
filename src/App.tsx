@@ -18,6 +18,7 @@ import Favorites from '@/pages/Favorites';
 import Account from '@/pages/Account';
 import AboutUs from '@/pages/AboutUs';
 import Contact from '@/pages/Contact';
+import CustomOrder from '@/pages/CustomOrder';
 import NotFound from '@/pages/NotFound';
 
 // Admin Pages
@@ -26,9 +27,6 @@ import AdminLayout from '@/components/Admin/AdminLayout';
 import Dashboard from '@/pages/Admin/Dashboard';
 import AdminProducts from '@/pages/Admin/Products';
 import AdminCategories from '@/pages/Admin/Categories';
-import AdminOrders from '@/pages/Admin/Orders';
-import AdminCustomers from '@/pages/Admin/Customers';
-import AdminSettings from '@/pages/Admin/Settings';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -52,6 +50,7 @@ function App() {
                   <Route path="/account" element={<Account />} />
                   <Route path="/about" element={<AboutUs />} />
                   <Route path="/contact" element={<Contact />} />
+                  <Route path="/custom-order" element={<CustomOrder />} />
                   
                   {/* Admin Routes */}
                   <Route path="/admin" element={
@@ -72,27 +71,6 @@ function App() {
                     <AdminAuth>
                       <AdminLayout>
                         <AdminCategories />
-                      </AdminLayout>
-                    </AdminAuth>
-                  } />
-                  <Route path="/admin/orders" element={
-                    <AdminAuth>
-                      <AdminLayout>
-                        <AdminOrders />
-                      </AdminLayout>
-                    </AdminAuth>
-                  } />
-                  <Route path="/admin/customers" element={
-                    <AdminAuth>
-                      <AdminLayout>
-                        <AdminCustomers />
-                      </AdminLayout>
-                    </AdminAuth>
-                  } />
-                  <Route path="/admin/settings" element={
-                    <AdminAuth>
-                      <AdminLayout>
-                        <AdminSettings />
                       </AdminLayout>
                     </AdminAuth>
                   } />

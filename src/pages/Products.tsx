@@ -80,12 +80,20 @@ const Products = () => {
     return filtered;
   }, [products, searchQuery, sortBy, selectedCategories, priceRange, showOnlyInStock, showOnlyFeatured]);
 
-  const handleCategoryChange = (categoryId: string, checked: boolean) => {
-    if (checked) {
+  const handleCategoryChange = (categoryId: string, checked: boolean | 'indeterminate') => {
+    if (checked === true) {
       setSelectedCategories([...selectedCategories, categoryId]);
     } else {
       setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
     }
+  };
+
+  const handleInStockChange = (checked: boolean | 'indeterminate') => {
+    setShowOnlyInStock(checked === true);
+  };
+
+  const handleFeaturedChange = (checked: boolean | 'indeterminate') => {
+    setShowOnlyFeatured(checked === true);
   };
 
   const clearFilters = () => {
@@ -180,7 +188,7 @@ const Products = () => {
                                 id={category.id}
                                 checked={selectedCategories.includes(category.id)}
                                 onCheckedChange={(checked) => 
-                                  handleCategoryChange(category.id, checked as boolean)
+                                  handleCategoryChange(category.id, checked)
                                 }
                               />
                               <label htmlFor={category.id} className="text-sm text-foreground">
@@ -218,7 +226,7 @@ const Products = () => {
                             <Checkbox
                               id="inStock"
                               checked={showOnlyInStock}
-                              onCheckedChange={setShowOnlyInStock}
+                              onCheckedChange={handleInStockChange}
                             />
                             <label htmlFor="inStock" className="text-sm text-foreground">
                               En stock seulement
@@ -228,7 +236,7 @@ const Products = () => {
                             <Checkbox
                               id="featured"
                               checked={showOnlyFeatured}
-                              onCheckedChange={setShowOnlyFeatured}
+                              onCheckedChange={handleFeaturedChange}
                             />
                             <label htmlFor="featured" className="text-sm text-foreground">
                               Produits vedettes
@@ -274,7 +282,7 @@ const Products = () => {
             <motion.div
               className={`grid gap-6 ${
                 viewMode === 'grid' 
-                  ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4' 
+                  ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' 
                   : 'grid-cols-1'
               }`}
               initial={{ opacity: 0 }}
