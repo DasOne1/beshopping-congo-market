@@ -21,7 +21,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import Sidebar from './Sidebar';
 
 const Header = () => {
-  const { cart, getTotalQuantity } = useCart();
+  const { getTotalQuantity } = useCart();
   const { favorites } = useFavorites();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);

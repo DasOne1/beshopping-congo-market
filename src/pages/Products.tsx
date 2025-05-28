@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
@@ -17,11 +18,16 @@ import { motion } from 'framer-motion';
 const Products = () => {
   const { products, isLoading } = useProducts();
   const { categories } = useCategories();
+  const [searchParams] = useSearchParams();
+  const categoryFromUrl = searchParams.get('category');
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('featured');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [priceRange, setPriceRange] = useState([0, 1000000]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    categoryFromUrl ? [categoryFromUrl] : []
+  );
   const [showOnlyInStock, setShowOnlyInStock] = useState(false);
   const [showOnlyFeatured, setShowOnlyFeatured] = useState(false);
 
@@ -282,7 +288,7 @@ const Products = () => {
             <motion.div
               className={`grid gap-6 ${
                 viewMode === 'grid' 
-                  ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' 
+                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
                   : 'grid-cols-1'
               }`}
               initial={{ opacity: 0 }}

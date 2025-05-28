@@ -3,16 +3,25 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  originalPrice: number;
+  original_price: number; // Added this required field
+  originalPrice?: number; // Keep for compatibility
+  discounted_price?: number;
   discountedPrice?: number;
   discount?: number;
   images: string[];
   stock: number;
   category: string;
+  category_id?: string;
   tags: string[];
   variants?: ProductVariant[];
   featured: boolean;
   popular: number; // Number of orders, higher means more popular
+  sku?: string;
+  weight?: number;
+  dimensions?: any;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ProductVariant {
