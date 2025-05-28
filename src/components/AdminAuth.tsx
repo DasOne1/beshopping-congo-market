@@ -13,8 +13,8 @@ interface AdminAuthProps {
 
 const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
   const { isAuthenticated, signIn, loading } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@beshop.com');
+  const [password, setPassword] = useState('admin123');
   const [isSigningIn, setIsSigningIn] = useState(false);
   const navigate = useNavigate();
 
@@ -64,7 +64,7 @@ const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@example.com"
+                  placeholder="admin@beshop.com"
                   required
                 />
               </div>
@@ -77,7 +77,7 @@ const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="•••••••"
+                  placeholder="admin123"
                   required
                 />
               </div>
@@ -91,7 +91,11 @@ const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
             </form>
           </CardContent>
           <CardFooter className="text-center text-sm text-muted-foreground">
-            <p className="w-full">Utilisez vos identifiants Supabase pour vous connecter</p>
+            <div className="w-full space-y-2">
+              <p>Identifiants par défaut:</p>
+              <p><strong>Email:</strong> admin@beshop.com</p>
+              <p><strong>Mot de passe:</strong> admin123</p>
+            </div>
           </CardFooter>
         </Card>
       </div>

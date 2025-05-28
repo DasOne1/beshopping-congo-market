@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-import CategoryCard from '@/components/CategoryCard';
+import CategoryCarousel from '@/components/CategoryCarousel';
 import WhatsAppContact from '@/components/WhatsAppContact';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
@@ -19,7 +19,7 @@ import { useEffect } from 'react';
 const Index = () => {
   const navigate = useNavigate();
   const { products, isLoading: productsLoading } = useProducts();
-  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { categories } = useCategories();
   const { trackEvent } = useAnalytics();
 
   useEffect(() => {
@@ -36,9 +36,11 @@ const Index = () => {
     .sort((a, b) => b.popular - a.popular)
     .slice(0, 8) || [];
 
-  const handleCategoryClick = (categoryId: string) => {
-    navigate(`/products?category=${categoryId}`);
-  };
+  // Group products by category
+  const productsByCategory = categories?.map(category => ({
+    category,
+    products: products?.filter(p => p.category_id === category.id && p.status === 'active').slice(0, 4) || []
+  })).filter(group => group.products.length > 0) || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,59 +120,66 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Shop Markets Section */}
-      <section className="py-8 md:py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-8 md:mb-12"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl md:text-3xl font-bold">Shop Markets</h2>
-              <Button variant="ghost" onClick={() => navigate('/categories')}>
-                See All
-              </Button>
-            </div>
-          </motion.div>
+      {/* Categories Carousel */}
+      <CategoryCarousel />
 
-          {categoriesLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="bg-gray-200 aspect-square rounded-lg mb-3"></div>
-                  <div className="bg-gray-200 h-4 rounded mb-2"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
+      {/* Products by Category */}
+      {productsByCategory.map((group, groupIndex) => (
+        <section key={group.category.id} className="py-8 md:py-16">
+          <div className="container mx-auto px-4">
             <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.8 }}
-              className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="mb-8 md:mb-12"
             >
-              {categories?.slice(0, 5).map((category, index) => (
-                <motion.div
-                  key={category.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 * index }}
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold">{group.category.name}</h2>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate(`/products?category=${group.category.id}`)}
                 >
-                  <CategoryCard
-                    {...category}
-                    onClick={() => handleCategoryClick(category.id)}
-                  />
-                </motion.div>
-              ))}
+                  Voir tout
+                </Button>
+              </div>
             </motion.div>
-          )}
-        </div>
-      </section>
+
+            {productsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-gray-200 aspect-square rounded-lg mb-3"></div>
+                    <div className="bg-gray-200 h-4 rounded mb-2"></div>
+                    <div className="bg-gray-200 h-3 rounded mb-2"></div>
+                    <div className="bg-gray-200 h-6 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                transition={{ duration: 0.8 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
+              >
+                {group.products.map((product, index) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 * index }}
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+        </section>
+      ))}
 
       {/* Popular Items */}
-      <section className="py-8 md:py-16">
+      <section className="py-8 md:py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -187,7 +196,7 @@ const Index = () => {
           </motion.div>
 
           {productsLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="animate-pulse">
                   <div className="bg-gray-200 aspect-square rounded-lg mb-3"></div>
@@ -202,7 +211,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.8 }}
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
             >
               {(popularProducts.length > 0 ? popularProducts : featuredProducts).slice(0, 8).map((product, index) => (
                 <motion.div
@@ -220,7 +229,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-8 md:py-16 bg-muted/30">
+      <section className="py-8 md:py-16">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

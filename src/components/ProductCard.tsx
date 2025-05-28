@@ -53,10 +53,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
     <motion.div
       whileHover={{ y: -5 }}
       transition={{ duration: 0.2 }}
-      className={cn("group cursor-pointer", className)}
+      className={cn("group cursor-pointer w-full", className)}
       onClick={handleProductClick}
     >
-      <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-card">
+      <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-card h-full">
         <div className="relative aspect-square overflow-hidden bg-muted/50">
           <img
             src={product.images[0] || '/placeholder.svg'}
@@ -81,7 +81,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
             size="sm"
             onClick={handleToggleFavorite}
             variant="ghost"
-            className={`absolute top-2 right-10 h-8 w-8 p-0 bg-white/80 hover:bg-white/90 ${
+            className={`absolute top-2 right-2 ${product.featured ? 'right-20' : ''} h-8 w-8 p-0 bg-white/80 hover:bg-white/90 ${
               isFavorite ? 'text-red-500' : 'text-gray-600'
             }`}
           >
@@ -89,13 +89,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
           </Button>
         </div>
 
-        <CardContent className="p-4">
-          <div className="space-y-2">
-            <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
+        <CardContent className="p-3 md:p-4 flex-1 flex flex-col">
+          <div className="space-y-2 flex-1">
+            <h3 className="font-semibold text-sm md:text-base line-clamp-2 group-hover:text-primary transition-colors">
               {product.name}
             </h3>
             
-            <p className="text-xs text-muted-foreground line-clamp-2">
+            <p className="text-xs text-muted-foreground line-clamp-2 hidden md:block">
               {product.description}
             </p>
 
@@ -109,10 +109,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
               </span>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-primary">
+                  <span className="font-bold text-primary text-sm md:text-base">
                     {formatPrice(currentPrice)} FC
                   </span>
                   {hasDiscount && (
@@ -127,7 +127,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
                 size="sm"
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}
-                className="h-8 px-3"
+                className="h-8 px-3 w-full md:w-auto"
               >
                 <ShoppingCart className="h-3 w-3 mr-1" />
                 {product.stock === 0 ? 'Rupture' : 'Ajouter'}
@@ -135,7 +135,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
             </div>
 
             {product.stock <= 5 && product.stock > 0 && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs w-fit">
                 Plus que {product.stock} en stock
               </Badge>
             )}

@@ -91,7 +91,7 @@ const Dashboard = () => {
             <CardTitle>Produits Populaires</CardTitle>
           </CardHeader>
           <CardContent>
-            {stats?.topProducts?.map((product: any, index: number) => (
+            {stats?.topProducts?.map((product, index) => (
               <div key={index} className="flex items-center justify-between py-2">
                 <span className="text-sm">{product.name}</span>
                 <span className="text-sm font-medium">{product.sales} ventes</span>
@@ -105,7 +105,7 @@ const Dashboard = () => {
             <CardTitle>Commandes Récentes</CardTitle>
           </CardHeader>
           <CardContent>
-            {stats?.recentOrders?.map((order: any, index: number) => (
+            {stats?.recentOrders?.map((order, index) => (
               <div key={index} className="flex items-center justify-between py-2">
                 <span className="text-sm">Commande #{order.id.slice(0, 8)}</span>
                 <span className="text-sm font-medium">{order.total_amount} FC</span>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -18,17 +17,22 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { toast } from '@/hooks/use-toast';
 
 const ProductDetails = () => {
-  const { productId } = useParams();
+  const { id: productId } = useParams();
   const navigate = useNavigate();
   const { products, isLoading } = useProducts();
   const { addToCart } = useCart();
-  const { isFavorite, addToFavorites, removeFromFavorites } = useFavorites();
+  const { favorites, addToFavorites, removeFromFavorites } = useFavorites();
   const { trackEvent } = useAnalytics();
   
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   
+  console.log('ProductDetails - productId:', productId);
+  console.log('ProductDetails - products:', products);
+  
   const product = products?.find(p => p.id === productId);
+  console.log('ProductDetails - found product:', product);
+  
   const relatedProducts = products?.filter(p => 
     p.category_id === product?.category_id && 
     p.id !== productId && 
@@ -69,14 +73,15 @@ const ProductDetails = () => {
   }
 
   if (!product) {
+    console.log('ProductDetails - product not found, redirecting to products');
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-16">
-            <h2 className="text-2xl font-bold mb-4">Produit non trouvé</h2>
+            <h2 className="text-2xl font-bold mb-4">Chargement du produit...</h2>
             <p className="text-muted-foreground mb-6">
-              Le produit que vous recherchez n'existe pas ou a été supprimé.
+              Veuillez patienter pendant que nous chargeons les détails du produit.
             </p>
             <Button onClick={() => navigate('/products')}>
               Retour aux produits
@@ -88,7 +93,7 @@ const ProductDetails = () => {
   }
 
   const currentPrice = product.discounted_price || product.original_price;
-  const isFav = isFavorite(product.id);
+  const isFav = favorites.includes(product.id);
 
   const formatPrice = (price: number) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
