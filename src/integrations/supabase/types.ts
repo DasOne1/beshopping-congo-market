@@ -123,6 +123,44 @@ export type Database = {
         }
         Relationships: []
       }
+      cart_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string | null
+          quantity: number
+          selected_variants: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number
+          selected_variants?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number
+          selected_variants?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -177,6 +215,7 @@ export type Database = {
           status: string | null
           total_spent: number | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           address?: Json | null
@@ -190,6 +229,7 @@ export type Database = {
           status?: string | null
           total_spent?: number | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           address?: Json | null
@@ -203,8 +243,38 @@ export type Database = {
           status?: string | null
           total_spent?: number | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
+      }
+      favorites: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
@@ -278,6 +348,7 @@ export type Database = {
           total_amount: number
           tracking_number: string | null
           updated_at: string | null
+          user_id: string | null
           whatsapp_number: string | null
         }
         Insert: {
@@ -300,6 +371,7 @@ export type Database = {
           total_amount: number
           tracking_number?: string | null
           updated_at?: string | null
+          user_id?: string | null
           whatsapp_number?: string | null
         }
         Update: {
@@ -322,6 +394,7 @@ export type Database = {
           total_amount?: number
           tracking_number?: string | null
           updated_at?: string | null
+          user_id?: string | null
           whatsapp_number?: string | null
         }
         Relationships: [
@@ -404,6 +477,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_profiles: {
+        Row: {
+          address: Json | null
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: Json | null
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: Json | null
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

@@ -53,7 +53,7 @@ export const useAuth = () => {
         .eq('id', userId)
         .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching admin user:', error);
         return;
       }
@@ -80,7 +80,7 @@ export const useAuth = () => {
       
       toast({
         title: "Connexion réussie",
-        description: "Bienvenue dans le panneau d'administration",
+        description: "Bienvenue !",
       });
     } catch (error: any) {
       console.error('Sign in error:', error);
@@ -95,7 +95,7 @@ export const useAuth = () => {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -109,8 +109,10 @@ export const useAuth = () => {
 
       toast({
         title: "Compte créé",
-        description: "Votre compte administrateur a été créé avec succès",
+        description: "Votre compte a été créé avec succès",
       });
+      
+      return data;
     } catch (error: any) {
       toast({
         title: "Erreur lors de la création",
