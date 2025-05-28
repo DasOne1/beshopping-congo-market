@@ -1,10 +1,21 @@
 
+import React, { createContext, useContext } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 
-export const useAuth = () => {
+interface AuthContextType {
+  user: any;
+  isLoading: boolean;
+  signIn: any;
+  signUp: any;
+  signOut: any;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -100,11 +111,21 @@ export const useAuth = () => {
     },
   });
 
-  return {
+  const value = {
     user,
     isLoading,
     signIn,
     signUp,
     signOut,
   };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
