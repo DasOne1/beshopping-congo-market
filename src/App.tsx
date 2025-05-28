@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -25,6 +24,7 @@ import AdminOrders from "./pages/Admin/Orders";
 import AdminCatalog from "./pages/Admin/Catalog";
 import AdminCustomers from "./pages/Admin/Customers";
 import AdminSettings from "./pages/Admin/Settings";
+import AdminAnalytics from "./pages/Admin/Analytics";
 import SplashScreen from "./components/SplashScreen";
 import { MobileNavBar } from "./components/MobileNavBar";
 import MobileAdminNavBar from "./components/Admin/MobileAdminNavBar";
@@ -160,6 +160,11 @@ const App = () => {
                       <Route path="/admin/customers" element={
                         <AdminAuth>
                           <AdminCustomers />
+                        </AdminAuth>
+                      } />
+                      <Route path="/admin/analytics" element={
+                        <AdminAuth>
+                          <AdminAnalytics />
                         </AdminAuth>
                       } />
                       <Route path="/admin/settings" element={
