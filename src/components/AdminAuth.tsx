@@ -6,7 +6,7 @@ interface AdminAuthProps {
 }
 
 const AdminAuth: React.FC<AdminAuthProps> = ({ children }) => {
-  // Plus besoin d'authentification, on affiche directement les enfants
+  // Accès direct sans authentification pour simplifier l'utilisation
   return <>{children}</>;
 };
 

@@ -31,8 +31,8 @@ export function MobileAdminNavBar() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      <div className="bg-background shadow-lg border-t border-border/50">
-        <div className="grid grid-cols-5 items-center">
+      <div className="bg-white dark:bg-gray-900 shadow-2xl border-t border-gray-200 dark:border-gray-800">
+        <div className="grid grid-cols-5 items-center px-2 py-2">
           {navItems.map((item) => {
             const active = isActive(item.path);
             const ItemIcon = item.icon;
@@ -42,24 +42,26 @@ export function MobileAdminNavBar() {
                 key={item.path} 
                 to={item.path}
                 className={cn(
-                  "relative flex flex-col items-center justify-center p-2 transition-all duration-300",
-                  active ? "text-primary" : "text-muted-foreground"
+                  "relative flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 mx-1",
+                  active 
+                    ? "text-blue-600 dark:text-blue-400" 
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 )}
               >
                 {active && (
                   <motion.div
                     layoutId="admin-bubble"
-                    className="absolute inset-0 bg-primary/10 rounded-lg z-0"
+                    className="absolute inset-0 bg-blue-50 dark:bg-blue-900/30 rounded-xl z-0"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
                 <ItemIcon className={cn(
-                  "relative z-10 w-5 h-5",
-                  active ? "text-primary" : "text-muted-foreground"
+                  "relative z-10 w-6 h-6 mb-1",
+                  active ? "text-blue-600 dark:text-blue-400" : ""
                 )} />
                 <span className={cn(
-                  "text-xs mt-1 relative z-10",
-                  active ? "font-medium" : ""
+                  "text-xs relative z-10 font-medium",
+                  active ? "text-blue-600 dark:text-blue-400" : ""
                 )}>
                   {item.label}
                 </span>
