@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '@/components/Logo';
 import { useDataPreloader } from '@/hooks/useDataPreloader';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -12,27 +13,38 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const { isLoaded, isLoading, error } = useDataPreloader();
+  const { theme } = useTheme();
+
+  // Déterminer le thème effectif (résoudre 'system')
+  const getEffectiveTheme = () => {
+    if (theme === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return theme;
+  };
+
+  const effectiveTheme = getEffectiveTheme();
 
   useEffect(() => {
     let progressInterval: NodeJS.Timeout;
 
     if (isLoading) {
-      // Simulate loading progress while data is being preloaded
+      // Animation de progression plus rapide
       progressInterval = setInterval(() => {
         setLoadingProgress(prev => {
-          const newProgress = prev + 15;
-          return newProgress <= 80 ? newProgress : 80; // Don't go to 100% until data is loaded
+          const newProgress = prev + 25; // Augmentation plus rapide
+          return newProgress <= 75 ? newProgress : 75; // Ne pas aller à 100% tant que les données ne sont pas chargées
         });
-      }, 300);
+      }, 150); // Intervalle plus court
     } else if (isLoaded || error) {
-      // Complete the progress when data is loaded or if there's an error
+      // Compléter immédiatement la progression
       setLoadingProgress(100);
       
-      // Wait a bit before hiding splash screen
+      // Réduire le temps d'attente avant de masquer le splash screen
       const timer = setTimeout(() => {
         setIsVisible(false);
-        setTimeout(onComplete, 500); // Wait for exit animation
-      }, 800);
+        setTimeout(onComplete, 300); // Animation de sortie plus rapide
+      }, 400); // Temps d'affichage réduit
 
       return () => clearTimeout(timer);
     }
@@ -46,16 +58,20 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-orange-50 dark:bg-gray-900"
+          className={`fixed inset-0 z-50 flex items-center justify-center ${
+            effectiveTheme === 'dark' 
+              ? 'bg-gray-900' 
+              : 'bg-orange-50'
+          }`}
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
         >
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 1.1, opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            exit={{ scale: 1.05, opacity: 0 }}
+            transition={{ duration: 0.3 }}
             className="flex flex-col items-center"
           >
             <motion.div
@@ -63,7 +79,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                 rotate: 360,
                 transition: { 
                   repeat: Infinity, 
-                  duration: 2,
+                  duration: 1.5, // Rotation plus rapide
                   ease: "linear"
                 }
               }}
@@ -73,32 +89,46 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             </motion.div>
             
             <motion.h1 
-              className="text-2xl font-bold text-primary mb-8"
+              className={`text-2xl font-bold text-primary mb-8 ${
+                effectiveTheme === 'dark' ? 'text-orange-400' : 'text-primary'
+              }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.2 }}
             >
               BeShop Congo
             </motion.h1>
             
-            {/* Loading bar */}
-            <div className="w-64 h-2 bg-gray-200 rounded-full mb-4">
+            {/* Barre de progression adaptée au thème */}
+            <div className={`w-64 h-2 rounded-full mb-4 ${
+              effectiveTheme === 'dark' 
+                ? 'bg-gray-700' 
+                : 'bg-gray-200'
+            }`}>
               <motion.div
-                className="h-full bg-primary rounded-full"
+                className={`h-full rounded-full ${
+                  effectiveTheme === 'dark' 
+                    ? 'bg-orange-400' 
+                    : 'bg-primary'
+                }`}
                 initial={{ width: 0 }}
                 animate={{ width: `${loadingProgress}%` }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.2 }}
               />
             </div>
             
             <motion.div 
-              className="text-sm text-muted-foreground font-medium"
+              className={`text-sm font-medium ${
+                effectiveTheme === 'dark' 
+                  ? 'text-gray-300' 
+                  : 'text-muted-foreground'
+              }`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2 }}
             >
-              {isLoading ? 'Chargement des données...' : 
-               error ? 'Erreur de chargement' : 
+              {isLoading ? 'Chargement...' : 
+               error ? 'Prêt malgré l\'erreur' : 
                'Prêt !'}
             </motion.div>
           </motion.div>

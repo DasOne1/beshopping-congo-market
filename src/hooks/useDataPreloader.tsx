@@ -7,41 +7,35 @@ export const useDataPreloader = () => {
     queryKey: ['preload-data'],
     queryFn: async () => {
       try {
-        // Précharger les catégories
-        const { data: categories, error: categoriesError } = await supabase
-          .from('categories')
-          .select('*');
-        
-        if (categoriesError) throw categoriesError;
+        // Précharger seulement les données essentielles pour réduire le temps de chargement
+        const promises = [
+          supabase.from('categories').select('id, name, slug').limit(10),
+          supabase.from('products').select('id, name, images, original_price, featured').eq('featured', true).limit(6),
+          supabase.from('settings').select('*').limit(5)
+        ];
 
-        // Précharger les produits
-        const { data: products, error: productsError } = await supabase
-          .from('products')
-          .select('*');
-        
-        if (productsError) throw productsError;
+        const [categoriesResult, productsResult, settingsResult] = await Promise.all(promises);
 
-        // Précharger les paramètres
-        const { data: settings, error: settingsError } = await supabase
-          .from('settings')
-          .select('*');
-        
-        if (settingsError) throw settingsError;
+        if (categoriesResult.error) throw categoriesResult.error;
+        if (productsResult.error) throw productsResult.error;
+        if (settingsResult.error) throw settingsResult.error;
 
-        console.log('Données préchargées:', { 
-          categories: categories?.length, 
-          products: products?.length,
-          settings: settings?.length 
+        console.log('Données essentielles préchargées:', { 
+          categories: categoriesResult.data?.length, 
+          products: productsResult.data?.length,
+          settings: settingsResult.data?.length 
         });
 
         return true;
       } catch (error) {
         console.error('Erreur lors du préchargement:', error);
-        throw error;
+        // Ne pas bloquer l'application en cas d'erreur réseau
+        return true;
       }
     },
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1, // Réduire le nombre de tentatives
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   return {
