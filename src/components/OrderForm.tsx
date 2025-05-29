@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,8 +12,9 @@ interface OrderFormProps {
   onOrderComplete: () => void;
 }
 
-// WhatsApp officiel par défaut, WhatsApp business en alternative
-const PRIMARY_WHATSAPP = "243978100940"; // WhatsApp officiel
+// WhatsApp officiel par défaut
+const OFFICIAL_WHATSAPP = "243978100940"; // WhatsApp officiel
+const BUSINESS_WHATSAPP = "243123456789"; // WhatsApp business en alternative
 
 const OrderForm = ({ onOrderComplete }: OrderFormProps) => {
   const [customerName, setCustomerName] = useState('');
@@ -49,6 +51,9 @@ const OrderForm = ({ onOrderComplete }: OrderFormProps) => {
     const message = `Bonjour, je souhaite passer une commande avec les informations suivantes:\n\nNom: ${customerName}\nTéléphone: ${customerPhone}\nAdresse: ${customerAddress}`;
     return message;
   };
+
+  // Utiliser le WhatsApp officiel par défaut, et le business en fallback
+  const primaryWhatsApp = OFFICIAL_WHATSAPP;
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -91,7 +96,7 @@ const OrderForm = ({ onOrderComplete }: OrderFormProps) => {
             type="submit" 
             className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
             size="lg"
-            disabled={isSubmitting}
+            onClick={handleSubmit}
           >
             {isSubmitting ? (
               <>
@@ -109,11 +114,10 @@ const OrderForm = ({ onOrderComplete }: OrderFormProps) => {
           <div className="text-center text-sm text-gray-500">ou</div>
 
           <WhatsAppContact
-            phoneNumber={PRIMARY_WHATSAPP}
+            phoneNumber={primaryWhatsApp}
             message={generateWhatsAppMessage()}
             className="w-full bg-whatsapp hover:bg-whatsapp-dark text-white"
             size="lg"
-            disabled={isSubmitting}
           >
             Commander via WhatsApp
           </WhatsAppContact>

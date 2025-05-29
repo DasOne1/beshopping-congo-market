@@ -40,18 +40,42 @@ export const useSettings = () => {
 
   const updateSetting = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: any }) => {
-      const { data, error } = await supabase
+      // D'abord vérifier si la clé existe déjà
+      const { data: existingSetting } = await supabase
         .from('settings')
-        .upsert({
-          key,
-          value: JSON.stringify(value),
-          updated_at: new Date().toISOString()
-        })
-        .select()
+        .select('id')
+        .eq('key', key)
         .single();
 
-      if (error) throw error;
-      return data;
+      if (existingSetting) {
+        // Mettre à jour le setting existant
+        const { data, error } = await supabase
+          .from('settings')
+          .update({
+            value: JSON.stringify(value),
+            updated_at: new Date().toISOString()
+          })
+          .eq('key', key)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      } else {
+        // Créer un nouveau setting
+        const { data, error } = await supabase
+          .from('settings')
+          .insert({
+            key,
+            value: JSON.stringify(value),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
@@ -61,9 +85,10 @@ export const useSettings = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Error updating setting:', error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: error.message || "Erreur lors de la mise à jour du paramètre",
         variant: "destructive",
       });
     },
