@@ -100,7 +100,7 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
         return existingCustomer.id;
       }
 
-      // Créer un nouveau client
+      // Créer un nouveau client seulement si aucun client existant n'est trouvé
       const newCustomer = await createCustomer.mutateAsync({
         name: customerData.name,
         email: customerData.email || undefined,
@@ -207,16 +207,16 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
       if (orderNotes) whatsappMessage += `📝 *Notes:* ${orderNotes}\n\n`;
       whatsappMessage += `Merci de confirmer la commande et les modalités de livraison.`;
 
-      // 6. Ouvrir WhatsApp
+      // 6. Vider le panier
+      clearCart();
+
+      // 7. Ouvrir WhatsApp directement
       const encodedMessage = encodeURIComponent(whatsappMessage);
       window.open(`https://wa.me/243978100940?text=${encodedMessage}`, '_blank');
 
-      // 7. Vider le panier
-      clearCart();
-
       toast({
         title: "Commande créée avec succès!",
-        description: `Votre commande #${newOrder.order_number} a été enregistrée et vous serez redirigé vers WhatsApp`,
+        description: `Votre commande #${newOrder.order_number} a été enregistrée et vous êtes redirigé vers WhatsApp`,
       });
 
     } catch (error) {
@@ -328,7 +328,7 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
         </Button>
 
         <p className="text-xs text-muted-foreground text-center">
-          * Champs obligatoires. Votre commande sera enregistrée et vous serez redirigé vers WhatsApp pour finaliser.
+          * Champs obligatoires. Votre commande sera enregistrée et vous serez redirigé vers WhatsApp automatiquement.
         </p>
       </CardContent>
     </Card>

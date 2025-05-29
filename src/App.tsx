@@ -8,6 +8,7 @@ import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { Toaster } from '@/components/ui/toaster';
 import { MobileNavBar } from '@/components/MobileNavBar';
 import SplashScreen from '@/components/SplashScreen';
+import AdminAuth from '@/components/AdminAuth';
 
 // Pages
 import Index from '@/pages/Index';
@@ -71,11 +72,18 @@ function App() {
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/custom-order" element={<CustomOrder />} />
                   
-                  {/* Admin Routes - Plus besoin d'authentification */}
+                  {/* Admin Routes */}
                   <Route path="/admin" element={
                     <AdminAuth>
                       <AdminLayout>
                         <Dashboard />
+                      </AdminLayout>
+                    </AdminAuth>
+                  } />
+                  <Route path="/admin/catalog" element={
+                    <AdminAuth>
+                      <AdminLayout>
+                        <Catalog />
                       </AdminLayout>
                     </AdminAuth>
                   } />
