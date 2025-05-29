@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -14,6 +13,7 @@ import { Slider } from '@/components/ui/slider';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { motion } from 'framer-motion';
+import { MobileNavBar } from '@/components/MobileNavBar';
 
 const Products = () => {
   const { products, isLoading } = useProducts();
@@ -125,6 +125,7 @@ const Products = () => {
           </div>
         </div>
         <Footer />
+        <MobileNavBar />
       </div>
     );
   }
@@ -288,7 +289,7 @@ const Products = () => {
             <motion.div
               className={`grid gap-6 ${
                 viewMode === 'grid' 
-                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
                   : 'grid-cols-1'
               }`}
               initial={{ opacity: 0 }}
@@ -302,7 +303,10 @@ const Products = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                 >
-                  <ProductCard product={product} />
+                  <ProductCard 
+                    product={product} 
+                    className={viewMode === 'list' ? 'w-full' : ''}
+                  />
                 </motion.div>
               ))}
             </motion.div>
@@ -311,6 +315,7 @@ const Products = () => {
       </main>
       
       <Footer />
+      <MobileNavBar />
     </div>
   );
 };

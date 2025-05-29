@@ -5,11 +5,13 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function MobileNavBar() {
   const location = useLocation();
   const { cart } = useCart();
   const { favorites } = useFavorites();
+  const isMobile = useIsMobile();
   
   const navItems = [
     { icon: Home, path: '/', label: 'Home' },
@@ -19,8 +21,18 @@ export function MobileNavBar() {
     { icon: User, path: '/account', label: 'Account' },
   ];
 
+  // Ne pas afficher sur les routes admin
+  if (location.pathname.startsWith('/admin')) {
+    return null;
+  }
+
+  // Afficher seulement sur mobile
+  if (!isMobile) {
+    return null;
+  }
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-50">
       <div className="bg-background/95 backdrop-blur-md shadow-lg border-t border-border/50">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
