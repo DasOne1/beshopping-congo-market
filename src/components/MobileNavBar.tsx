@@ -31,12 +31,19 @@ export function MobileNavBar() {
     return null;
   }
 
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
       <div className="bg-background/95 backdrop-blur-md shadow-lg border-t border-border/50">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const active = isActive(item.path);
             const ItemIcon = item.icon;
             
             return (
@@ -45,10 +52,10 @@ export function MobileNavBar() {
                 to={item.path}
                 className={cn(
                   "relative flex flex-col items-center justify-center p-3 transition-all duration-300",
-                  isActive ? "text-primary" : "text-foreground/60"
+                  active ? "text-primary" : "text-foreground/60"
                 )}
               >
-                {isActive && (
+                {active && (
                   <motion.div
                     layoutId="bubble"
                     className="absolute inset-0 bg-primary/20 dark:bg-primary/30 rounded-full z-0"
@@ -58,7 +65,7 @@ export function MobileNavBar() {
                 <div className="relative">
                   <ItemIcon className={cn(
                     "relative z-10 w-5 h-5",
-                    isActive ? "text-primary" : "text-foreground/60"
+                    active ? "text-primary" : "text-foreground/60"
                   )} />
                   
                   {item.count && item.count > 0 && (
@@ -69,7 +76,7 @@ export function MobileNavBar() {
                 </div>
                 <span className={cn(
                   "text-xs mt-1 relative z-10",
-                  isActive ? "font-medium text-primary" : "text-foreground/60"
+                  active ? "font-medium text-primary" : "text-foreground/60"
                 )}>
                   {item.label}
                 </span>
