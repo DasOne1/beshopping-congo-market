@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -35,10 +34,7 @@ export const useProducts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          categories(name, slug)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -47,7 +43,7 @@ export const useProducts = () => {
       return data.map(product => ({
         ...product,
         originalPrice: product.original_price,
-        category: product.categories?.name || ''
+        category: ''
       })) as Product[];
     },
   });
@@ -57,10 +53,7 @@ export const useProducts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          categories(name, slug)
-        `)
+        .select('*')
         .eq('featured', true)
         .eq('status', 'active')
         .limit(6);
@@ -70,7 +63,7 @@ export const useProducts = () => {
       return data.map(product => ({
         ...product,
         originalPrice: product.original_price,
-        category: product.categories?.name || ''
+        category: ''
       })) as Product[];
     },
   });
@@ -80,10 +73,7 @@ export const useProducts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          categories(name, slug)
-        `)
+        .select('*')
         .eq('status', 'active')
         .order('popular', { ascending: false })
         .limit(8);
@@ -93,7 +83,7 @@ export const useProducts = () => {
       return data.map(product => ({
         ...product,
         originalPrice: product.original_price,
-        category: product.categories?.name || ''
+        category: ''
       })) as Product[];
     },
   });
