@@ -156,7 +156,7 @@ const ProductForm = () => {
                       <SelectValue placeholder="Sélectionner une catégorie" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Aucune catégorie</SelectItem>
+                      <SelectItem value="none">Aucune catégorie</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
