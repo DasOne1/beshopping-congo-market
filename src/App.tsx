@@ -13,7 +13,7 @@ import SplashScreen from '@/components/SplashScreen';
 import Index from '@/pages/Index';
 import Products from '@/pages/Products';
 import ProductDetails from '@/pages/ProductDetails';
-import Categories from '@/pages/Categories';
+import PublicCategories from '@/pages/Categories';
 import Cart from '@/pages/Cart';
 import Favorites from '@/pages/Favorites';
 import CustomOrder from '@/pages/CustomOrder';
@@ -28,7 +28,7 @@ import Dashboard from '@/pages/Admin/Dashboard';
 import Orders from '@/pages/Admin/Orders';
 import AdminProducts from '@/pages/Admin/Products';
 import ProductForm from '@/pages/Admin/ProductForm';
-import Categories from '@/pages/Admin/Categories';
+import AdminCategories from '@/pages/Admin/Categories';
 import CategoryForm from '@/pages/Admin/CategoryForm';
 import Catalog from '@/pages/Admin/Catalog';
 import Customers from '@/pages/Admin/Customers';
@@ -48,7 +48,7 @@ function AppContent() {
   const { isLoading } = useDataPreloader();
 
   if (isLoading) {
-    return <SplashScreen />;
+    return <SplashScreen onComplete={() => {}} />;
   }
 
   return (
@@ -57,7 +57,7 @@ function AppContent() {
       <Route path="/" element={<Index />} />
       <Route path="/products" element={<Products />} />
       <Route path="/product/:id" element={<ProductDetails />} />
-      <Route path="/categories" element={<Categories />} />
+      <Route path="/categories" element={<PublicCategories />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/favorites" element={<Favorites />} />
       <Route path="/custom-order" element={<CustomOrder />} />
@@ -71,7 +71,7 @@ function AppContent() {
       <Route path="/admin/products" element={<AdminAuth><AdminProducts /></AdminAuth>} />
       <Route path="/admin/products/new" element={<AdminAuth><ProductForm /></AdminAuth>} />
       <Route path="/admin/products/edit/:id" element={<AdminAuth><ProductForm /></AdminAuth>} />
-      <Route path="/admin/categories" element={<AdminAuth><Categories /></AdminAuth>} />
+      <Route path="/admin/categories" element={<AdminAuth><AdminCategories /></AdminAuth>} />
       <Route path="/admin/categories/new" element={<AdminAuth><CategoryForm /></AdminAuth>} />
       <Route path="/admin/categories/edit/:id" element={<AdminAuth><CategoryForm /></AdminAuth>} />
       <Route path="/admin/catalog" element={<AdminAuth><Catalog /></AdminAuth>} />

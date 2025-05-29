@@ -30,7 +30,7 @@ export function AdminDesktopNavigation() {
   };
 
   return (
-    <nav className="hidden md:flex items-center space-x-6">
+    <nav className="hidden md:flex items-center space-x-1">
       {navItems.map((item) => {
         const active = isActive(item.path);
         const ItemIcon = item.icon;
@@ -40,7 +40,7 @@ export function AdminDesktopNavigation() {
             key={item.path} 
             to={item.path}
             className={cn(
-              "relative flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-300",
+              "relative flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 text-sm font-medium",
               active 
                 ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30" 
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -49,16 +49,16 @@ export function AdminDesktopNavigation() {
             {active && (
               <motion.div
                 layoutId="admin-desktop-indicator"
-                className="absolute inset-0 bg-blue-50 dark:bg-blue-900/30 rounded-lg z-0"
+                className="absolute inset-0 bg-blue-50 dark:bg-blue-900/30 rounded-lg"
                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
               />
             )}
             <ItemIcon className={cn(
-              "relative z-10 w-5 h-5",
+              "relative z-10 w-4 h-4",
               active ? "text-blue-600 dark:text-blue-400" : ""
             )} />
             <span className={cn(
-              "text-sm font-medium relative z-10",
+              "relative z-10",
               active ? "text-blue-600 dark:text-blue-400" : ""
             )}>
               {item.label}

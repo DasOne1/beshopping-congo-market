@@ -13,9 +13,10 @@ export function AdminHeader() {
     <div className="sticky top-0 z-40 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-900/60">
       <div className="flex h-16 items-center justify-between px-4 lg:px-6">
         <div className="flex items-center space-x-8">
-          <div className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
+          {/* Logo et titre */}
+          <div className="flex items-center space-x-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-lg">A</span>
             </div>
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">Administration</h1>
@@ -23,7 +24,7 @@ export function AdminHeader() {
             </div>
           </div>
           
-          {/* Desktop Navigation */}
+          {/* Navigation Desktop */}
           <AdminDesktopNavigation />
         </div>
         

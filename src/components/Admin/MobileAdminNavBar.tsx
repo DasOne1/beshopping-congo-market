@@ -31,7 +31,7 @@ export function MobileAdminNavBar() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      <div className="bg-white dark:bg-gray-900 shadow-2xl border-t border-gray-200 dark:border-gray-800">
+      <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl border-t border-gray-200 dark:border-gray-800">
         <div className="grid grid-cols-5 items-center px-2 py-2">
           {navItems.map((item) => {
             const active = isActive(item.path);
@@ -50,17 +50,17 @@ export function MobileAdminNavBar() {
               >
                 {active && (
                   <motion.div
-                    layoutId="admin-bubble"
-                    className="absolute inset-0 bg-blue-50 dark:bg-blue-900/30 rounded-xl z-0"
+                    layoutId="admin-mobile-indicator"
+                    className="absolute inset-0 bg-blue-50 dark:bg-blue-900/30 rounded-xl"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
                 <ItemIcon className={cn(
-                  "relative z-10 w-6 h-6 mb-1",
+                  "relative z-10 w-5 h-5 mb-1",
                   active ? "text-blue-600 dark:text-blue-400" : ""
                 )} />
                 <span className={cn(
-                  "text-xs relative z-10 font-medium",
+                  "text-[10px] relative z-10 font-medium leading-tight",
                   active ? "text-blue-600 dark:text-blue-400" : ""
                 )}>
                   {item.label}
