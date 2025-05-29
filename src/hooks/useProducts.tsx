@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -32,6 +33,7 @@ export const useProducts = () => {
   const { data: products = [], isLoading, error } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
+      console.log('Chargement des produits depuis la base de données...');
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -39,7 +41,6 @@ export const useProducts = () => {
 
       if (error) {
         console.error('Erreur lors du chargement des produits:', error);
-        // Retourner un tableau vide au lieu de lancer une erreur pour permettre l'affichage progressif
         return [];
       }
       
@@ -52,15 +53,18 @@ export const useProducts = () => {
         category: ''
       })) as Product[];
     },
-    retry: 3,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry: 2,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes - données considérées comme fraîches
+    gcTime: 10 * 60 * 1000, // 10 minutes - temps avant suppression du cache
+    refetchInterval: 5 * 60 * 1000, // Actualisation automatique toutes les 5 minutes si nécessaire
   });
 
   const { data: featuredProducts = [] } = useQuery({
     queryKey: ['products', 'featured'],
     queryFn: async () => {
+      console.log('Chargement des produits vedettes...');
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -81,11 +85,14 @@ export const useProducts = () => {
     },
     retry: 2,
     refetchOnWindowFocus: false,
+    staleTime: 3 * 60 * 1000, // 3 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 
   const { data: popularProducts = [] } = useQuery({
     queryKey: ['products', 'popular'],
     queryFn: async () => {
+      console.log('Chargement des produits populaires...');
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -106,10 +113,13 @@ export const useProducts = () => {
     },
     retry: 2,
     refetchOnWindowFocus: false,
+    staleTime: 3 * 60 * 1000, // 3 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 
   const createProduct = useMutation({
     mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
+      console.log('Création d\'un nouveau produit...');
       const { data, error } = await supabase
         .from('products')
         .insert([{
@@ -135,14 +145,29 @@ export const useProducts = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (newProduct) => {
+      console.log('Produit créé avec succès, mise à jour du cache...');
+      
+      // Mise à jour optimiste du cache
+      queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
+        const transformedProduct = {
+          ...newProduct,
+          originalPrice: newProduct.original_price,
+          category: ''
+        } as Product;
+        return [transformedProduct, ...oldData];
+      });
+
+      // Invalider les requêtes pour synchroniser avec la base de données
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      
       toast({
         title: "Produit créé",
         description: "Le produit a été créé avec succès",
       });
     },
     onError: (error: any) => {
+      console.error('Erreur lors de la création du produit:', error);
       toast({
         title: "Erreur",
         description: error.message,
@@ -153,6 +178,7 @@ export const useProducts = () => {
 
   const updateProduct = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
+      console.log('Mise à jour du produit:', id);
       const updateData: any = { ...updates };
       
       // Convert compatibility fields
@@ -172,14 +198,30 @@ export const useProducts = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (updatedProduct) => {
+      console.log('Produit mis à jour avec succès, mise à jour du cache...');
+      
+      // Mise à jour optimiste du cache
+      queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
+        const transformedProduct = {
+          ...updatedProduct,
+          originalPrice: updatedProduct.original_price,
+          category: ''
+        } as Product;
+        return oldData.map(product => 
+          product.id === updatedProduct.id ? transformedProduct : product
+        );
+      });
+
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      
       toast({
         title: "Produit mis à jour",
         description: "Le produit a été mis à jour avec succès",
       });
     },
     onError: (error: any) => {
+      console.error('Erreur lors de la mise à jour du produit:', error);
       toast({
         title: "Erreur",
         description: error.message,
@@ -190,21 +232,32 @@ export const useProducts = () => {
 
   const deleteProduct = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Suppression du produit:', id);
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      console.log('Produit supprimé avec succès, mise à jour du cache...');
+      
+      // Mise à jour optimiste du cache
+      queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
+        return oldData.filter(product => product.id !== deletedId);
+      });
+
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      
       toast({
         title: "Produit supprimé",
         description: "Le produit a été supprimé avec succès",
       });
     },
     onError: (error: any) => {
+      console.error('Erreur lors de la suppression du produit:', error);
       toast({
         title: "Erreur",
         description: error.message,

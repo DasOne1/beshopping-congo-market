@@ -7,6 +7,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { useDataPreloader } from '@/hooks/useDataPreloader';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import SplashScreen from '@/components/SplashScreen';
 import UserLayout from '@/components/UserLayout';
 
@@ -39,14 +40,19 @@ import Settings from '@/pages/Admin/Settings';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
+      staleTime: 2 * 60 * 1000, // 2 minutes - données considérées comme fraîches
+      gcTime: 10 * 60 * 1000, // 10 minutes - temps avant suppression du cache
+      retry: 2,
+      refetchOnWindowFocus: false,
     },
   },
 });
 
 function AppContent() {
   const { isLoading } = useDataPreloader();
+  
+  // Activer la synchronisation en temps réel
+  useRealtimeSync();
 
   if (isLoading) {
     return <SplashScreen onComplete={() => {}} />;

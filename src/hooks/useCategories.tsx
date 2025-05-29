@@ -20,18 +20,26 @@ export const useCategories = () => {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
+      console.log('Chargement des catégories depuis la base de données...');
       const { data, error } = await supabase
         .from('categories')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('Catégories chargées:', data?.length);
       return data as Category[];
     },
+    retry: 2,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - catégories changent moins souvent
+    gcTime: 20 * 60 * 1000, // 20 minutes
+    refetchInterval: 10 * 60 * 1000, // Actualisation automatique toutes les 10 minutes
   });
 
   const createCategory = useMutation({
     mutationFn: async (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>) => {
+      console.log('Création d\'une nouvelle catégorie...');
       const { data, error } = await supabase
         .from('categories')
         .insert([category])
@@ -41,14 +49,23 @@ export const useCategories = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (newCategory) => {
+      console.log('Catégorie créée avec succès, mise à jour du cache...');
+      
+      // Mise à jour optimiste du cache
+      queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
+        return [newCategory, ...oldData];
+      });
+
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      
       toast({
         title: "Catégorie créée",
         description: "La catégorie a été créée avec succès",
       });
     },
     onError: (error: any) => {
+      console.error('Erreur lors de la création de la catégorie:', error);
       toast({
         title: "Erreur",
         description: error.message,
@@ -59,6 +76,7 @@ export const useCategories = () => {
 
   const updateCategory = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Category> & { id: string }) => {
+      console.log('Mise à jour de la catégorie:', id);
       const { data, error } = await supabase
         .from('categories')
         .update(updates)
@@ -69,14 +87,25 @@ export const useCategories = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (updatedCategory) => {
+      console.log('Catégorie mise à jour avec succès, mise à jour du cache...');
+      
+      // Mise à jour optimiste du cache
+      queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
+        return oldData.map(category => 
+          category.id === updatedCategory.id ? updatedCategory : category
+        );
+      });
+
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      
       toast({
         title: "Catégorie mise à jour",
         description: "La catégorie a été mise à jour avec succès",
       });
     },
     onError: (error: any) => {
+      console.error('Erreur lors de la mise à jour de la catégorie:', error);
       toast({
         title: "Erreur",
         description: error.message,
@@ -87,21 +116,32 @@ export const useCategories = () => {
 
   const deleteCategory = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Suppression de la catégorie:', id);
       const { error } = await supabase
         .from('categories')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      console.log('Catégorie supprimée avec succès, mise à jour du cache...');
+      
+      // Mise à jour optimiste du cache
+      queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
+        return oldData.filter(category => category.id !== deletedId);
+      });
+
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      
       toast({
         title: "Catégorie supprimée",
         description: "La catégorie a été supprimée avec succès",
       });
     },
     onError: (error: any) => {
+      console.error('Erreur lors de la suppression de la catégorie:', error);
       toast({
         title: "Erreur",
         description: error.message,
