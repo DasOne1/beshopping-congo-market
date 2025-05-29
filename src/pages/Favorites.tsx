@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
@@ -18,7 +17,7 @@ const Favorites = () => {
   );
   
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <Header />
       
       <main className="container mx-auto px-4 py-8 pb-20 md:pb-8">
@@ -66,7 +65,7 @@ const Favorites = () => {
       </main>
       
       <Footer />
-    </div>
+    </>
   );
 };
 

@@ -43,7 +43,7 @@ const Index = () => {
   })).filter(group => group.products.length > 0) || [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <Header />
       
       {/* Hero Section */}
@@ -288,7 +288,7 @@ const Index = () => {
       </section>
 
       <Footer />
-    </div>
+    </>
   );
 };
 

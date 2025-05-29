@@ -8,6 +8,7 @@ import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { useDataPreloader } from '@/hooks/useDataPreloader';
 import SplashScreen from '@/components/SplashScreen';
+import UserLayout from '@/components/UserLayout';
 
 // Public Pages
 import Index from '@/pages/Index';
@@ -53,19 +54,19 @@ function AppContent() {
 
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<Index />} />
-      <Route path="/products" element={<Products />} />
-      <Route path="/product/:id" element={<ProductDetails />} />
-      <Route path="/categories" element={<PublicCategories />} />
-      <Route path="/cart" element={<Cart />} />
-      <Route path="/favorites" element={<Favorites />} />
-      <Route path="/custom-order" element={<CustomOrder />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/about" element={<AboutUs />} />
-      <Route path="/account" element={<Account />} />
+      {/* Public Routes with UserLayout */}
+      <Route path="/" element={<UserLayout><Index /></UserLayout>} />
+      <Route path="/products" element={<UserLayout><Products /></UserLayout>} />
+      <Route path="/product/:id" element={<UserLayout><ProductDetails /></UserLayout>} />
+      <Route path="/categories" element={<UserLayout><PublicCategories /></UserLayout>} />
+      <Route path="/cart" element={<UserLayout><Cart /></UserLayout>} />
+      <Route path="/favorites" element={<UserLayout><Favorites /></UserLayout>} />
+      <Route path="/custom-order" element={<UserLayout><CustomOrder /></UserLayout>} />
+      <Route path="/contact" element={<UserLayout><Contact /></UserLayout>} />
+      <Route path="/about" element={<UserLayout><AboutUs /></UserLayout>} />
+      <Route path="/account" element={<UserLayout><Account /></UserLayout>} />
 
-      {/* Admin Routes */}
+      {/* Admin Routes - AdminLayout is already included in each admin page */}
       <Route path="/admin" element={<AdminAuth><Dashboard /></AdminAuth>} />
       <Route path="/admin/orders" element={<AdminAuth><Orders /></AdminAuth>} />
       <Route path="/admin/products" element={<AdminAuth><AdminProducts /></AdminAuth>} />
@@ -80,7 +81,7 @@ function AppContent() {
       <Route path="/admin/settings" element={<AdminAuth><Settings /></AdminAuth>} />
 
       {/* 404 Route */}
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<UserLayout><NotFound /></UserLayout>} />
     </Routes>
   );
 }

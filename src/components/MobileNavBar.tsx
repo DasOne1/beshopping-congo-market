@@ -21,11 +21,6 @@ export function MobileNavBar() {
     { icon: User, path: '/account', label: 'Account' },
   ];
 
-  // Ne pas afficher sur les routes admin
-  if (location.pathname.startsWith('/admin')) {
-    return null;
-  }
-
   // Afficher seulement sur mobile
   if (!isMobile) {
     return null;

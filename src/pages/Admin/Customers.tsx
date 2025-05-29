@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +8,7 @@ import { useCustomers } from '@/hooks/useCustomers';
 import { Loader2, Search, User, Phone, Mail, MapPin, Calendar, DollarSign } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import AdminLayout from '@/components/Admin/AdminLayout';
 
 const Customers = () => {
   const { customers, isLoading } = useCustomers();
@@ -32,131 +32,135 @@ const Customers = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Clients</h1>
-          <p className="text-muted-foreground">Gérez votre base de clients</p>
+    <AdminLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Clients</h1>
+            <p className="text-muted-foreground">Gérez votre base de clients</p>
+          </div>
         </div>
-      </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Rechercher par nom ou email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Rechercher par nom ou email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue placeholder="Filtrer par statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="active">Actif</SelectItem>
+              <SelectItem value="inactive">Inactif</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full md:w-[200px]">
-            <SelectValue placeholder="Filtrer par statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les statuts</SelectItem>
-            <SelectItem value="active">Actif</SelectItem>
-            <SelectItem value="inactive">Inactif</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
 
-      <div className="grid gap-4">
-        {filteredCustomers.map((customer) => (
-          <Card key={customer.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{customer.name}</CardTitle>
-                    <CardDescription className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      {customer.email || 'N/A'}
-                    </CardDescription>
-                  </div>
-                </div>
-                <Badge className={getStatusColor(customer.status)}>
-                  {customer.status || 'active'}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{customer.phone || 'N/A'}</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{(customer.total_spent || 0).toLocaleString()} CDF</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{customer.orders_count || 0} commande(s)</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    {customer.last_order_date 
-                      ? formatDistanceToNow(new Date(customer.last_order_date), { addSuffix: true, locale: fr })
-                      : 'Aucune commande'
-                    }
-                  </span>
-                </div>
-              </div>
-
-              {customer.address && (
-                <div className="mt-4 pt-4 border-t">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
-                    <div className="text-sm">
-                      {typeof customer.address === 'object' ? (
-                        <div>
-                          <div>{customer.address.street}</div>
-                          <div>{customer.address.city}</div>
-                          {customer.address.commune && <div>{customer.address.commune}</div>}
-                        </div>
-                      ) : (
-                        customer.address
-                      )}
+        <div className="grid gap-4">
+          {filteredCustomers.map((customer) => (
+            <Card key={customer.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <User className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{customer.name}</CardTitle>
+                      <CardDescription className="flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        {customer.email || 'N/A'}
+                      </CardDescription>
                     </div>
                   </div>
+                  <Badge className={getStatusColor(customer.status)}>
+                    {customer.status || 'active'}
+                  </Badge>
                 </div>
-              )}
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">{customer.phone || 'N/A'}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">{(customer.total_spent || 0).toLocaleString()} CDF</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">{customer.orders_count || 0} commande(s)</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      {customer.last_order_date 
+                        ? formatDistanceToNow(new Date(customer.last_order_date), { addSuffix: true, locale: fr })
+                        : 'Aucune commande'
+                      }
+                    </span>
+                  </div>
+                </div>
+
+                {customer.address && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+                      <div className="text-sm">
+                        {typeof customer.address === 'object' ? (
+                          <div>
+                            <div>{customer.address.street}</div>
+                            <div>{customer.address.city}</div>
+                            {customer.address.commune && <div>{customer.address.commune}</div>}
+                          </div>
+                        ) : (
+                          customer.address
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {filteredCustomers.length === 0 && (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <User className="w-12 h-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Aucun client trouvé</h3>
+              <p className="text-muted-foreground text-center">
+                {searchTerm || statusFilter !== 'all' 
+                  ? 'Essayez de modifier vos critères de recherche.'
+                  : 'Les nouveaux clients apparaîtront ici.'
+                }
+              </p>
             </CardContent>
           </Card>
-        ))}
+        )}
       </div>
-
-      {filteredCustomers.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <User className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Aucun client trouvé</h3>
-            <p className="text-muted-foreground text-center">
-              {searchTerm || statusFilter !== 'all' 
-                ? 'Essayez de modifier vos critères de recherche.'
-                : 'Les nouveaux clients apparaîtront ici.'
-              }
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    </AdminLayout>
   );
 };
 

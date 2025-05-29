@@ -31,11 +31,6 @@ export function MobileAdminNavBar() {
     return location.pathname.startsWith(path);
   };
 
-  // Ne pas afficher sur les routes non-admin
-  if (!location.pathname.startsWith('/admin')) {
-    return null;
-  }
-
   // Afficher seulement sur mobile
   if (!isMobile) {
     return null;
