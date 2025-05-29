@@ -10,9 +10,11 @@ import {
   BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function MobileAdminNavBar() {
   const location = useLocation();
+  const isMobile = useIsMobile();
   
   const navItems = [
     { icon: LayoutDashboard, path: '/admin', label: 'Dashboard' },
@@ -29,8 +31,18 @@ export function MobileAdminNavBar() {
     return location.pathname.startsWith(path);
   };
 
+  // Ne pas afficher sur les routes non-admin
+  if (!location.pathname.startsWith('/admin')) {
+    return null;
+  }
+
+  // Afficher seulement sur mobile
+  if (!isMobile) {
+    return null;
+  }
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl border-t border-gray-200 dark:border-gray-800">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl border-t border-gray-200 dark:border-gray-800">
       <div className="grid grid-cols-5 items-center px-2 py-2">
         {navItems.map((item) => {
           const active = isActive(item.path);
