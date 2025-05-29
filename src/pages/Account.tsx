@@ -12,7 +12,8 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { mockProducts } from '@/data/mockData';
+import { useOrders } from '@/hooks/useOrders';
+import { useProducts } from '@/hooks/useProducts';
 import ProductCard from '@/components/ProductCard';
 import { toast } from 'sonner';
 
@@ -20,63 +21,44 @@ const AccountPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
-
-  // Mock user data
+  
+  // Récupération des données depuis la base de données
+  const { orders } = useOrders();
+  const { products } = useProducts();
+  
+  // Données utilisateur fictives (à remplacer par de vraies données utilisateur)
   const user = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
+    name: 'Utilisateur',
+    email: 'user@example.com',
     phone: '+243 123 456 789',
     address: '123 Main St, Kinshasa',
-    avatarUrl: null, // Replace with actual avatar URL if available
+    avatarUrl: null,
   };
 
-  // Mock order history
-  const orderHistory = [
-    {
-      id: 'ORD-001',
-      date: '2023-07-15',
-      items: 3,
-      total: 75000,
-      status: 'Delivered',
-    },
-    {
-      id: 'ORD-002',
-      date: '2023-06-20',
-      items: 2,
-      total: 45000,
-      status: 'Delivered',
-    },
-    {
-      id: 'ORD-003',
-      date: '2023-05-05',
-      items: 1,
-      total: 25000,
-      status: 'Cancelled',
-    },
-  ];
-
-  // Mock recently viewed products
-  const recentlyViewed = mockProducts.slice(0, 4);
+  // Utilisation des vraies commandes depuis la base de données
+  const userOrders = orders?.slice(0, 5) || [];
+  
+  // Produits récemment vus (utilisation des produits populaires)
+  const recentlyViewed = products?.filter(p => p.popular && p.popular > 80).slice(0, 4) || [];
 
   // Handle form submissions
   const handleProfileUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Profile updated successfully');
+    toast.success('Profil mis à jour avec succès');
   };
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Password changed successfully');
+    toast.success('Mot de passe modifié avec succès');
   };
   
   const handleAddressUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Address updated successfully');
+    toast.success('Adresse mise à jour avec succès');
   };
 
   const handleLogout = () => {
-    toast.info('Logged out successfully');
-    // Implement actual logout logic here
+    toast.info('Déconnexion réussie');
   };
 
   return (
@@ -94,7 +76,7 @@ const AccountPage = () => {
               <div className="w-full md:w-1/3">
                 <Card className="glass-effect">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-center">My Account</CardTitle>
+                    <CardTitle className="text-center">Mon Compte</CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-col items-center">
                     <Avatar className="h-24 w-24 mb-4">
@@ -111,19 +93,19 @@ const AccountPage = () => {
                       <TabsList className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
                         <TabsTrigger value="profile" className="flex items-center justify-start">
                           <User className="h-4 w-4 mr-2" />
-                          <span>Profile</span>
+                          <span>Profil</span>
                         </TabsTrigger>
                         <TabsTrigger value="orders" className="flex items-center justify-start">
                           <ShoppingBag className="h-4 w-4 mr-2" />
-                          <span>Orders</span>
+                          <span>Commandes</span>
                         </TabsTrigger>
                         <TabsTrigger value="favorites" className="flex items-center justify-start">
                           <Heart className="h-4 w-4 mr-2" />
-                          <span>Favorites</span>
+                          <span>Favoris</span>
                         </TabsTrigger>
                         <TabsTrigger value="settings" className="flex items-center justify-start">
                           <Settings className="h-4 w-4 mr-2" />
-                          <span>Settings</span>
+                          <span>Paramètres</span>
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
@@ -134,26 +116,25 @@ const AccountPage = () => {
                       onClick={handleLogout}
                     >
                       <LogOut className="h-4 w-4 mr-2" />
-                      <span>Logout</span>
+                      <span>Déconnexion</span>
                     </Button>
                   </CardContent>
                 </Card>
               </div>
               
               <div className="w-full md:w-2/3">
-                {/* Here's the critical fix: We need to wrap all TabsContent components within a parent Tabs component */}
                 <Tabs value={activeTab}>
                   <TabsContent value="profile" className="mt-0">
                     <Card className="glass-effect">
                       <CardHeader>
-                        <CardTitle>Personal Information</CardTitle>
-                        <CardDescription>Update your personal details</CardDescription>
+                        <CardTitle>Informations Personnelles</CardTitle>
+                        <CardDescription>Mettez à jour vos informations personnelles</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-6">
                         <form onSubmit={handleProfileUpdate} className="space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label htmlFor="name">Full Name</Label>
+                              <Label htmlFor="name">Nom Complet</Label>
                               <Input id="name" defaultValue={user.name} />
                             </div>
                             <div className="space-y-2">
@@ -164,31 +145,31 @@ const AccountPage = () => {
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label htmlFor="phone">Phone</Label>
+                              <Label htmlFor="phone">Téléphone</Label>
                               <Input id="phone" defaultValue={user.phone} />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="avatar">Profile Picture</Label>
+                              <Label htmlFor="avatar">Photo de Profil</Label>
                               <Input id="avatar" type="file" />
                             </div>
                           </div>
                           
-                          <Button type="submit">Save Changes</Button>
+                          <Button type="submit">Sauvegarder</Button>
                         </form>
                         
                         <Separator />
                         
                         <div>
-                          <h3 className="text-lg font-medium mb-4">Address Information</h3>
+                          <h3 className="text-lg font-medium mb-4">Informations d'Adresse</h3>
                           <form onSubmit={handleAddressUpdate} className="space-y-4">
                             <div className="space-y-2">
-                              <Label htmlFor="address">Address</Label>
+                              <Label htmlFor="address">Adresse</Label>
                               <Input id="address" defaultValue={user.address} />
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label htmlFor="city">City</Label>
+                                <Label htmlFor="city">Ville</Label>
                                 <Input id="city" defaultValue="Kinshasa" />
                               </div>
                               <div className="space-y-2">
@@ -197,32 +178,32 @@ const AccountPage = () => {
                               </div>
                             </div>
                             
-                            <Button type="submit">Update Address</Button>
+                            <Button type="submit">Mettre à jour l'adresse</Button>
                           </form>
                         </div>
                         
                         <Separator />
                         
                         <div>
-                          <h3 className="text-lg font-medium mb-4">Security</h3>
+                          <h3 className="text-lg font-medium mb-4">Sécurité</h3>
                           <form onSubmit={handlePasswordChange} className="space-y-4">
                             <div className="space-y-2">
-                              <Label htmlFor="currentPassword">Current Password</Label>
+                              <Label htmlFor="currentPassword">Mot de passe actuel</Label>
                               <Input id="currentPassword" type="password" />
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label htmlFor="newPassword">New Password</Label>
+                                <Label htmlFor="newPassword">Nouveau mot de passe</Label>
                                 <Input id="newPassword" type="password" />
                               </div>
                               <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
                                 <Input id="confirmPassword" type="password" />
                               </div>
                             </div>
                             
-                            <Button type="submit">Change Password</Button>
+                            <Button type="submit">Changer le mot de passe</Button>
                           </form>
                         </div>
                       </CardContent>
@@ -232,25 +213,27 @@ const AccountPage = () => {
                   <TabsContent value="orders" className="mt-0">
                     <Card className="glass-effect">
                       <CardHeader>
-                        <CardTitle>Order History</CardTitle>
-                        <CardDescription>Track and manage your orders</CardDescription>
+                        <CardTitle>Historique des Commandes</CardTitle>
+                        <CardDescription>Suivez et gérez vos commandes</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        {orderHistory.length > 0 ? (
+                        {userOrders.length > 0 ? (
                           <div className="space-y-4">
-                            {orderHistory.map((order) => (
+                            {userOrders.map((order) => (
                               <Card key={order.id}>
                                 <CardHeader className="py-3">
                                   <div className="flex justify-between items-center">
                                     <div>
-                                      <CardTitle className="text-sm font-medium">{order.id}</CardTitle>
-                                      <CardDescription>{new Date(order.date).toLocaleDateString()}</CardDescription>
+                                      <CardTitle className="text-sm font-medium">{order.order_number}</CardTitle>
+                                      <CardDescription>{new Date(order.created_at).toLocaleDateString('fr-FR')}</CardDescription>
                                     </div>
                                     <div className="text-right">
                                       <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                                        order.status === 'Delivered' 
+                                        order.status === 'delivered' 
                                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                          : order.status === 'cancelled'
+                                          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                                       }`}>
                                         {order.status}
                                       </span>
@@ -259,13 +242,13 @@ const AccountPage = () => {
                                 </CardHeader>
                                 <CardContent className="py-2">
                                   <div className="flex justify-between items-center">
-                                    <p className="text-sm">{order.items} item{order.items !== 1 ? 's' : ''}</p>
-                                    <p className="font-medium">{order.total.toLocaleString()} FC</p>
+                                    <p className="text-sm">Commande #{order.order_number}</p>
+                                    <p className="font-medium">{order.total_amount.toLocaleString()} CDF</p>
                                   </div>
                                 </CardContent>
                                 <CardFooter className="pt-0 pb-3 flex justify-end">
                                   <Button variant="outline" size="sm">
-                                    View Details
+                                    Voir les détails
                                   </Button>
                                 </CardFooter>
                               </Card>
@@ -274,10 +257,10 @@ const AccountPage = () => {
                         ) : (
                           <div className="text-center py-8">
                             <ShoppingBag className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
-                            <h3 className="mt-2 text-lg font-medium">No orders yet</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">When you place orders, they will appear here</p>
+                            <h3 className="mt-2 text-lg font-medium">Aucune commande</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Vos commandes apparaîtront ici</p>
                             <Button className="mt-4" asChild>
-                              <a href="/products">Start Shopping</a>
+                              <a href="/products">Commencer les achats</a>
                             </Button>
                           </div>
                         )}
@@ -288,15 +271,23 @@ const AccountPage = () => {
                   <TabsContent value="favorites" className="mt-0">
                     <Card className="glass-effect">
                       <CardHeader>
-                        <CardTitle>Favorites</CardTitle>
-                        <CardDescription>Products you've saved</CardDescription>
+                        <CardTitle>Favoris</CardTitle>
+                        <CardDescription>Produits que vous avez sauvegardés</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {recentlyViewed.map((product) => (
-                            <ProductCard key={product.id} product={product} />
-                          ))}
-                        </div>
+                        {recentlyViewed.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {recentlyViewed.map((product) => (
+                              <ProductCard key={product.id} product={product} />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <Heart className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
+                            <h3 className="mt-2 text-lg font-medium">Aucun favori</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Vos produits favoris apparaîtront ici</p>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </TabsContent>
@@ -304,12 +295,12 @@ const AccountPage = () => {
                   <TabsContent value="settings" className="mt-0">
                     <Card className="glass-effect">
                       <CardHeader>
-                        <CardTitle>Account Settings</CardTitle>
-                        <CardDescription>Manage your account preferences</CardDescription>
+                        <CardTitle>Paramètres du Compte</CardTitle>
+                        <CardDescription>Gérez vos préférences de compte</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-6">
                         <div className="space-y-4">
-                          <h3 className="text-lg font-medium">Theme Preferences</h3>
+                          <h3 className="text-lg font-medium">Préférences de Thème</h3>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <div className={`p-1 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-orange-100'}`}>
@@ -320,9 +311,9 @@ const AccountPage = () => {
                                 )}
                               </div>
                               <div>
-                                <Label>Dark Mode</Label>
+                                <Label>Mode Sombre</Label>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  {darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                                  {darkMode ? 'Passer au mode clair' : 'Passer au mode sombre'}
                                 </p>
                               </div>
                             </div>
@@ -333,12 +324,12 @@ const AccountPage = () => {
                         <Separator />
                         
                         <div className="space-y-4">
-                          <h3 className="text-lg font-medium">Notification Preferences</h3>
+                          <h3 className="text-lg font-medium">Préférences de Notification</h3>
                           <div className="flex items-center justify-between">
                             <div>
-                              <Label>Push Notifications</Label>
+                              <Label>Notifications Push</Label>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Receive notifications for orders and promotions
+                                Recevoir des notifications pour les commandes et promotions
                               </p>
                             </div>
                             <Switch checked={notifications} onCheckedChange={setNotifications} />
@@ -348,7 +339,7 @@ const AccountPage = () => {
                         <Separator />
                         
                         <div className="space-y-4">
-                          <h3 className="text-lg font-medium">Communication Preferences</h3>
+                          <h3 className="text-lg font-medium">Préférences de Communication</h3>
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <Mail className="h-4 w-4" />
@@ -356,18 +347,18 @@ const AccountPage = () => {
                             </div>
                             <div className="flex items-center gap-2">
                               <Phone className="h-4 w-4" />
-                              <span className="text-sm">Phone: {user.phone}</span>
+                              <span className="text-sm">Téléphone: {user.phone}</span>
                             </div>
                           </div>
                           
                           <div className="flex flex-wrap gap-2">
                             <Button variant="outline" size="sm" className="mt-2">
                               <Mail className="h-4 w-4 mr-2" />
-                              Update Email
+                              Mettre à jour l'email
                             </Button>
                             <Button variant="outline" size="sm" className="mt-2">
                               <Phone className="h-4 w-4 mr-2" />
-                              Update Phone
+                              Mettre à jour le téléphone
                             </Button>
                           </div>
                         </div>
@@ -375,11 +366,11 @@ const AccountPage = () => {
                         <Separator />
                         
                         <div>
-                          <h3 className="text-lg font-medium text-red-600 dark:text-red-400">Danger Zone</h3>
+                          <h3 className="text-lg font-medium text-red-600 dark:text-red-400">Zone de Danger</h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            Permanently delete your account and all data
+                            Supprimer définitivement votre compte et toutes les données
                           </p>
-                          <Button variant="destructive">Delete Account</Button>
+                          <Button variant="destructive">Supprimer le Compte</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -388,14 +379,16 @@ const AccountPage = () => {
               </div>
             </div>
             
-            <div className="mt-8">
-              <h2 className="text-lg font-semibold mb-4">Recently Viewed Products</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {recentlyViewed.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
+            {recentlyViewed.length > 0 && (
+              <div className="mt-8">
+                <h2 className="text-lg font-semibold mb-4">Produits Récemment Vus</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {recentlyViewed.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
         </div>
       </main>

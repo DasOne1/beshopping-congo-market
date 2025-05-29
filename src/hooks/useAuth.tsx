@@ -4,27 +4,14 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
-interface AdminUser {
-  id: string;
-  email: string;
-  full_name?: string;
-  role: 'admin' | 'manager' | 'support';
-  avatar_url?: string;
-  is_active: boolean;
-}
-
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchAdminUser(session.user.id);
-      }
       setLoading(false);
     });
 
@@ -33,37 +20,12 @@ export const useAuth = () => {
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchAdminUser(session.user.id);
-        } else {
-          setAdminUser(null);
-        }
         setLoading(false);
       }
     );
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const fetchAdminUser = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching admin user:', error);
-        return;
-      }
-      
-      console.log('Admin user fetched:', data);
-      setAdminUser(data);
-    } catch (error) {
-      console.error('Error fetching admin user:', error);
-    }
-  };
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -80,7 +42,7 @@ export const useAuth = () => {
       
       toast({
         title: "Connexion réussie",
-        description: "Bienvenue dans le panneau d'administration",
+        description: "Bienvenue !",
       });
     } catch (error: any) {
       console.error('Sign in error:', error);
@@ -109,7 +71,7 @@ export const useAuth = () => {
 
       toast({
         title: "Compte créé",
-        description: "Votre compte administrateur a été créé avec succès",
+        description: "Votre compte a été créé avec succès",
       });
     } catch (error: any) {
       toast({
@@ -141,12 +103,10 @@ export const useAuth = () => {
 
   return {
     user,
-    adminUser,
     loading,
     signIn,
     signUp,
     signOut,
     isAuthenticated: !!user,
-    isAdmin: adminUser?.role === 'admin',
   };
 };

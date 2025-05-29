@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '@/components/Logo';
-import { Loader } from 'lucide-react';
+import { useDataPreloader } from '@/hooks/useDataPreloader';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -11,27 +11,36 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const { isLoaded, isLoading, error } = useDataPreloader();
 
   useEffect(() => {
-    // Simulate loading progress
-    const interval = setInterval(() => {
-      setLoadingProgress(prev => {
-        const newProgress = prev + 25;
-        return newProgress <= 100 ? newProgress : 100;
-      });
-    }, 500);
+    let progressInterval: NodeJS.Timeout;
 
-    // Total animation time: 2.5 seconds (500ms * 5 steps)
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-      setTimeout(onComplete, 500); // Wait for exit animation to complete
-    }, 2500);
+    if (isLoading) {
+      // Simulate loading progress while data is being preloaded
+      progressInterval = setInterval(() => {
+        setLoadingProgress(prev => {
+          const newProgress = prev + 15;
+          return newProgress <= 80 ? newProgress : 80; // Don't go to 100% until data is loaded
+        });
+      }, 300);
+    } else if (isLoaded || error) {
+      // Complete the progress when data is loaded or if there's an error
+      setLoadingProgress(100);
+      
+      // Wait a bit before hiding splash screen
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        setTimeout(onComplete, 500); // Wait for exit animation
+      }, 800);
+
+      return () => clearTimeout(timer);
+    }
 
     return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
+      if (progressInterval) clearInterval(progressInterval);
     };
-  }, [onComplete]);
+  }, [isLoading, isLoaded, error, onComplete]);
 
   return (
     <AnimatePresence>
@@ -72,32 +81,25 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               BeShop Congo
             </motion.h1>
             
-            {/* Loading indicators */}
-            <div className="flex space-x-3 mb-8">
-              {[0, 1, 2, 3].map((i) => (
-                <motion.div
-                  key={i}
-                  className={`h-3 w-3 rounded-full ${loadingProgress > i * 25 ? 'bg-primary' : 'bg-gray-300'}`}
-                  initial={{ scale: 0 }}
-                  animate={{ 
-                    scale: loadingProgress > i * 25 ? [0.8, 1.2, 1] : 0.8,
-                    opacity: loadingProgress > i * 25 ? 1 : 0.5
-                  }}
-                  transition={{ 
-                    delay: i * 0.2,
-                    duration: 0.5,
-                  }}
-                />
-              ))}
+            {/* Loading bar */}
+            <div className="w-64 h-2 bg-gray-200 rounded-full mb-4">
+              <motion.div
+                className="h-full bg-primary rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${loadingProgress}%` }}
+                transition={{ duration: 0.3 }}
+              />
             </div>
             
             <motion.div 
-              className="mt-4 text-sm text-muted-foreground font-medium"
+              className="text-sm text-muted-foreground font-medium"
               initial={{ opacity: 0 }}
-              animate={{ opacity: loadingProgress === 100 ? 1 : 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              Ready!
+              {isLoading ? 'Chargement des données...' : 
+               error ? 'Erreur de chargement' : 
+               'Prêt !'}
             </motion.div>
           </motion.div>
         </motion.div>

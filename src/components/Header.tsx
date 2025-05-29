@@ -55,25 +55,27 @@ const Header = () => {
           <span className="sr-only">Menu</span>
         </Button>
 
-        {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2">
-          <Logo size="small" asLink />
-          <span className="text-lg font-bold text-primary hidden sm:inline-block">BeShop</span>
-        </Link>
+        {/* Logo - positionné à gauche */}
+        <div className="flex items-center space-x-2">
+          <Link to="/" className="flex items-center space-x-2">
+            <Logo size="small" asLink />
+            <span className="text-lg font-bold text-primary hidden sm:inline-block">BeShop</span>
+          </Link>
+        </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
+        {/* Desktop Navigation - centré */}
+        <nav className="hidden md:flex items-center space-x-6 flex-1 justify-center">
           <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
-            Home
+            Accueil
           </Link>
           <Link to="/products" className="text-sm font-medium transition-colors hover:text-primary">
-            Products
+            Produits
           </Link>
           <Link to="/categories" className="text-sm font-medium transition-colors hover:text-primary">
-            Categories
+            Catégories
           </Link>
           <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
-            About Us
+            À Propos
           </Link>
           <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary">
             Contact
@@ -84,7 +86,7 @@ const Header = () => {
         <div className="flex items-center space-x-1 md:space-x-2">
           <Button variant="ghost" size="icon" onClick={toggleSearch} className="hidden sm:flex">
             <Search className="h-5 w-5" />
-            <span className="sr-only">Search</span>
+            <span className="sr-only">Recherche</span>
           </Button>
           
           <ThemeToggle />
@@ -97,7 +99,7 @@ const Header = () => {
                   {favoriteQuantity}
                 </span>
               )}
-              <span className="sr-only">Favorites</span>
+              <span className="sr-only">Favoris</span>
             </Button>
           </Link>
           
@@ -109,14 +111,14 @@ const Header = () => {
                   {cartQuantity}
                 </span>
               )}
-              <span className="sr-only">Cart</span>
+              <span className="sr-only">Panier</span>
             </Button>
           </Link>
 
           <Link to="/account" className="hidden sm:block">
             <Button variant="ghost" size="icon">
               <User className="h-5 w-5" />
-              <span className="sr-only">Account</span>
+              <span className="sr-only">Compte</span>
             </Button>
           </Link>
         </div>
@@ -134,22 +136,22 @@ const Header = () => {
           >
             <div className="container py-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Search products</h2>
+                <h2 className="text-lg font-medium">Rechercher des produits</h2>
                 <Button variant="ghost" size="icon" onClick={toggleSearch}>
                   <X className="h-5 w-5" />
-                  <span className="sr-only">Close</span>
+                  <span className="sr-only">Fermer</span>
                 </Button>
               </div>
               <form onSubmit={handleSearchSubmit}>
                 <div className="flex space-x-2">
                   <Input
-                    placeholder="Search for products..."
+                    placeholder="Rechercher des produits..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1"
                     autoFocus
                   />
-                  <Button type="submit">Search</Button>
+                  <Button type="submit">Rechercher</Button>
                 </div>
               </form>
             </div>
