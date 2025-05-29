@@ -5,18 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import WhatsAppContact from '@/components/WhatsAppContact';
 
 interface OrderFormProps {
-  onOrderComplete: () => void;
+  onOrderComplete?: () => void;
+  cartProducts?: any[];
+  subtotal?: number;
+  formatPrice?: (price: number) => string;
 }
 
-// WhatsApp officiel par défaut
-const OFFICIAL_WHATSAPP = "243978100940"; // WhatsApp officiel
-const BUSINESS_WHATSAPP = "243123456789"; // WhatsApp business en alternative
-
-const OrderForm = ({ onOrderComplete }: OrderFormProps) => {
+const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: OrderFormProps) => {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
@@ -44,16 +43,31 @@ const OrderForm = ({ onOrderComplete }: OrderFormProps) => {
       description: "Votre commande a été enregistrée avec succès.",
     });
 
-    onOrderComplete();
+    if (onOrderComplete) {
+      onOrderComplete();
+    }
   };
 
   const generateWhatsAppMessage = () => {
-    const message = `Bonjour, je souhaite passer une commande avec les informations suivantes:\n\nNom: ${customerName}\nTéléphone: ${customerPhone}\nAdresse: ${customerAddress}`;
+    let message = `Bonjour, je souhaite passer une commande avec les informations suivantes:\n\nNom: ${customerName}\nTéléphone: ${customerPhone}\nAdresse: ${customerAddress}`;
+    
+    if (cartProducts && cartProducts.length > 0) {
+      message += '\n\nProduits commandés:';
+      cartProducts.forEach(item => {
+        if (item.product) {
+          const price = item.product.discounted_price || item.product.original_price;
+          const itemTotal = formatPrice ? formatPrice(price * item.quantity) : (price * item.quantity);
+          message += `\n- ${item.product.name} x${item.quantity} = ${itemTotal} FC`;
+        }
+      });
+      
+      if (subtotal && formatPrice) {
+        message += `\n\nTotal: ${formatPrice(subtotal)} FC`;
+      }
+    }
+    
     return message;
   };
-
-  // Utiliser le WhatsApp officiel par défaut, et le business en fallback
-  const primaryWhatsApp = OFFICIAL_WHATSAPP;
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -114,7 +128,7 @@ const OrderForm = ({ onOrderComplete }: OrderFormProps) => {
           <div className="text-center text-sm text-gray-500">ou</div>
 
           <WhatsAppContact
-            phoneNumber={primaryWhatsApp}
+            phoneNumber="243978100940"
             message={generateWhatsAppMessage()}
             className="w-full bg-whatsapp hover:bg-whatsapp-dark text-white"
             size="lg"

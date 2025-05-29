@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -8,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCategories, Category } from '@/hooks/useCategories';
-import { ImageUpload } from '@/components/Admin/ImageUpload';
+import ImageUpload from '@/components/Admin/ImageUpload';
 import AdminLayout from '@/components/Admin/AdminLayout';
 
 const CategoryForm = () => {

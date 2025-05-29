@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -11,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useProducts, Product } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
-import { ImageUpload } from '@/components/Admin/ImageUpload';
+import ImageUpload from '@/components/Admin/ImageUpload';
 import AdminLayout from '@/components/Admin/AdminLayout';
 
 const ProductForm = () => {

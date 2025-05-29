@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface ImageUploadProps {
   label: string;
-  value: string | string[];
-  onChange: (value: string | string[]) => void;
-  multiple?: boolean;
+  images: string[];
+  onImagesChange: (images: string[]) => void;
+  maxImages?: number;
   accept?: string;
 }
 
@@ -60,9 +60,9 @@ const compressImage = (file: File, maxWidth: number = 800, maxHeight: number = 6
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
   label,
-  value,
-  onChange,
-  multiple = false,
+  images,
+  onImagesChange,
+  maxImages = 5,
   accept = "image/*"
 }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -78,6 +78,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       const processedFiles: string[] = [];
       
       for (let i = 0; i < files.length; i++) {
+        if (images.length + processedFiles.length >= maxImages) break;
+        
         const file = files[i];
         
         // Compress the image
@@ -94,12 +96,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         processedFiles.push(base64);
       }
 
-      if (multiple) {
-        const currentValues = Array.isArray(value) ? value : [];
-        onChange([...currentValues, ...processedFiles]);
-      } else {
-        onChange(processedFiles[0]);
-      }
+      onImagesChange([...images, ...processedFiles]);
 
       toast({
         title: "Images uploadées",
@@ -121,15 +118,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   };
 
   const removeImage = (indexToRemove: number) => {
-    if (multiple && Array.isArray(value)) {
-      const newValue = value.filter((_, index) => index !== indexToRemove);
-      onChange(newValue);
-    } else {
-      onChange('');
-    }
+    const newImages = images.filter((_, index) => index !== indexToRemove);
+    onImagesChange(newImages);
   };
-
-  const currentImages = multiple ? (Array.isArray(value) ? value : []) : (value ? [value] : []);
 
   return (
     <div className="space-y-4">
@@ -140,7 +131,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           ref={fileInputRef}
           type="file"
           accept={accept}
-          multiple={multiple}
+          multiple={maxImages > 1}
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -149,17 +140,23 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           type="button"
           variant="outline"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
+          disabled={isUploading || images.length >= maxImages}
           className="flex items-center gap-2"
         >
           <Upload className="w-4 h-4" />
           {isUploading ? 'Upload en cours...' : 'Choisir image(s)'}
         </Button>
+        
+        {images.length >= maxImages && (
+          <span className="text-sm text-muted-foreground">
+            Limite atteinte ({maxImages} images max)
+          </span>
+        )}
       </div>
 
-      {currentImages.length > 0 && (
+      {images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {currentImages.map((img, index) => (
+          {images.map((img, index) => (
             <div key={index} className="relative group">
               <div className="aspect-square rounded-lg overflow-hidden border border-gray-200">
                 {img ? (
