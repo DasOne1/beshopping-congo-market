@@ -29,7 +29,7 @@ export interface Product {
 export const useProducts = () => {
   const queryClient = useQueryClient();
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading, error } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -37,7 +37,13 @@ export const useProducts = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur lors du chargement des produits:', error);
+        // Retourner un tableau vide au lieu de lancer une erreur pour permettre l'affichage progressif
+        return [];
+      }
+      
+      console.log('Produits chargés:', data?.length);
       
       // Transform data to match both interfaces
       return data.map(product => ({
@@ -46,6 +52,10 @@ export const useProducts = () => {
         category: ''
       })) as Product[];
     },
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const { data: featuredProducts = [] } = useQuery({
@@ -58,7 +68,10 @@ export const useProducts = () => {
         .eq('status', 'active')
         .limit(6);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur lors du chargement des produits vedettes:', error);
+        return [];
+      }
       
       return data.map(product => ({
         ...product,
@@ -66,6 +79,8 @@ export const useProducts = () => {
         category: ''
       })) as Product[];
     },
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 
   const { data: popularProducts = [] } = useQuery({
@@ -78,7 +93,10 @@ export const useProducts = () => {
         .order('popular', { ascending: false })
         .limit(8);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur lors du chargement des produits populaires:', error);
+        return [];
+      }
       
       return data.map(product => ({
         ...product,
@@ -86,6 +104,8 @@ export const useProducts = () => {
         category: ''
       })) as Product[];
     },
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 
   const createProduct = useMutation({
@@ -198,6 +218,7 @@ export const useProducts = () => {
     featuredProducts,
     popularProducts,
     isLoading,
+    error,
     createProduct,
     updateProduct,
     deleteProduct,

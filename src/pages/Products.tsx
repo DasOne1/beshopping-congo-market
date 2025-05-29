@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
+import { Search, Filter, Grid, List, SlidersHorizontal, AlertCircle } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -10,13 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
-import { motion } from 'framer-motion';
-import { MobileNavBar } from '@/components/MobileNavBar';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Products = () => {
-  const { products, isLoading } = useProducts();
+  const { products, isLoading, error } = useProducts();
   const { categories } = useCategories();
   const [searchParams] = useSearchParams();
   const categoryFromUrl = searchParams.get('category');
@@ -275,47 +275,84 @@ const Products = () => {
             </div>
           </div>
 
+          {/* Error state */}
+          {error && (
+            <Alert className="mb-6 border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+              <AlertCircle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800 dark:text-orange-200">
+                Erreur lors du chargement des produits. Certains produits peuvent ne pas être affichés.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Loading state - Show skeleton cards while loading */}
+          {isLoading && products.length === 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-card rounded-lg border p-4"
+                >
+                  <div className="aspect-square bg-muted rounded-lg mb-4 animate-pulse" />
+                  <div className="space-y-2">
+                    <div className="h-4 bg-muted rounded animate-pulse" />
+                    <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+                    <div className="h-6 bg-muted rounded w-1/2 animate-pulse" />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
           {/* Results Info */}
-          <div className="mb-4 text-sm text-muted-foreground">
-            {filteredAndSortedProducts.length} produit(s) trouvé(s)
+          <div className="mb-4 text-sm text-muted-foreground flex items-center justify-between">
+            <span>{filteredAndSortedProducts.length} produit(s) trouvé(s)</span>
+            {isLoading && products.length > 0 && (
+              <span className="text-primary">Chargement de nouveaux produits...</span>
+            )}
           </div>
 
           {/* Products Grid */}
-          {filteredAndSortedProducts.length === 0 ? (
+          {filteredAndSortedProducts.length === 0 && !isLoading ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">Aucun produit trouvé avec ces critères.</p>
             </div>
           ) : (
-            <motion.div
-              className={`grid gap-6 ${
-                viewMode === 'grid' 
-                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-                  : 'grid-cols-1'
-              }`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              {filteredAndSortedProducts.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                >
-                  <ProductCard 
-                    product={product} 
-                    className={viewMode === 'list' ? 'w-full' : ''}
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
+            <AnimatePresence>
+              <motion.div
+                className={`grid gap-6 ${
+                  viewMode === 'grid' 
+                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                    : 'grid-cols-1'
+                }`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                {filteredAndSortedProducts.map((product, index) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    layout
+                  >
+                    <ProductCard 
+                      product={product} 
+                      className={viewMode === 'list' ? 'w-full' : ''}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
           )}
         </motion.div>
       </main>
       
       <Footer />
-      <MobileNavBar />
     </div>
   );
 };

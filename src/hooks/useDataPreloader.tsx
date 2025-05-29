@@ -7,25 +7,31 @@ export const useDataPreloader = () => {
     queryKey: ['preload-data'],
     queryFn: async () => {
       try {
-        // Précharger seulement les données essentielles pour réduire le temps de chargement
+        console.log('Début du préchargement des données essentielles...');
+        
+        // Précharger seulement les données essentielles
         const promises = [
           supabase.from('categories').select('id, name, slug').limit(10),
           supabase.from('products').select('id, name, images, original_price, featured').eq('featured', true).limit(6),
           supabase.from('settings').select('*').limit(5)
         ];
 
-        const [categoriesResult, productsResult, settingsResult] = await Promise.all(promises);
-
-        if (categoriesResult.error) throw categoriesResult.error;
-        if (productsResult.error) throw productsResult.error;
-        if (settingsResult.error) throw settingsResult.error;
-
-        console.log('Données essentielles préchargées:', { 
-          categories: categoriesResult.data?.length, 
-          products: productsResult.data?.length,
-          settings: settingsResult.data?.length 
+        const results = await Promise.allSettled(promises);
+        
+        let successCount = 0;
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            successCount++;
+            console.log(`Données ${['catégories', 'produits', 'paramètres'][index]} préchargées avec succès`);
+          } else {
+            console.warn(`Erreur lors du préchargement ${['catégories', 'produits', 'paramètres'][index]}:`, result.reason);
+          }
         });
 
+        console.log(`Préchargement terminé: ${successCount}/3 sources de données chargées`);
+        
+        // Retourner true même si certaines données n'ont pas pu être chargées
+        // L'application peut fonctionner avec des données partielles
         return true;
       } catch (error) {
         console.error('Erreur lors du préchargement:', error);
@@ -33,9 +39,12 @@ export const useDataPreloader = () => {
         return true;
       }
     },
-    retry: 1, // Réduire le nombre de tentatives
+    retry: 1,
+    retryDelay: 1000,
     staleTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
+    // Permettre à l'application de démarrer même si le préchargement échoue
+    throwOnError: false,
   });
 
   return {
