@@ -12,8 +12,9 @@ interface WhatsAppContactProps {
   useAlternate?: boolean;
 }
 
-const PRIMARY_WHATSAPP = "243978100940";
-const SECONDARY_WHATSAPP = "243974984449";
+// WhatsApp officiel par défaut, WhatsApp business en alternative
+const PRIMARY_WHATSAPP = "243978100940"; // WhatsApp officiel
+const SECONDARY_WHATSAPP = "243974984449"; // WhatsApp business
 
 const WhatsAppContact = ({
   phoneNumber,

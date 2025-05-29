@@ -22,9 +22,6 @@ export interface Product {
   status?: string;
   created_at?: string;
   updated_at?: string;
-  // Computed fields for compatibility
-  originalPrice?: number;
-  category?: string;
 }
 
 export const useProducts = () => {
@@ -45,20 +42,14 @@ export const useProducts = () => {
       }
       
       console.log('Produits chargés:', data?.length);
-      
-      // Transform data to match both interfaces
-      return data.map(product => ({
-        ...product,
-        originalPrice: product.original_price,
-        category: ''
-      })) as Product[];
+      return data as Product[];
     },
     retry: 2,
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
     refetchOnWindowFocus: false,
-    staleTime: 2 * 60 * 1000, // 2 minutes - données considérées comme fraîches
-    gcTime: 10 * 60 * 1000, // 10 minutes - temps avant suppression du cache
-    refetchInterval: 5 * 60 * 1000, // Actualisation automatique toutes les 5 minutes si nécessaire
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const { data: featuredProducts = [] } = useQuery({
@@ -77,16 +68,12 @@ export const useProducts = () => {
         return [];
       }
       
-      return data.map(product => ({
-        ...product,
-        originalPrice: product.original_price,
-        category: ''
-      })) as Product[];
+      return data as Product[];
     },
     retry: 2,
     refetchOnWindowFocus: false,
-    staleTime: 3 * 60 * 1000, // 3 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 3 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   const { data: popularProducts = [] } = useQuery({
@@ -105,16 +92,12 @@ export const useProducts = () => {
         return [];
       }
       
-      return data.map(product => ({
-        ...product,
-        originalPrice: product.original_price,
-        category: ''
-      })) as Product[];
+      return data as Product[];
     },
     retry: 2,
     refetchOnWindowFocus: false,
-    staleTime: 3 * 60 * 1000, // 3 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 3 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   const createProduct = useMutation({
@@ -125,7 +108,7 @@ export const useProducts = () => {
         .insert([{
           name: product.name,
           description: product.description,
-          original_price: product.original_price || product.originalPrice || 0,
+          original_price: product.original_price,
           discounted_price: product.discounted_price,
           discount: product.discount,
           images: product.images,
@@ -148,17 +131,10 @@ export const useProducts = () => {
     onSuccess: (newProduct) => {
       console.log('Produit créé avec succès, mise à jour du cache...');
       
-      // Mise à jour optimiste du cache
       queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
-        const transformedProduct = {
-          ...newProduct,
-          originalPrice: newProduct.original_price,
-          category: ''
-        } as Product;
-        return [transformedProduct, ...oldData];
+        return [newProduct, ...oldData];
       });
 
-      // Invalider les requêtes pour synchroniser avec la base de données
       queryClient.invalidateQueries({ queryKey: ['products'] });
       
       toast({
@@ -179,18 +155,10 @@ export const useProducts = () => {
   const updateProduct = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
       console.log('Mise à jour du produit:', id);
-      const updateData: any = { ...updates };
-      
-      // Convert compatibility fields
-      if (updates.originalPrice && !updates.original_price) {
-        updateData.original_price = updates.originalPrice;
-        delete updateData.originalPrice;
-      }
-      delete updateData.category; // Remove computed field
       
       const { data, error } = await supabase
         .from('products')
-        .update(updateData)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
@@ -201,15 +169,9 @@ export const useProducts = () => {
     onSuccess: (updatedProduct) => {
       console.log('Produit mis à jour avec succès, mise à jour du cache...');
       
-      // Mise à jour optimiste du cache
       queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
-        const transformedProduct = {
-          ...updatedProduct,
-          originalPrice: updatedProduct.original_price,
-          category: ''
-        } as Product;
         return oldData.map(product => 
-          product.id === updatedProduct.id ? transformedProduct : product
+          product.id === updatedProduct.id ? updatedProduct : product
         );
       });
 
@@ -244,7 +206,6 @@ export const useProducts = () => {
     onSuccess: (deletedId) => {
       console.log('Produit supprimé avec succès, mise à jour du cache...');
       
-      // Mise à jour optimiste du cache
       queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
         return oldData.filter(product => product.id !== deletedId);
       });

@@ -24,26 +24,16 @@ export const useRealtimeSync = () => {
           
           // Mise à jour optimiste du cache selon le type d'événement
           if (payload.eventType === 'INSERT' && payload.new) {
-            // Ajouter le nouveau produit au cache immédiatement
             queryClient.setQueryData(['products'], (oldData: any[] = []) => {
-              const newProduct = {
-                ...payload.new,
-                originalPrice: payload.new.original_price,
-                category: ''
-              };
-              return [newProduct, ...oldData];
+              return [payload.new, ...oldData];
             });
           } else if (payload.eventType === 'UPDATE' && payload.new) {
-            // Mettre à jour le produit dans le cache
             queryClient.setQueryData(['products'], (oldData: any[] = []) => {
               return oldData.map(product => 
-                product.id === payload.new.id 
-                  ? { ...payload.new, originalPrice: payload.new.original_price, category: '' }
-                  : product
+                product.id === payload.new.id ? payload.new : product
               );
             });
           } else if (payload.eventType === 'DELETE' && payload.old) {
-            // Supprimer le produit du cache
             queryClient.setQueryData(['products'], (oldData: any[] = []) => {
               return oldData.filter(product => product.id !== payload.old.id);
             });

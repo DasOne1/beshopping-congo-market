@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +9,7 @@ import { useCustomers } from '@/hooks/useCustomers';
 import { useOrders } from '@/hooks/useOrders';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from '@/components/ui/use-toast';
-import { WhatsAppIcon } from '@/components/WhatsAppIcon';
+import WhatsAppContact from '@/components/WhatsAppContact';
 
 interface OrderFormProps {
   cartProducts: any[];
@@ -210,7 +209,7 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
       // 6. Vider le panier
       clearCart();
 
-      // 7. Ouvrir WhatsApp directement
+      // 7. Ouvrir WhatsApp directement avec le WhatsApp officiel par défaut
       const encodedMessage = encodeURIComponent(whatsappMessage);
       window.open(`https://wa.me/243978100940?text=${encodedMessage}`, '_blank');
 
@@ -317,15 +316,16 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
           </div>
         </div>
 
-        <Button
-          onClick={handleSubmitOrder}
+        <WhatsAppContact
+          phoneNumber="243978100940"
+          message={`Bonjour! Je souhaite finaliser ma commande d'un montant de ${formatPrice(subtotal)} FC.`}
           className="w-full bg-[#25D366] hover:bg-[#075E54] text-white"
-          disabled={isSubmitting}
           size="lg"
+          onClick={handleSubmitOrder}
+          disabled={isSubmitting}
         >
-          <WhatsAppIcon className="mr-2 h-4 w-4" />
           {isSubmitting ? 'Création de la commande...' : 'Finaliser la commande via WhatsApp'}
-        </Button>
+        </WhatsAppContact>
 
         <p className="text-xs text-muted-foreground text-center">
           * Champs obligatoires. Votre commande sera enregistrée et vous serez redirigé vers WhatsApp automatiquement.
