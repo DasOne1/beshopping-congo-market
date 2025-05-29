@@ -23,9 +23,9 @@ import CustomOrder from '@/pages/CustomOrder';
 import NotFound from '@/pages/NotFound';
 
 // Admin Pages
-import AdminAuth from '@/components/AdminAuth';
 import AdminLayout from '@/components/Admin/AdminLayout';
 import Dashboard from '@/pages/Admin/Dashboard';
+import Catalog from '@/pages/Admin/Catalog';
 import AdminProducts from '@/pages/Admin/Products';
 import AdminCategories from '@/pages/Admin/Categories';
 import Orders from '@/pages/Admin/Orders';

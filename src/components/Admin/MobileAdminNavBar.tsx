@@ -7,8 +7,7 @@ import {
   ShoppingBag,
   Package,
   Users,
-  BarChart3,
-  Settings
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,10 +17,9 @@ export function MobileAdminNavBar() {
   const navItems = [
     { icon: LayoutDashboard, path: '/admin', label: 'Dashboard' },
     { icon: ShoppingBag, path: '/admin/orders', label: 'Orders' },
-    { icon: Package, path: '/admin/products', label: 'Catalog' },
+    { icon: Package, path: '/admin/catalog', label: 'Catalog' },
     { icon: Users, path: '/admin/customers', label: 'Customers' },
     { icon: BarChart3, path: '/admin/analytics', label: 'Analytics' },
-    { icon: Settings, path: '/admin/settings', label: 'Settings' },
   ];
 
   const isActive = (path: string) => {
@@ -34,7 +32,7 @@ export function MobileAdminNavBar() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
       <div className="bg-background shadow-lg border-t border-border/50">
-        <div className="grid grid-cols-6 items-center">
+        <div className="grid grid-cols-5 items-center">
           {navItems.map((item) => {
             const active = isActive(item.path);
             const ItemIcon = item.icon;
