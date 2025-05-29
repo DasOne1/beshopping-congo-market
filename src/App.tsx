@@ -1,142 +1,99 @@
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+import { Toaster } from '@/components/ui/toaster';
 import { CartProvider } from '@/contexts/CartContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
-import { Toaster } from '@/components/ui/toaster';
-import { MobileNavBar } from '@/components/MobileNavBar';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { useDataPreloader } from '@/hooks/useDataPreloader';
 import SplashScreen from '@/components/SplashScreen';
-import AdminAuth from '@/components/AdminAuth';
 
-// Pages
+// Public Pages
 import Index from '@/pages/Index';
 import Products from '@/pages/Products';
 import ProductDetails from '@/pages/ProductDetails';
 import Categories from '@/pages/Categories';
 import Cart from '@/pages/Cart';
 import Favorites from '@/pages/Favorites';
-import Account from '@/pages/Account';
-import AboutUs from '@/pages/AboutUs';
-import Contact from '@/pages/Contact';
 import CustomOrder from '@/pages/CustomOrder';
+import Contact from '@/pages/Contact';
+import AboutUs from '@/pages/AboutUs';
+import Account from '@/pages/Account';
 import NotFound from '@/pages/NotFound';
 
 // Admin Pages
-import AdminLayout from '@/components/Admin/AdminLayout';
+import AdminAuth from '@/components/AdminAuth';
 import Dashboard from '@/pages/Admin/Dashboard';
-import Catalog from '@/pages/Admin/Catalog';
-import AdminProducts from '@/pages/Admin/Products';
-import AdminCategories from '@/pages/Admin/Categories';
 import Orders from '@/pages/Admin/Orders';
+import AdminProducts from '@/pages/Admin/Products';
+import ProductForm from '@/pages/Admin/ProductForm';
+import Categories from '@/pages/Admin/Categories';
+import CategoryForm from '@/pages/Admin/CategoryForm';
+import Catalog from '@/pages/Admin/Catalog';
 import Customers from '@/pages/Admin/Customers';
 import Analytics from '@/pages/Admin/Analytics';
 import Settings from '@/pages/Admin/Settings';
 
-// Create a client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
-function App() {
-  const [showSplash, setShowSplash] = useState(true);
+function AppContent() {
+  const { isLoading } = useDataPreloader();
 
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-  };
-
-  if (showSplash) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <SplashScreen onComplete={handleSplashComplete} />
-      </QueryClientProvider>
-    );
+  if (isLoading) {
+    return <SplashScreen />;
   }
 
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<Index />} />
+      <Route path="/products" element={<Products />} />
+      <Route path="/product/:id" element={<ProductDetails />} />
+      <Route path="/categories" element={<Categories />} />
+      <Route path="/cart" element={<Cart />} />
+      <Route path="/favorites" element={<Favorites />} />
+      <Route path="/custom-order" element={<CustomOrder />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/about" element={<AboutUs />} />
+      <Route path="/account" element={<Account />} />
+
+      {/* Admin Routes */}
+      <Route path="/admin" element={<AdminAuth><Dashboard /></AdminAuth>} />
+      <Route path="/admin/orders" element={<AdminAuth><Orders /></AdminAuth>} />
+      <Route path="/admin/products" element={<AdminAuth><AdminProducts /></AdminAuth>} />
+      <Route path="/admin/products/new" element={<AdminAuth><ProductForm /></AdminAuth>} />
+      <Route path="/admin/products/edit/:id" element={<AdminAuth><ProductForm /></AdminAuth>} />
+      <Route path="/admin/categories" element={<AdminAuth><Categories /></AdminAuth>} />
+      <Route path="/admin/categories/new" element={<AdminAuth><CategoryForm /></AdminAuth>} />
+      <Route path="/admin/categories/edit/:id" element={<AdminAuth><CategoryForm /></AdminAuth>} />
+      <Route path="/admin/catalog" element={<AdminAuth><Catalog /></AdminAuth>} />
+      <Route path="/admin/customers" element={<AdminAuth><Customers /></AdminAuth>} />
+      <Route path="/admin/analytics" element={<AdminAuth><Analytics /></AdminAuth>} />
+      <Route path="/admin/settings" element={<AdminAuth><Settings /></AdminAuth>} />
+
+      {/* 404 Route */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <CartProvider>
           <FavoritesProvider>
             <Router>
-              <div className="App">
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/product/:id" element={<ProductDetails />} />
-                  <Route path="/categories" element={<Categories />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/favorites" element={<Favorites />} />
-                  <Route path="/account" element={<Account />} />
-                  <Route path="/about" element={<AboutUs />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/custom-order" element={<CustomOrder />} />
-                  
-                  {/* Admin Routes */}
-                  <Route path="/admin" element={
-                    <AdminAuth>
-                      <AdminLayout>
-                        <Dashboard />
-                      </AdminLayout>
-                    </AdminAuth>
-                  } />
-                  <Route path="/admin/catalog" element={
-                    <AdminAuth>
-                      <AdminLayout>
-                        <Catalog />
-                      </AdminLayout>
-                    </AdminAuth>
-                  } />
-                  <Route path="/admin/products" element={
-                    <AdminAuth>
-                      <AdminLayout>
-                        <AdminProducts />
-                      </AdminLayout>
-                    </AdminAuth>
-                  } />
-                  <Route path="/admin/categories" element={
-                    <AdminAuth>
-                      <AdminLayout>
-                        <AdminCategories />
-                      </AdminLayout>
-                    </AdminAuth>
-                  } />
-                  <Route path="/admin/orders" element={
-                    <AdminAuth>
-                      <AdminLayout>
-                        <Orders />
-                      </AdminLayout>
-                    </AdminAuth>
-                  } />
-                  <Route path="/admin/customers" element={
-                    <AdminAuth>
-                      <AdminLayout>
-                        <Customers />
-                      </AdminLayout>
-                    </AdminAuth>
-                  } />
-                  <Route path="/admin/analytics" element={
-                    <AdminAuth>
-                      <AdminLayout>
-                        <Analytics />
-                      </AdminLayout>
-                    </AdminAuth>
-                  } />
-                  <Route path="/admin/settings" element={
-                    <AdminAuth>
-                      <AdminLayout>
-                        <Settings />
-                      </AdminLayout>
-                    </AdminAuth>
-                  } />
-                  
-                  {/* 404 Route */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                
-                <MobileNavBar />
-                <Toaster />
-              </div>
+              <AppContent />
+              <Toaster />
             </Router>
           </FavoritesProvider>
         </CartProvider>

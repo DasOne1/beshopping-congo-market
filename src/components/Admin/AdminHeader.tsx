@@ -4,6 +4,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Settings, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { AdminDesktopNavigation } from './AdminDesktopNavigation';
 
 export function AdminHeader() {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export function AdminHeader() {
   return (
     <div className="sticky top-0 z-40 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-900/60">
       <div className="flex h-16 items-center justify-between px-4 lg:px-6">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-8">
           <div className="flex items-center space-x-2">
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
               <span className="text-white font-bold text-sm">A</span>
@@ -21,6 +22,9 @@ export function AdminHeader() {
               <p className="text-xs text-gray-500 dark:text-gray-400">Tableau de bord</p>
             </div>
           </div>
+          
+          {/* Desktop Navigation */}
+          <AdminDesktopNavigation />
         </div>
         
         <div className="flex items-center space-x-2">
