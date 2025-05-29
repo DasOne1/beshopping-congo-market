@@ -9,7 +9,6 @@ import { Separator } from '@/components/ui/separator';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useOrders } from '@/hooks/useOrders';
 import { useCart } from '@/contexts/CartContext';
-import { useProducts } from '@/hooks/useProducts';
 import { toast } from '@/components/ui/use-toast';
 import { WhatsAppIcon } from '@/components/WhatsAppIcon';
 
@@ -27,10 +26,9 @@ interface CustomerData {
 }
 
 const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
-  const { customers, createCustomer } = useCustomers();
+  const { customers, createCustomer, updateCustomerStats } = useCustomers();
   const { createOrder } = useOrders();
   const { cart, clearCart } = useCart();
-  const { products } = useProducts();
   
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: '',
@@ -77,23 +75,32 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
       return false;
     }
 
+    if (cartProducts.length === 0) {
+      toast({
+        title: "Erreur",
+        description: "Votre panier est vide",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     return true;
   };
 
   const findOrCreateCustomer = async () => {
-    // Chercher un client existant par téléphone ou email
-    const existingCustomer = customers.find(customer => 
-      (customer.phone && customer.phone === customerData.phone) ||
-      (customer.email && customerData.email && customer.email === customerData.email)
-    );
-
-    if (existingCustomer) {
-      console.log('Client existant trouvé:', existingCustomer);
-      return existingCustomer.id;
-    }
-
-    // Créer un nouveau client
     try {
+      // Chercher un client existant par téléphone ou email
+      const existingCustomer = customers.find(customer => 
+        (customer.phone && customer.phone === customerData.phone) ||
+        (customer.email && customerData.email && customer.email === customerData.email)
+      );
+
+      if (existingCustomer) {
+        console.log('Client existant trouvé:', existingCustomer);
+        return existingCustomer.id;
+      }
+
+      // Créer un nouveau client
       const newCustomer = await createCustomer.mutateAsync({
         name: customerData.name,
         email: customerData.email || undefined,
@@ -101,14 +108,16 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
         address: {
           full_address: customerData.address
         },
-        status: 'active'
+        status: 'active',
+        total_spent: 0,
+        orders_count: 0
       });
       
       console.log('Nouveau client créé:', newCustomer);
       return newCustomer.id;
     } catch (error) {
       console.error('Erreur lors de la création du client:', error);
-      throw error;
+      throw new Error('Impossible de créer ou trouver le client');
     }
   };
 
@@ -118,8 +127,11 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
     setIsSubmitting(true);
 
     try {
+      console.log('Début du processus de commande...');
+
       // 1. Trouver ou créer le client
       const customerId = await findOrCreateCustomer();
+      console.log('Client ID obtenu:', customerId);
 
       // 2. Préparer les articles de la commande
       const orderItems = cartProducts.map(item => {
@@ -135,6 +147,8 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
           total_price: price * item.quantity
         };
       }).filter(Boolean);
+
+      console.log('Articles de commande préparés:', orderItems);
 
       // 3. Créer la commande
       const orderData = {
@@ -157,6 +171,8 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
         notes: orderNotes
       };
 
+      console.log('Données de commande préparées:', orderData);
+
       const newOrder = await createOrder.mutateAsync({
         order: orderData,
         items: orderItems
@@ -164,7 +180,15 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
 
       console.log('Commande créée avec succès:', newOrder);
 
-      // 4. Préparer le message WhatsApp
+      // 4. Mettre à jour les statistiques du client
+      await updateCustomerStats.mutateAsync({
+        customerId: customerId,
+        orderAmount: subtotal
+      });
+
+      console.log('Statistiques client mises à jour');
+
+      // 5. Préparer le message WhatsApp
       let whatsappMessage = `Bonjour! Voici ma commande #${newOrder.order_number}:\n\n`;
       whatsappMessage += `📋 *Détails de la commande:*\n`;
       
@@ -183,23 +207,23 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: OrderFormProps) => {
       if (orderNotes) whatsappMessage += `📝 *Notes:* ${orderNotes}\n\n`;
       whatsappMessage += `Merci de confirmer la commande et les modalités de livraison.`;
 
-      // 5. Ouvrir WhatsApp
-      const phone = customerData.phone.replace(/\D/g, '');
-      window.open(`https://wa.me/243978100940?text=${encodeURIComponent(whatsappMessage)}`, '_blank');
+      // 6. Ouvrir WhatsApp
+      const encodedMessage = encodeURIComponent(whatsappMessage);
+      window.open(`https://wa.me/243978100940?text=${encodedMessage}`, '_blank');
 
-      // 6. Vider le panier
+      // 7. Vider le panier
       clearCart();
 
       toast({
         title: "Commande créée avec succès!",
-        description: `Votre commande #${newOrder.order_number} a été enregistrée`,
+        description: `Votre commande #${newOrder.order_number} a été enregistrée et vous serez redirigé vers WhatsApp`,
       });
 
     } catch (error) {
       console.error('Erreur lors de la création de la commande:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de créer la commande. Veuillez réessayer.",
+        description: `Impossible de créer la commande: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
         variant: "destructive",
       });
     } finally {

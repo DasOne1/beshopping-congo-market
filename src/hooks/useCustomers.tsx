@@ -60,6 +60,49 @@ export const useCustomers = () => {
     },
   });
 
+  const updateCustomerStats = useMutation({
+    mutationFn: async ({ customerId, orderAmount }: { customerId: string; orderAmount: number }) => {
+      // Récupérer les statistiques actuelles du client
+      const { data: currentCustomer, error: fetchError } = await supabase
+        .from('customers')
+        .select('total_spent, orders_count')
+        .eq('id', customerId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const newTotalSpent = (currentCustomer.total_spent || 0) + orderAmount;
+      const newOrdersCount = (currentCustomer.orders_count || 0) + 1;
+
+      // Mettre à jour les statistiques
+      const { data, error } = await supabase
+        .from('customers')
+        .update({
+          total_spent: newTotalSpent,
+          orders_count: newOrdersCount,
+          last_order_date: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', customerId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    },
+    onError: (error: any) => {
+      console.error('Erreur lors de la mise à jour des statistiques client:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour les statistiques du client",
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateCustomer = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Customer> & { id: string }) => {
       const { data, error } = await supabase
@@ -118,6 +161,7 @@ export const useCustomers = () => {
     isLoading,
     createCustomer,
     updateCustomer,
+    updateCustomerStats,
     deleteCustomer,
   };
 };
