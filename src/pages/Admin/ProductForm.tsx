@@ -112,183 +112,216 @@ const ProductForm = () => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Informations du produit</CardTitle>
-              <CardDescription>
-                Remplissez tous les champs requis pour {isEditing ? 'modifier' : 'créer'} le produit
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Nom du produit *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name || ''}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      placeholder="Nom du produit"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="description">Description *</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description || ''}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      placeholder="Description du produit"
-                      rows={4}
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="original_price">Prix original (FC) *</Label>
-                      <Input
-                        id="original_price"
-                        type="number"
-                        value={formData.original_price || 0}
-                        onChange={(e) => handleInputChange('original_price', parseInt(e.target.value) || 0)}
-                        placeholder="0"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="discounted_price">Prix promotionnel (FC)</Label>
-                      <Input
-                        id="discounted_price"
-                        type="number"
-                        value={formData.discounted_price || 0}
-                        onChange={(e) => handleInputChange('discounted_price', parseInt(e.target.value) || 0)}
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="stock">Stock</Label>
-                      <Input
-                        id="stock"
-                        type="number"
-                        value={formData.stock || 0}
-                        onChange={(e) => handleInputChange('stock', parseInt(e.target.value) || 0)}
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="category">Catégorie</Label>
-                      <Select 
-                        value={formData.category_id || ''} 
-                        onValueChange={(value) => handleInputChange('category_id', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner une catégorie" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">Aucune catégorie</SelectItem>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="featured"
-                      checked={formData.featured || false}
-                      onCheckedChange={(checked) => handleInputChange('featured', checked)}
-                    />
-                    <Label htmlFor="featured">Produit vedette</Label>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="status">Statut</Label>
-                    <Select 
-                      value={formData.status || 'active'} 
-                      onValueChange={(value) => handleInputChange('status', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Actif</SelectItem>
-                        <SelectItem value="inactive">Inactif</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <ImageUpload
-                    images={formData.images || []}
-                    onImagesChange={handleImagesChange}
-                    label="Images du produit"
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Informations principales */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Informations principales</CardTitle>
+                <CardDescription>
+                  Détails de base du produit
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Nom du produit *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name || ''}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="Nom du produit"
+                    required
                   />
+                </div>
 
-                  <div>
-                    <Label>Tags</Label>
-                    <div className="flex gap-2 mb-2">
-                      <Input
-                        value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                        placeholder="Ajouter un tag"
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                      />
-                      <Button type="button" onClick={handleAddTag} size="sm">
-                        Ajouter
-                      </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {(formData.tags || []).map((tag, index) => (
-                        <div key={index} className="flex items-center gap-1 bg-secondary px-2 py-1 rounded text-sm">
-                          {tag}
-                          <Button
-                            type="button"
-                            onClick={() => handleRemoveTag(tag)}
-                            size="sm"
-                            variant="ghost"
-                            className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                          >
-                            ×
-                          </Button>
-                        </div>
+                <div>
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description || ''}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    placeholder="Description du produit"
+                    rows={4}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="category">Catégorie</Label>
+                  <Select 
+                    value={formData.category_id || ''} 
+                    onValueChange={(value) => handleInputChange('category_id', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une catégorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Aucune catégorie</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
                       ))}
-                    </div>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Prix et stock */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Prix et stock</CardTitle>
+                <CardDescription>
+                  Configuration financière et inventaire
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="original_price">Prix original (FC) *</Label>
+                    <Input
+                      id="original_price"
+                      type="number"
+                      value={formData.original_price || 0}
+                      onChange={(e) => handleInputChange('original_price', parseInt(e.target.value) || 0)}
+                      placeholder="0"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="discounted_price">Prix promotionnel (FC)</Label>
+                    <Input
+                      id="discounted_price"
+                      type="number"
+                      value={formData.discounted_price || 0}
+                      onChange={(e) => handleInputChange('discounted_price', parseInt(e.target.value) || 0)}
+                      placeholder="0"
+                    />
                   </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate('/admin/products')}
-                >
-                  Annuler
-                </Button>
-                <Button 
-                  type="submit"
-                  disabled={createProduct.isPending || updateProduct.isPending}
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  {createProduct.isPending || updateProduct.isPending 
-                    ? (isEditing ? 'Mise à jour...' : 'Création...') 
-                    : (isEditing ? 'Mettre à jour' : 'Créer le produit')
-                  }
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <div>
+                  <Label htmlFor="stock">Stock disponible</Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    value={formData.stock || 0}
+                    onChange={(e) => handleInputChange('stock', parseInt(e.target.value) || 0)}
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="featured"
+                    checked={formData.featured || false}
+                    onCheckedChange={(checked) => handleInputChange('featured', checked)}
+                  />
+                  <Label htmlFor="featured">Produit vedette</Label>
+                </div>
+
+                <div>
+                  <Label htmlFor="status">Statut</Label>
+                  <Select 
+                    value={formData.status || 'active'} 
+                    onValueChange={(value) => handleInputChange('status', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Actif</SelectItem>
+                      <SelectItem value="inactive">Inactif</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Images et tags */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Images du produit</CardTitle>
+                <CardDescription>
+                  Ajoutez des images pour présenter votre produit
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ImageUpload
+                  images={formData.images || []}
+                  onImagesChange={handleImagesChange}
+                  label=""
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Tags et métadonnées</CardTitle>
+                <CardDescription>
+                  Mots-clés pour améliorer la recherche
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Ajouter des tags</Label>
+                  <div className="flex gap-2 mb-3">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Nouveau tag"
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                    />
+                    <Button type="button" onClick={handleAddTag} size="sm">
+                      Ajouter
+                    </Button>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {(formData.tags || []).map((tag, index) => (
+                      <div key={index} className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
+                        {tag}
+                        <Button
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-4 w-4 p-0 hover:bg-red-200 hover:text-red-800 rounded-full"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/admin/products')}
+            >
+              Annuler
+            </Button>
+            <Button 
+              type="submit"
+              disabled={createProduct.isPending || updateProduct.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {createProduct.isPending || updateProduct.isPending 
+                ? (isEditing ? 'Mise à jour...' : 'Création...') 
+                : (isEditing ? 'Mettre à jour' : 'Créer le produit')
+              }
+            </Button>
+          </div>
         </form>
       </div>
     </AdminLayout>
