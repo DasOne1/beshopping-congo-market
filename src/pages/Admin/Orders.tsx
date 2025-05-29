@@ -18,8 +18,8 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (order.order_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.customer_name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -108,10 +108,10 @@ const Orders = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div>
-                      <CardTitle className="text-lg">{order.order_number}</CardTitle>
+                      <CardTitle className="text-lg">{order.order_number || 'N/A'}</CardTitle>
                       <CardDescription className="flex items-center gap-2">
                         <User className="w-4 h-4" />
-                        {order.customer_name}
+                        {order.customer_name || 'Client inconnu'}
                       </CardDescription>
                     </div>
                     <Badge className={getStatusColor(order.status || 'pending')}>

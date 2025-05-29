@@ -28,7 +28,7 @@ const ProductForm = () => {
     original_price: 0,
     discounted_price: 0,
     stock: 0,
-    category_id: '',
+    category_id: null,
     images: [],
     tags: [],
     featured: false,
@@ -41,7 +41,10 @@ const ProductForm = () => {
     if (isEditing && id && products.length > 0) {
       const product = products.find(p => p.id === id);
       if (product) {
-        setFormData(product);
+        setFormData({
+          ...product,
+          category_id: product.category_id || null
+        });
       }
     }
   }, [isEditing, id, products]);
@@ -79,12 +82,17 @@ const ProductForm = () => {
     }
 
     try {
+      const submitData = {
+        ...formData,
+        category_id: formData.category_id === 'none' ? null : formData.category_id
+      };
+
       if (isEditing && id) {
-        await updateProduct.mutateAsync({ ...formData, id } as Product & { id: string });
+        await updateProduct.mutateAsync({ ...submitData, id } as Product & { id: string });
       } else {
-        await createProduct.mutateAsync(formData as Omit<Product, 'id' | 'created_at' | 'updated_at'>);
+        await createProduct.mutateAsync(submitData as Omit<Product, 'id' | 'created_at' | 'updated_at'>);
       }
-      navigate('/admin/products');
+      navigate('/admin/catalog');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
     }
@@ -97,7 +105,7 @@ const ProductForm = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/admin/products')}
+            onClick={() => navigate('/admin/catalog')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour
@@ -149,8 +157,8 @@ const ProductForm = () => {
                 <div>
                   <Label htmlFor="category">Catégorie</Label>
                   <Select 
-                    value={formData.category_id || ''} 
-                    onValueChange={(value) => handleInputChange('category_id', value)}
+                    value={formData.category_id || 'none'} 
+                    onValueChange={(value) => handleInputChange('category_id', value === 'none' ? null : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner une catégorie" />
@@ -306,7 +314,7 @@ const ProductForm = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate('/admin/products')}
+              onClick={() => navigate('/admin/catalog')}
             >
               Annuler
             </Button>
