@@ -13,12 +13,17 @@ import WhatsAppContact from '@/components/WhatsAppContact';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { products, isLoading: productsLoading } = useProducts();
+  
+  // Activer la synchronisation en temps réel
+  useRealtimeSync();
+  
+  const { products, featuredProducts, popularProducts, isLoading: productsLoading } = useProducts();
   const { categories } = useCategories();
   const { trackEvent } = useAnalytics();
 
@@ -31,12 +36,7 @@ const Index = () => {
     });
   }, []);
 
-  const featuredProducts = products?.filter(p => p.featured && p.status === 'active') || [];
-  const popularProducts = products?.filter(p => p.popular > 0 && p.status === 'active')
-    .sort((a, b) => b.popular - a.popular)
-    .slice(0, 8) || [];
-
-  // Group products by category
+  // Group products by category with real-time data
   const productsByCategory = categories?.map(category => ({
     category,
     products: products?.filter(p => p.category_id === category.id && p.status === 'active').slice(0, 4) || []

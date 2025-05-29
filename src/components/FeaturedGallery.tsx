@@ -7,7 +7,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { mockProducts } from '@/data/mockData';
+import { useProducts } from '@/hooks/useProducts';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -18,10 +19,14 @@ export function FeaturedGallery() {
   const [current, setCurrent] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
   
-  // Get the 5 most popular products
-  const featuredProducts = [...mockProducts]
+  // Utiliser les données en temps réel
+  useRealtimeSync();
+  const { products } = useProducts();
+  
+  // Get the 5 most popular products from real data
+  const featuredProducts = products?.filter(p => p.popular > 0 && p.status === 'active')
     .sort((a, b) => b.popular - a.popular)
-    .slice(0, 5);
+    .slice(0, 5) || [];
   
   // Autoplay
   useEffect(() => {
@@ -46,6 +51,22 @@ export function FeaturedGallery() {
       api.off("select", onSelect);
     };
   }, [api]);
+
+  if (featuredProducts.length === 0) {
+    return (
+      <section className="py-4 mb-6">
+        <div className="container px-2 sm:px-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-200 aspect-[4/3] rounded-2xl mb-3"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-4 mb-6">
@@ -92,7 +113,7 @@ export function FeaturedGallery() {
                         />
                         <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/70 via-black/40 to-transparent text-white">
                           <h3 className="font-medium truncate">{product.name}</h3>
-                          <p className="text-sm opacity-90">{product.originalPrice.toLocaleString()} CDF</p>
+                          <p className="text-sm opacity-90">{product.original_price.toLocaleString()} CDF</p>
                           
                           <div className="absolute bottom-4 right-4 bg-primary rounded-full p-2 shadow-lg">
                             <ShoppingCart size={18} className="text-white" />

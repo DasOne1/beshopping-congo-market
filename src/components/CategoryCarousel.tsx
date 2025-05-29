@@ -10,12 +10,16 @@ import {
 } from "@/components/ui/carousel";
 import CategoryCard from '@/components/CategoryCard';
 import { useCategories } from '@/hooks/useCategories';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useNavigate } from 'react-router-dom';
 
 const CategoryCarousel = () => {
   const { categories, isLoading } = useCategories();
   const navigate = useNavigate();
   const [api, setApi] = useState<any>();
+
+  // Activer la synchronisation en temps réel pour les catégories
+  useRealtimeSync();
 
   // Auto-play functionality
   useEffect(() => {
