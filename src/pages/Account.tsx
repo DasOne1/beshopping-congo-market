@@ -1,125 +1,260 @@
 
 import React from 'react';
-import { User, MessageCircle } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Calendar } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFavorites } from '@/contexts/FavoritesContext';
+import { useCart } from '@/contexts/CartContext';
+import { useProducts } from '@/hooks/useProducts';
+import ProductSkeleton from '@/components/ProductSkeleton';
 import { motion } from 'framer-motion';
 
 const Account = () => {
-  // Simulation des données utilisateur
+  const { favorites } = useFavorites();
+  const { cart } = useCart();
+  const { products, isLoading } = useProducts();
+
+  // Get favorite products
+  const favoriteProducts = products.filter(product => 
+    favorites.includes(product.id)
+  );
+
+  // Get cart products
+  const cartProducts = cart.map(cartItem => {
+    const product = products.find(p => p.id === cartItem.productId);
+    return {
+      ...cartItem,
+      product
+    };
+  }).filter(item => item.product);
+
+  // Mock user data - in a real app, this would come from authentication
   const user = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+243 123 456 789',
-    joinDate: '2024-01-15',
-    totalOrders: 12,
-    totalSpent: 450000
-  };
-
-  const formatPrice = (price: number): string => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  };
-
-  const handleWhatsAppContact = () => {
-    const phoneNumber = '+243978100940';
-    const message = encodeURIComponent('Bonjour BeShopping Congo ! Je souhaite entrer en contact avec vous.');
-    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+    name: "Utilisateur",
+    email: "utilisateur@example.com",
+    phone: "+243 XXX XXX XXX",
+    address: "Lubumbashi, Congo"
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8 pb-20 md:pb-8">
+      <main className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-20 md:pb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6 }}
         >
-          <h1 className="text-2xl md:text-3xl font-bold mb-8 text-foreground flex items-center">
-            <User className="mr-3 h-8 w-8" />
+          <h1 className="text-2xl md:text-3xl font-bold mb-6 flex items-center">
+            <User className="mr-2 h-6 w-6" />
             Mon Compte
           </h1>
 
-          {/* Profile Info Card */}
-          <Card className="mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* User Profile */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <User className="mr-2 h-5 w-5" />
+                  Profil Utilisateur
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span>{user.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span>{user.email}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span>{user.phone}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span>{user.address}</span>
+                </div>
+                <Button variant="outline" className="w-full mt-4">
+                  Modifier le profil
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Favorites Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Heart className="mr-2 h-5 w-5" />
+                  Mes Favoris
+                </CardTitle>
+                <CardDescription>
+                  {favorites.length} produit(s) dans vos favoris
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary mb-2">
+                  {favorites.length}
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Produits sauvegardés pour plus tard
+                </p>
+                <Button variant="outline" className="w-full">
+                  Voir mes favoris
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Cart Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  Mon Panier
+                </CardTitle>
+                <CardDescription>
+                  {cart.length} article(s) dans votre panier
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary mb-2">
+                  {cart.length}
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Articles prêts pour la commande
+                </p>
+                <Button variant="outline" className="w-full">
+                  Voir mon panier
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Favorites */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Favoris Récents</CardTitle>
+                <CardDescription>Vos derniers produits ajoutés aux favoris</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    <ProductSkeleton count={3} />
+                  </div>
+                ) : favoriteProducts.length > 0 ? (
+                  <div className="space-y-4">
+                    {favoriteProducts.slice(0, 3).map(product => (
+                      <div key={product.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                        <img 
+                          src={product.images[0] || '/favicon.svg'} 
+                          alt={product.name}
+                          className="w-12 h-12 object-cover rounded-md"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">{product.name}</h4>
+                          <p className="text-sm text-primary font-medium">
+                            {(product.discounted_price || product.original_price).toLocaleString()} FC
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {favoriteProducts.length > 3 && (
+                      <Button variant="ghost" className="w-full">
+                        Voir tous les favoris ({favoriteProducts.length})
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">Aucun favori pour le moment</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Cart Items */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Articles du Panier</CardTitle>
+                <CardDescription>Vos articles actuels dans le panier</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    <ProductSkeleton count={3} />
+                  </div>
+                ) : cartProducts.length > 0 ? (
+                  <div className="space-y-4">
+                    {cartProducts.slice(0, 3).map(item => (
+                      <div key={item.productId} className="flex items-center gap-3 p-3 border rounded-lg">
+                        <img 
+                          src={item.product?.images[0] || '/favicon.svg'} 
+                          alt={item.product?.name}
+                          className="w-12 h-12 object-cover rounded-md"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">{item.product?.name}</h4>
+                          <p className="text-sm text-muted-foreground">Quantité: {item.quantity}</p>
+                          <p className="text-sm text-primary font-medium">
+                            {((item.product?.discounted_price || item.product?.original_price || 0) * item.quantity).toLocaleString()} FC
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {cartProducts.length > 3 && (
+                      <Button variant="ghost" className="w-full">
+                        Voir tout le panier ({cartProducts.length})
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">Votre panier est vide</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <Card className="mt-6">
             <CardHeader>
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                  <User className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">{user.name}</CardTitle>
-                  <p className="text-muted-foreground">{user.email}</p>
-                  <p className="text-sm text-muted-foreground">Membre depuis {new Date(user.joinDate).toLocaleDateString('fr-FR')}</p>
-                </div>
-              </div>
+              <CardTitle>Actions Rapides</CardTitle>
+              <CardDescription>Gérez votre compte et vos préférences</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">{user.totalOrders}</div>
-                  <div className="text-sm text-muted-foreground">Commandes</div>
-                </div>
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">Premium</div>
-                  <div className="text-sm text-muted-foreground">Statut</div>
-                </div>
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">{formatPrice(user.totalSpent)} FC</div>
-                  <div className="text-sm text-muted-foreground">Total dépensé</div>
-                </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                  <Package className="h-5 w-5" />
+                  <span className="text-xs">Mes Commandes</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                  <Heart className="h-5 w-5" />
+                  <span className="text-xs">Favoris</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                  <User className="h-5 w-5" />
+                  <span className="text-xs">Profil</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                  <Mail className="h-5 w-5" />
+                  <span className="text-xs">Support</span>
+                </Button>
               </div>
             </CardContent>
           </Card>
-
-          {/* Thank You Message */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <Card className="text-center p-4 md:p-8 bg-gradient-to-br from-primary/5 to-secondary/5">
-              <CardContent className="space-y-6">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                  <User className="h-10 w-10 text-primary" />
-                </div>
-                
-                <div className="space-y-4">
-                  <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
-                    Merci pour votre confiance !
-                  </h2>
-                  <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-                    Chez BeShopping Congo, nous sommes reconnaissants de vous compter parmi nos clients privilégiés. 
-                    Votre satisfaction est notre priorité et nous continuons à travailler pour vous offrir 
-                    les meilleurs produits et le meilleur service.
-                  </p>
-                  <p className="text-sm md:text-base text-muted-foreground">
-                    Pour toute question, suggestion ou assistance, n'hésitez pas à nous contacter directement via WhatsApp.
-                  </p>
-                </div>
-
-                <div className="pt-4 flex flex-col items-center space-y-3">
-                  <Button 
-                    onClick={handleWhatsAppContact}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 md:py-3 text-sm md:text-base w-full max-w-xs"
-                    size="lg"
-                  >
-                    <MessageCircle className="mr-2 h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
-                    <span className="truncate">Nous contacter</span>
-                  </Button>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    Numéro : +243 978100940
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
         </motion.div>
       </main>
-      
+
       <Footer />
     </div>
   );

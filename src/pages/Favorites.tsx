@@ -1,20 +1,43 @@
+
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import ProductSkeleton from '@/components/ProductSkeleton';
 import { Button } from '@/components/ui/button';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useProducts } from '@/hooks/useProducts';
 
 const Favorites = () => {
   const { favorites, removeFromFavorites } = useFavorites();
-  const { products } = useProducts();
+  const { products, isLoading } = useProducts();
   
   // Get detailed product information for favorited items
   const favoriteProducts = products.filter(product => 
     favorites.includes(product.id)
   );
+
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        
+        <main className="container mx-auto px-4 py-8 pb-20 md:pb-8">
+          <h1 className="text-2xl md:text-3xl font-bold mb-6 flex items-center text-foreground">
+            <Heart className="mr-2 h-6 w-6" />
+            Vos Favoris
+          </h1>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <ProductSkeleton count={8} />
+          </div>
+        </main>
+        
+        <Footer />
+      </>
+    );
+  }
   
   return (
     <>

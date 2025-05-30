@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Package, ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CategoryCard from '@/components/CategoryCard';
+import CategorySkeleton from '@/components/CategorySkeleton';
 import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 const Categories = () => {
   const navigate = useNavigate();
   const { categories, isLoading: categoriesLoading } = useCategories();
-  const { products } = useProducts();
+  const { products, isLoading: productsLoading } = useProducts();
 
   const getCategoryProductCount = (categoryId: string) => {
     return products?.filter(p => p.category_id === categoryId && p.status === 'active').length || 0;
@@ -20,6 +22,8 @@ const Categories = () => {
   const handleCategoryClick = (categoryId: string) => {
     navigate(`/products?category=${categoryId}`);
   };
+
+  const isLoading = categoriesLoading || productsLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -42,15 +46,9 @@ const Categories = () => {
         </motion.div>
 
         {/* Categories Grid */}
-        {categoriesLoading ? (
+        {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-gray-200 aspect-square rounded-lg mb-3"></div>
-                <div className="bg-gray-200 h-4 rounded mb-2"></div>
-                <div className="bg-gray-200 h-3 rounded"></div>
-              </div>
-            ))}
+            <CategorySkeleton count={8} />
           </div>
         ) : categories && categories.length > 0 ? (
           <motion.div
@@ -126,7 +124,7 @@ const Categories = () => {
         )}
 
         {/* Call to Action */}
-        {categories && categories.length > 0 && (
+        {categories && categories.length > 0 && !isLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, ShoppingBag, ShoppingCart, Plus, Minus } from 'lucide-react';
@@ -5,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppContact from '@/components/WhatsAppContact';
 import OrderForm from '@/components/OrderForm';
+import ProductSkeleton from '@/components/ProductSkeleton';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
@@ -13,7 +15,7 @@ import { motion } from 'framer-motion';
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
-  const { products } = useProducts();
+  const { products, isLoading } = useProducts();
   
   // Get product details for all cart items
   const cartProducts = cart.map(cartItem => {
@@ -35,6 +37,68 @@ const Cart = () => {
   const formatPrice = (price: number): string => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        
+        <main className="container mx-auto px-4 py-8 pb-20 md:pb-8">
+          <motion.h1 
+            className="text-2xl md:text-3xl font-bold mb-6 flex items-center text-foreground"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ShoppingCart className="mr-2 h-6 w-6" />
+            Votre Panier
+          </motion.h1>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+            {/* Cart Items Skeleton */}
+            <div className="lg:col-span-2">
+              <div className="bg-card rounded-lg shadow-sm border border-border">
+                <div className="p-4 border-b border-border">
+                  <div className="h-5 bg-gray-200 rounded w-48 animate-pulse"></div>
+                </div>
+                
+                <div className="divide-y divide-border">
+                  {[1, 2, 3].map((index) => (
+                    <div key={index} className="p-4 flex gap-4">
+                      <div className="w-20 h-20 bg-gray-200 rounded-md animate-pulse"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
+                          <div className="h-8 bg-gray-200 rounded w-8 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Order Form Skeleton */}
+            <div>
+              <div className="bg-card rounded-lg shadow-sm border border-border p-6 space-y-4">
+                <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((index) => (
+                    <div key={index} className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                  ))}
+                </div>
+                <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </main>
+        
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

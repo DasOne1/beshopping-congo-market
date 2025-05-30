@@ -12,7 +12,7 @@ export interface Product {
   images: string[];
   stock: number;
   category_id?: string;
-  tags?: string[];
+  tags: string[]; // Rendu obligatoire pour correspondre au type global
   featured?: boolean;
   popular?: number;
   sku?: string;
@@ -42,7 +42,11 @@ export const useProducts = () => {
       }
       
       console.log('Produits chargés:', data?.length);
-      return data as Product[];
+      // S'assurer que tags est toujours un tableau
+      return data.map(product => ({
+        ...product,
+        tags: product.tags || []
+      })) as Product[];
     },
     retry: 1,
     retryDelay: 500,
@@ -68,7 +72,10 @@ export const useProducts = () => {
         return [];
       }
       
-      return data as Product[];
+      return data.map(product => ({
+        ...product,
+        tags: product.tags || []
+      })) as Product[];
     },
     retry: 1,
     refetchOnWindowFocus: false,
@@ -92,7 +99,10 @@ export const useProducts = () => {
         return [];
       }
       
-      return data as Product[];
+      return data.map(product => ({
+        ...product,
+        tags: product.tags || []
+      })) as Product[];
     },
     retry: 1,
     refetchOnWindowFocus: false,
