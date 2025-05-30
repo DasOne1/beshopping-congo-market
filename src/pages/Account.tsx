@@ -242,10 +242,12 @@ const Account = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Button variant="outline" className="h-20 flex flex-col gap-2">
-                  <Package className="h-5 w-5" />
-                  <span className="text-xs">Mes Commandes</span>
-                </Button>
+                <Link to="/cart">
+                  <Button variant="outline" className="h-20 flex flex-col gap-2 w-full">
+                    <Package className="h-5 w-5" />
+                    <span className="text-xs">Mes Commandes</span>
+                  </Button>
+                </Link>
                 <Link to="/favorites">
                   <Button variant="outline" className="h-20 flex flex-col gap-2 w-full">
                     <Heart className="h-5 w-5" />
