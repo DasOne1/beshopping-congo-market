@@ -45,8 +45,8 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
   };
 
   return (
-    <div className={`space-y-3 ${className}`}>
-      {/* Image principale */}
+    <div className={`${className}`}>
+      {/* Image principale avec miniatures et indicateurs superposés */}
       <div className="relative aspect-square overflow-hidden rounded-lg group">
         <img
           src={images[currentImageIndex]}
@@ -73,7 +73,28 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
           <ChevronRight className="h-4 w-4" />
         </Button>
 
-        {/* Indicateur de position */}
+        {/* Miniatures sur l'image principale */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1 px-2 py-1 bg-black/20 backdrop-blur-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+          {images.map((image, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentImageIndex(index)}
+              className={`flex-shrink-0 w-10 h-10 rounded-md overflow-hidden border-2 transition-colors ${
+                index === currentImageIndex 
+                  ? 'border-white' 
+                  : 'border-white/50 hover:border-white/75'
+              }`}
+            >
+              <img
+                src={image}
+                alt={`${productName} - Miniature ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </button>
+          ))}
+        </div>
+
+        {/* Indicateurs de position */}
         <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
           {images.map((_, index) => (
             <button
@@ -85,27 +106,6 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
             />
           ))}
         </div>
-      </div>
-
-      {/* Miniatures */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {images.map((image, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentImageIndex(index)}
-            className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-colors ${
-              index === currentImageIndex 
-                ? 'border-primary' 
-                : 'border-transparent hover:border-gray-300'
-            }`}
-          >
-            <img
-              src={image}
-              alt={`${productName} - Miniature ${index + 1}`}
-              className="w-full h-full object-cover"
-            />
-          </button>
-        ))}
       </div>
     </div>
   );
