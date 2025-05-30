@@ -33,7 +33,6 @@ export const useProducts = () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('status', 'active')
         .order('created_at', { ascending: false });
 
       if (error) {

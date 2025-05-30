@@ -23,7 +23,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product.id, 1);
+    if (product.status === 'active') {
+      addToCart(product.id, 1);
+    }
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
@@ -45,6 +47,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
     : 0;
 
   const cardClasses = viewMode === 'list' ? "w-full" : "w-full";
+  const isOutOfStock = product.status === 'inactive';
 
   return (
     <motion.div
@@ -52,7 +55,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
       transition={{ duration: 0.2 }}
       className={cardClasses}
     >
-      <Card className="group relative overflow-hidden border border-border/40 hover:border-border/80 hover:shadow-lg transition-all duration-300 bg-card">
+      <Card className={`group relative overflow-hidden border border-border/40 hover:border-border/80 hover:shadow-lg transition-all duration-300 bg-card ${isOutOfStock ? 'opacity-75' : ''}`}>
         <div className="relative">
           <Link to={`/product/${product.id}`}>
             <ProductImageCarousel
@@ -63,10 +66,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
           </Link>
           
           {/* Discount badge */}
-          {discountPercentage > 0 && (
+          {discountPercentage > 0 && !isOutOfStock && (
             <Badge className="absolute top-2 left-2 bg-red-500 text-white z-10">
               -{discountPercentage}%
             </Badge>
+          )}
+          
+          {/* Out of stock overlay */}
+          {isOutOfStock && (
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
+              <Badge variant="secondary" className="bg-gray-600 text-white">
+                Hors stock
+              </Badge>
+            </div>
           )}
           
           {/* Favorite button */}
@@ -89,19 +101,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
             </h3>
           </Link>
           
-          <div className="flex items-center gap-1 mb-2">
-            {[...Array(5)].map((_, i) => (
-              <Star 
-                key={i} 
-                className={`h-3 w-3 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
-              />
-            ))}
-            <span className="text-xs text-muted-foreground ml-1">(4.0)</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <Star 
+                  key={i} 
+                  className={`h-3 w-3 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                />
+              ))}
+              <span className="text-xs text-muted-foreground ml-1">(4.0)</span>
+            </div>
+            
+            {/* Status badge on the same line as rating */}
+            <Badge 
+              variant={isOutOfStock ? "secondary" : "default"}
+              className="text-xs"
+            >
+              {isOutOfStock ? 'Hors stock' : 'En stock'}
+            </Badge>
           </div>
           
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              {product.discounted_price ? (
+              {product.discounted_price && !isOutOfStock ? (
                 <>
                   <span className="font-bold text-primary text-sm">
                     {formatPrice(product.discounted_price)} FC
@@ -119,11 +141,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
             
             <Button 
               onClick={handleAddToCart}
-              disabled={isInCart(product.id)}
+              disabled={isInCart(product.id) || isOutOfStock}
               className="w-full h-8 text-xs"
+              variant={isOutOfStock ? "secondary" : "default"}
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
-              {isInCart(product.id) ? 'Dans le panier' : 'Ajouter'}
+              {isOutOfStock ? 'Indisponible' : isInCart(product.id) ? 'Dans le panier' : 'Ajouter'}
             </Button>
           </div>
         </CardContent>

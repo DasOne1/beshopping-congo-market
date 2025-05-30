@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -60,7 +59,8 @@ const Products = () => {
     const price = product.discounted_price || product.original_price;
     const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
     
-    return matchesSearch && matchesCategory && matchesPrice && product.status === 'active';
+    // Include both active and inactive products in the list
+    return matchesSearch && matchesCategory && matchesPrice;
   });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
