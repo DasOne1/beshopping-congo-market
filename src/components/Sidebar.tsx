@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -84,7 +83,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           
           <div className="flex items-center justify-between px-3 py-2">
             <span>Mode thème</span>
-            <button onClick={toggleTheme} className="p-1">
+            <button onClick={toggleTheme} className="p-1" title="Changer le thème">
               <ThemeToggle />
             </button>
           </div>
