@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,18 +21,25 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
-  const isInFavorites = favorites.some(fav => fav.id === product.id);
+  // Check if product is in favorites by comparing IDs
+  const isInFavorites = Array.isArray(favorites) ? 
+    favorites.some(fav => (typeof fav === 'string' ? fav : fav.id) === product.id) :
+    false;
   
-  // Calculate actual number of likes from favorites
-  const likesCount = favorites.filter(fav => fav.id === product.id).length;
+  // Calculate actual number of likes from favorites - count occurrences of this product ID
+  const likesCount = Array.isArray(favorites) ? 
+    favorites.filter(fav => (typeof fav === 'string' ? fav : fav.id) === product.id).length :
+    0;
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (isInFavorites) {
+      // Remove from favorites using product ID
       removeFromFavorites(product.id);
     } else {
+      // Add to favorites using the product object
       addToFavorites(product);
     }
   };
@@ -116,7 +122,7 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
   return (
     <motion.div
       whileHover={{ y: -4 }}
-      className={`bg-card rounded-xl shadow-sm border border-border overflow-hidden transition-all duration-300 hover:shadow-lg ${
+      className={`bg-card rounded-xl shadow-sm border border-border overflow-hidden transition-all duration-300 hover:shadow-lg group ${
         viewMode === 'grid' ? 'max-w-sm' : 'w-full'
       }`}
       onMouseEnter={() => setIsHovered(true)}
