@@ -17,16 +17,16 @@ export function MobileAdminNavBar() {
   const isMobile = useIsMobile();
   
   const navItems = [
-    { icon: LayoutDashboard, path: '/admin', label: 'Dashboard' },
-    { icon: ShoppingBag, path: '/admin/orders', label: 'Orders' },
-    { icon: Package, path: '/admin/catalog', label: 'Catalog' },
-    { icon: Users, path: '/admin/customers', label: 'Customers' },
-    { icon: BarChart3, path: '/admin/analytics', label: 'Analytics' },
+    { icon: LayoutDashboard, path: '/dasgabriel@adminaccess/dashboard', label: 'Dashboard' },
+    { icon: ShoppingBag, path: '/dasgabriel@adminaccess/orders', label: 'Orders' },
+    { icon: Package, path: '/dasgabriel@adminaccess/catalog', label: 'Catalog' },
+    { icon: Users, path: '/dasgabriel@adminaccess/customers', label: 'Customers' },
+    { icon: BarChart3, path: '/dasgabriel@adminaccess/analytics', label: 'Analytics' },
   ];
 
   const isActive = (path: string) => {
-    if (path === '/admin') {
-      return location.pathname === '/admin';
+    if (path === '/dasgabriel@adminaccess/dashboard') {
+      return location.pathname === '/dasgabriel@adminaccess/dashboard' || location.pathname === '/dasgabriel@adminaccess';
     }
     return location.pathname.startsWith(path);
   };

@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          last_login: string | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          last_login?: string | null
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          last_login?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           created_at: string
@@ -392,6 +428,10 @@ export type Database = {
       generate_order_number: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
       }
     }
     Enums: {

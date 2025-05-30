@@ -26,6 +26,7 @@ import NotFound from '@/pages/NotFound';
 
 // Admin Pages
 import AdminAuth from '@/components/AdminAuth';
+import AdminAuthPage from '@/pages/Admin/AdminAuth';
 import Dashboard from '@/pages/Admin/Dashboard';
 import Orders from '@/pages/Admin/Orders';
 import AdminProducts from '@/pages/Admin/Products';
@@ -72,19 +73,22 @@ function AppContent() {
       <Route path="/about" element={<UserLayout><AboutUs /></UserLayout>} />
       <Route path="/account" element={<UserLayout><Account /></UserLayout>} />
 
-      {/* Admin Routes - AdminLayout is already included in each admin page */}
-      <Route path="/admin" element={<AdminAuth><Dashboard /></AdminAuth>} />
-      <Route path="/admin/orders" element={<AdminAuth><Orders /></AdminAuth>} />
-      <Route path="/admin/products" element={<AdminAuth><AdminProducts /></AdminAuth>} />
-      <Route path="/admin/products/new" element={<AdminAuth><ProductForm /></AdminAuth>} />
-      <Route path="/admin/products/edit/:id" element={<AdminAuth><ProductForm /></AdminAuth>} />
-      <Route path="/admin/categories" element={<AdminAuth><AdminCategories /></AdminAuth>} />
-      <Route path="/admin/categories/new" element={<AdminAuth><CategoryForm /></AdminAuth>} />
-      <Route path="/admin/categories/edit/:id" element={<AdminAuth><CategoryForm /></AdminAuth>} />
-      <Route path="/admin/catalog" element={<AdminAuth><Catalog /></AdminAuth>} />
-      <Route path="/admin/customers" element={<AdminAuth><Customers /></AdminAuth>} />
-      <Route path="/admin/analytics" element={<AdminAuth><Analytics /></AdminAuth>} />
-      <Route path="/admin/settings" element={<AdminAuth><Settings /></AdminAuth>} />
+      {/* Admin Authentication Route */}
+      <Route path="/dasgabriel@adminaccess" element={<AdminAuthPage />} />
+
+      {/* Admin Routes - Protected with AdminAuth */}
+      <Route path="/dasgabriel@adminaccess/dashboard" element={<AdminAuth><Dashboard /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/orders" element={<AdminAuth><Orders /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/products" element={<AdminAuth><AdminProducts /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/products/new" element={<AdminAuth><ProductForm /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/products/edit/:id" element={<AdminAuth><ProductForm /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/categories" element={<AdminAuth><AdminCategories /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/categories/new" element={<AdminAuth><CategoryForm /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/categories/edit/:id" element={<AdminAuth><CategoryForm /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/catalog" element={<AdminAuth><Catalog /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/customers" element={<AdminAuth><Customers /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/analytics" element={<AdminAuth><Analytics /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/settings" element={<AdminAuth><Settings /></AdminAuth>} />
 
       {/* 404 Route */}
       <Route path="*" element={<UserLayout><NotFound /></UserLayout>} />
