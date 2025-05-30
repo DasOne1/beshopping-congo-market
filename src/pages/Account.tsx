@@ -24,7 +24,7 @@ const Account = () => {
 
   const handleWhatsAppContact = () => {
     const phoneNumber = '+243978100940';
-    const message = encodeURIComponent('Bonjour BeShop Congo ! Je souhaite entrer en contact avec vous.');
+    const message = encodeURIComponent('Bonjour BeShopping Congo ! Je souhaite entrer en contact avec vous.');
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
   };
 
@@ -81,36 +81,36 @@ const Account = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <Card className="text-center p-8 bg-gradient-to-br from-primary/5 to-secondary/5">
+            <Card className="text-center p-4 md:p-8 bg-gradient-to-br from-primary/5 to-secondary/5">
               <CardContent className="space-y-6">
                 <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
                   <User className="h-10 w-10 text-primary" />
                 </div>
                 
                 <div className="space-y-4">
-                  <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+                  <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
                     Merci pour votre confiance !
                   </h2>
-                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                    Chez BeShop Congo, nous sommes reconnaissants de vous compter parmi nos clients privilégiés. 
+                  <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+                    Chez BeShopping Congo, nous sommes reconnaissants de vous compter parmi nos clients privilégiés. 
                     Votre satisfaction est notre priorité et nous continuons à travailler pour vous offrir 
                     les meilleurs produits et le meilleur service.
                   </p>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm md:text-base text-muted-foreground">
                     Pour toute question, suggestion ou assistance, n'hésitez pas à nous contacter directement via WhatsApp.
                   </p>
                 </div>
 
-                <div className="pt-4">
+                <div className="pt-4 flex flex-col items-center space-y-3">
                   <Button 
                     onClick={handleWhatsAppContact}
-                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 md:py-3 text-sm md:text-base w-full max-w-xs"
                     size="lg"
                   >
-                    <MessageCircle className="mr-2 h-5 w-5" />
-                    Nous contacter sur WhatsApp
+                    <MessageCircle className="mr-2 h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
+                    <span className="truncate">Nous contacter</span>
                   </Button>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-xs md:text-sm text-muted-foreground">
                     Numéro : +243 978100940
                   </p>
                 </div>
