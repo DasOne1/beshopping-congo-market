@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, ShoppingBag, ShoppingCart, Plus, Minus } from 'lucide-react';
@@ -99,7 +98,7 @@ const Cart = () => {
                         <div className="flex-shrink-0 w-20 h-20 bg-muted rounded-md overflow-hidden">
                           <Link to={`/product/${item.product.id}`}>
                             <img 
-                              src={item.product.images[0] || '/placeholder.svg'} 
+                              src={item.product.images[0] || '/favicon.svg'} 
                               alt={item.product.name} 
                               className="w-full h-full object-cover transition-transform hover:scale-105"
                             />
@@ -125,6 +124,7 @@ const Cart = () => {
                               <button
                                 className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
                                 onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
+                                title="Diminuer la quantité"
                               >
                                 <Minus className="h-4 w-4" />
                               </button>
@@ -135,6 +135,7 @@ const Cart = () => {
                                 className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
                                 onClick={() => updateQuantity(item.productId, Math.min(item.product.stock, item.quantity + 1))}
                                 disabled={item.quantity >= item.product.stock}
+                                title="Augmenter la quantité"
                               >
                                 <Plus className="h-4 w-4" />
                               </button>
@@ -143,6 +144,7 @@ const Cart = () => {
                             <button
                               onClick={() => removeFromCart(item.productId)}
                               className="text-red-500 hover:text-red-600 transition-colors p-2"
+                              title="Retirer du panier"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>

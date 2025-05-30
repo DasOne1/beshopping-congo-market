@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -15,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 const CategoryCarousel = () => {
   const { categories, isLoading } = useCategories();
   const navigate = useNavigate();
-  const [api, setApi] = useState<any>();
+  const [api, setApi] = useState<unknown>();
 
   // Activer la synchronisation en temps réel pour les catégories
   useRealtimeSync();
@@ -25,7 +24,7 @@ const CategoryCarousel = () => {
     if (!api) return;
 
     const interval = setInterval(() => {
-      api.scrollNext();
+      (api as { scrollNext: () => void }).scrollNext();
     }, 3000); // Change slide every 3 seconds
 
     return () => clearInterval(interval);
@@ -96,7 +95,7 @@ const CategoryCarousel = () => {
                   >
                     <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 mb-2 border-2 border-gray-200 hover:border-primary transition-colors">
                       <img 
-                        src={category.image || `/placeholder.svg`} 
+                        src={category.image || `/favicon.svg`} 
                         alt={category.name}
                         className="w-full h-full object-cover"
                       />

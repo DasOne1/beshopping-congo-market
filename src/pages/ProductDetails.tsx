@@ -118,7 +118,7 @@ const ProductDetails = () => {
       try {
         await navigator.share({
           title: product.name,
-          text: `Découvrez ${product.name} sur BeShop Congo`,
+          text: `Découvrez ${product.name} sur BeShopping Congo`,
           url: window.location.href,
         });
       } catch (err) {

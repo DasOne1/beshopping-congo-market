@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -34,7 +33,7 @@ const CategoryCard = ({
       <Card className="overflow-hidden transition-shadow hover:shadow-lg">
         <div className="relative aspect-square overflow-hidden">
           <img 
-            src={image || `/placeholder.svg`} 
+            src={image || `/favicon.svg`} 
             alt={name}
             className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
           />

@@ -8,6 +8,8 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { useCart } from '@/contexts/CartContext';
 import { Product } from '@/hooks/useProducts';
 
+type FavoriteType = string | { id: string };
+
 interface ProductCardProps {
   product: Product;
   viewMode?: 'single' | 'grid';
@@ -23,12 +25,12 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
 
   // Check if product is in favorites by comparing IDs
   const isInFavorites = Array.isArray(favorites) ? 
-    favorites.some(fav => (typeof fav === 'string' ? fav : fav.id) === product.id) :
+    (favorites as FavoriteType[]).some(fav => (typeof fav === 'string' ? fav : fav.id) === product.id) :
     false;
   
   // Calculate actual number of likes from favorites - count occurrences of this product ID
   const likesCount = Array.isArray(favorites) ? 
-    favorites.filter(fav => (typeof fav === 'string' ? fav : fav.id) === product.id).length :
+    (favorites as FavoriteType[]).filter(fav => (typeof fav === 'string' ? fav : fav.id) === product.id).length :
     0;
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
@@ -39,7 +41,7 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
       // Remove from favorites using product ID
       removeFromFavorites(product.id);
     } else {
-      // Add to favorites using the product object
+      // Add to favorites using le product object
       addToFavorites(product);
     }
   };
@@ -139,7 +141,7 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
             <AnimatePresence mode="wait">
               <motion.img
                 key={currentImageIndex}
-                src={product.images?.[currentImageIndex] || '/placeholder.svg'}
+                src={product.images?.[currentImageIndex] || '/favicon.svg'}
                 alt={product.name}
                 className="w-full h-full object-cover"
                 initial={{ opacity: 0 }}
@@ -157,6 +159,7 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
                   size="icon"
                   className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={prevImage}
+                  title="Image précédente"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -165,6 +168,7 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
                   size="icon"
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={nextImage}
+                  title="Image suivante"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -185,6 +189,7 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
                       e.stopPropagation();
                       setCurrentImageIndex(index);
                     }}
+                    title={`Voir l'image ${index + 1}`}
                   />
                 ))}
               </div>
@@ -221,6 +226,7 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
               size="icon"
               className="absolute top-2 right-2 bg-white/80 hover:bg-white/90 backdrop-blur-sm"
               onClick={handleFavoriteToggle}
+              title={isInFavorites ? "Retirer des favoris" : "Ajouter aux favoris"}
             >
               <Heart
                 className={`h-4 w-4 transition-colors ${
@@ -278,6 +284,7 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}
                 className="shrink-0"
+                title={product.stock === 0 ? 'Produit en rupture de stock' : 'Ajouter au panier'}
               >
                 <ShoppingCart className="h-4 w-4 mr-1" />
                 {product.stock === 0 ? 'Rupture' : 'Ajouter'}

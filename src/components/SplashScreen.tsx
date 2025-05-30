@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '@/components/Logo';
@@ -85,7 +84,11 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               }}
               className="mb-6"
             >
-              <Logo size="large" className="text-primary" />
+              <img
+                src="/favicon.svg"
+                alt="BeShopping Logo"
+                className="w-24 h-24 object-contain"
+              />
             </motion.div>
             
             <motion.h1 
@@ -96,7 +99,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              BeShop Congo
+              BeShopping Congo
             </motion.h1>
             
             {/* Barre de progression adaptée au thème */}

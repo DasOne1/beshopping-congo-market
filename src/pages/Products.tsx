@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, Grid, List, SlidersHorizontal, AlertCircle, Columns2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -38,7 +37,7 @@ const Products = () => {
 
   // Filter and sort products
   const filteredAndSortedProducts = useMemo(() => {
-    let filtered = products.filter(product => {
+    const filtered = products.filter(product => {
       // Search filter
       if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
           !product.description.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -127,7 +126,11 @@ const Products = () => {
   };
 
   const getGridClasses = () => {
-    return viewMode === 'grid' ? 'grid-cols-2' : 'space-y-4';
+    // Par défaut : 1 colonne mobile, 3 sur tablette et desktop
+    // En mode grille : 1 mobile, 3 tablette, 4 desktop
+    return viewMode === 'grid'
+      ? 'grid-cols-1 md:grid-cols-3 lg:grid-cols-4'
+      : 'grid-cols-1 md:grid-cols-3 lg:grid-cols-3';
   };
 
   if (isLoading) {
@@ -323,7 +326,7 @@ const Products = () => {
           ) : (
             <AnimatePresence>
               <motion.div
-                className={viewMode === 'grid' ? `grid ${getGridClasses()} gap-6` : 'space-y-4'}
+                className={`grid ${getGridClasses()} gap-6`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -58,7 +57,9 @@ const Header = () => {
 
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <Logo size="small" asLink />
+            <Link to="/">
+              <img src="/favicon.svg" alt="BeShopping Logo" className="h-10 w-10" />
+            </Link>
             <Link to="/" className="hidden sm:block">
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                 BeShopping

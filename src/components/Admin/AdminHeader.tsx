@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Settings, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { AdminDesktopNavigation } from './AdminDesktopNavigation';
+import { Link } from 'react-router-dom';
 
 export function AdminHeader() {
   const navigate = useNavigate();
@@ -15,9 +15,9 @@ export function AdminHeader() {
         <div className="flex items-center space-x-8">
           {/* Logo et titre */}
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">A</span>
-            </div>
+            <Link to="/admin">
+              <img src="/favicon.svg" alt="BeShopping Logo" className="h-10 w-10" />
+            </Link>
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">Administration</h1>
               <p className="text-xs text-gray-500 dark:text-gray-400">Tableau de bord</p>
