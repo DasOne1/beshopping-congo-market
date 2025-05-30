@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Plus, Edit, Trash2, Search, Filter, Package, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Package, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -98,79 +98,7 @@ const Products = () => {
           </Button>
         </div>
 
-        {/* Filters */}
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-2">
-              <Filter className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Filtres</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Rechercher</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Nom ou description..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Catégorie</label>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Toutes les catégories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toutes les catégories</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Stock</label>
-                <Select value={stockFilter} onValueChange={setStockFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tous les stocks" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les stocks</SelectItem>
-                    <SelectItem value="in-stock">En stock</SelectItem>
-                    <SelectItem value="low-stock">Stock faible (≤5)</SelectItem>
-                    <SelectItem value="out-of-stock">Rupture de stock</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Statut</label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tous les statuts" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les statuts</SelectItem>
-                    <SelectItem value="active">Actif</SelectItem>
-                    <SelectItem value="inactive">Inactif</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Products Table */}
+        {/* Products Table with Integrated Filters */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Liste des Produits</CardTitle>
@@ -181,14 +109,73 @@ const Products = () => {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="sticky top-0 bg-muted/50 z-10">
+                <TableHeader className="sticky top-0 bg-background z-10 border-b-2">
                   <TableRow>
                     <TableHead className="w-[100px]">Image</TableHead>
-                    <TableHead>Produit</TableHead>
-                    <TableHead>Catégorie</TableHead>
+                    <TableHead className="min-w-[250px]">
+                      <div className="space-y-2">
+                        <span className="font-medium">Produit</span>
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                          <Input
+                            placeholder="Rechercher..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-8 h-8 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </TableHead>
+                    <TableHead className="min-w-[150px]">
+                      <div className="space-y-2">
+                        <span className="font-medium">Catégorie</span>
+                        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Toutes" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Toutes</SelectItem>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TableHead>
                     <TableHead>Prix</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>Statut</TableHead>
+                    <TableHead className="min-w-[120px]">
+                      <div className="space-y-2">
+                        <span className="font-medium">Stock</span>
+                        <Select value={stockFilter} onValueChange={setStockFilter}>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Tous" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Tous</SelectItem>
+                            <SelectItem value="in-stock">En stock</SelectItem>
+                            <SelectItem value="low-stock">Stock faible</SelectItem>
+                            <SelectItem value="out-of-stock">Rupture</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TableHead>
+                    <TableHead className="min-w-[100px]">
+                      <div className="space-y-2">
+                        <span className="font-medium">Statut</span>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Tous" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Tous</SelectItem>
+                            <SelectItem value="active">Actif</SelectItem>
+                            <SelectItem value="inactive">Inactif</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
