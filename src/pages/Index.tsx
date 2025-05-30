@@ -67,7 +67,7 @@ const Index = () => {
               </div>
               <p className="text-lg md:text-xl text-muted-foreground max-w-md">
                 Une sélection soigneusement choisie des produits les plus recherchés, 
-                livrés directement chez vous à Kinshasa et dans tout le Congo.
+                livrés directement chez vous à Lubumbashi et dans tout le Congo.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                 <Button 
@@ -90,7 +90,7 @@ const Index = () => {
               </div>
             </motion.div>
             
-            <motion.div
+            {/* <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -113,7 +113,7 @@ const Index = () => {
                       />
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
                     </div>
-                  </motion.div>
+                  </motion.div> */}
                 ))}
               </div>
             </motion.div>
