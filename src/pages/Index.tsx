@@ -40,7 +40,7 @@ const Index = () => {
   // Group products by category with real-time data
   const productsByCategory = categories?.map(category => ({
     category,
-    products: products?.filter(p => p.category_id === category.id && p.status === 'active').slice(0, 4) || []
+    products: products?.filter(p => p.category_id === category.id && p.status === 'active').slice(0, 6) || []
   })).filter(group => group.products.length > 0) || [];
 
   return (
@@ -121,64 +121,16 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Categories Carousel - Sticky */}
+      <div className="sticky top-14 md:top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border/40">
+        <CategoryCarousel />
+      </div>
+
       {/* Featured Products Carousel */}
       <FeaturedGallery />
 
-      {/* Categories Carousel */}
-      <CategoryCarousel />
-
-      {/* Top Selling Products */}
-      <section className="py-6">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-6"
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Top Selling</h2>
-              <Button variant="ghost" onClick={() => navigate('/products')} className="text-sm">
-                See All
-              </Button>
-            </div>
-          </motion.div>
-
-          {productsLoading ? (
-            <div className="grid grid-cols-1 gap-3">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="bg-gray-200 aspect-square rounded-lg mb-3"></div>
-                  <div className="bg-gray-200 h-4 rounded mb-2"></div>
-                  <div className="bg-gray-200 h-3 rounded mb-2"></div>
-                  <div className="bg-gray-200 h-6 rounded"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.8 }}
-              className="grid grid-cols-1 gap-3"
-            >
-              {(popularProducts.length > 0 ? popularProducts : featuredProducts).slice(0, 4).map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 * index }}
-                >
-                  <ProductCard product={product} />
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </div>
-      </section>
-
-      {/* Products by Category */}
-      {productsByCategory.slice(0, 2).map((group, groupIndex) => (
+      {/* Products by Category - One per line */}
+      {productsByCategory.map((group, groupIndex) => (
         <section key={group.category.id} className="py-6">
           <div className="container mx-auto px-4">
             <motion.div
@@ -203,16 +155,16 @@ const Index = () => {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.8 }}
-              className="grid grid-cols-1 gap-3"
+              className="space-y-4"
             >
-              {group.products.slice(0, 4).map((product, index) => (
+              {group.products.map((product, index) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 * index }}
                 >
-                  <ProductCard product={product} />
+                  <ProductCard product={product} viewMode="single" />
                 </motion.div>
               ))}
             </motion.div>

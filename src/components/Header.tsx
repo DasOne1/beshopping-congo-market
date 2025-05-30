@@ -43,28 +43,30 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
-      <div className="container flex h-14 md:h-16 items-center justify-between">
+      <div className="container flex h-14 md:h-16 items-center">
+        {/* Logo et nom - à gauche */}
+        <div className="flex items-center space-x-3 mr-8">
+          <Logo size="small" asLink />
+          <Link to="/" className="hidden sm:block">
+            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              BeShop
+            </span>
+          </Link>
+        </div>
+
         {/* Mobile Menu Button */}
         <Button 
           variant="ghost" 
           size="icon" 
-          className="md:hidden"
+          className="md:hidden mr-2"
           onClick={toggleMenu}
         >
           <Menu className="h-5 w-5" />
           <span className="sr-only">Menu</span>
         </Button>
 
-        {/* Logo - positionné à gauche */}
-        <div className="flex items-center space-x-2">
-          <Link to="/" className="flex items-center space-x-2">
-            <Logo size="small" asLink />
-            <span className="text-lg font-bold text-primary hidden sm:inline-block">BeShop</span>
-          </Link>
-        </div>
-
         {/* Desktop Navigation - centré */}
-        <nav className="hidden md:flex items-center space-x-6 flex-1 justify-center">
+        <nav className="hidden md:flex items-center space-x-6 flex-1">
           <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
             Accueil
           </Link>
@@ -83,7 +85,7 @@ const Header = () => {
         </nav>
 
         {/* Right Icons */}
-        <div className="flex items-center space-x-1 md:space-x-2">
+        <div className="flex items-center space-x-1 md:space-x-2 ml-auto">
           <Button variant="ghost" size="icon" onClick={toggleSearch} className="hidden sm:flex">
             <Search className="h-5 w-5" />
             <span className="sr-only">Recherche</span>

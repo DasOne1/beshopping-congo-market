@@ -18,7 +18,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type ViewMode = 'grid' | 'grid2' | 'list';
+type ViewMode = 'single' | 'grid';
 
 const Products = () => {
   const { products, isLoading, error } = useProducts();
@@ -28,7 +28,7 @@ const Products = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('featured');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid2');
+  const [viewMode, setViewMode] = useState<ViewMode>('single');
   const [priceRange, setPriceRange] = useState([0, 1000000]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     categoryFromUrl ? [categoryFromUrl] : []
@@ -120,23 +120,12 @@ const Products = () => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
 
-  const cycleViewMode = () => {
-    if (viewMode === 'grid2') {
-      setViewMode('list');
-    } else {
-      setViewMode('grid2');
-    }
+  const toggleViewMode = () => {
+    setViewMode(viewMode === 'single' ? 'grid' : 'single');
   };
 
   const getGridClasses = () => {
-    switch (viewMode) {
-      case 'grid2':
-        return 'grid-cols-2';
-      case 'list':
-        return 'grid-cols-1';
-      default:
-        return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
-    }
+    return viewMode === 'grid' ? 'grid-cols-2' : 'space-y-4';
   };
 
   if (isLoading) {
@@ -290,13 +279,13 @@ const Products = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={cycleViewMode}
+                  onClick={toggleViewMode}
                   className="border-border"
                 >
-                  {viewMode === 'grid2' ? (
-                    <List className="h-4 w-4" />
-                  ) : (
+                  {viewMode === 'single' ? (
                     <Columns2 className="h-4 w-4" />
+                  ) : (
+                    <List className="h-4 w-4" />
                   )}
                 </Button>
               </div>
@@ -315,7 +304,7 @@ const Products = () => {
 
           {/* Loading state - Show skeleton cards while loading */}
           {isLoading && products.length === 0 && (
-            <div className={`grid ${getGridClasses()} gap-6 mb-6`}>
+            <div className={viewMode === 'grid' ? `grid ${getGridClasses()} gap-6 mb-6` : 'space-y-4 mb-6'}>
               {Array.from({ length: 8 }).map((_, index) => (
                 <motion.div
                   key={index}
@@ -351,7 +340,7 @@ const Products = () => {
           ) : (
             <AnimatePresence>
               <motion.div
-                className={`grid ${getGridClasses()} gap-6`}
+                className={viewMode === 'grid' ? `grid ${getGridClasses()} gap-6` : 'space-y-4'}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
@@ -366,7 +355,8 @@ const Products = () => {
                   >
                     <ProductCard 
                       product={product} 
-                      className={viewMode === 'list' ? 'w-full' : ''}
+                      viewMode={viewMode === 'grid' ? 'grid' : 'single'}
+                      className="w-full"
                     />
                   </motion.div>
                 ))}
