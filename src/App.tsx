@@ -36,6 +36,7 @@ import CategoryForm from '@/pages/Admin/CategoryForm';
 import Catalog from '@/pages/Admin/Catalog';
 import Customers from '@/pages/Admin/Customers';
 import Analytics from '@/pages/Admin/Analytics';
+import AdminAccounts from '@/pages/Admin/AdminAccounts';
 import Settings from '@/pages/Admin/Settings';
 
 const queryClient = new QueryClient({
@@ -88,6 +89,7 @@ function AppContent() {
       <Route path="/dasgabriel@adminaccess/catalog" element={<AdminAuth><Catalog /></AdminAuth>} />
       <Route path="/dasgabriel@adminaccess/customers" element={<AdminAuth><Customers /></AdminAuth>} />
       <Route path="/dasgabriel@adminaccess/analytics" element={<AdminAuth><Analytics /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/accounts" element={<AdminAuth><AdminAccounts /></AdminAuth>} />
       <Route path="/dasgabriel@adminaccess/settings" element={<AdminAuth><Settings /></AdminAuth>} />
 
       {/* 404 Route */}
