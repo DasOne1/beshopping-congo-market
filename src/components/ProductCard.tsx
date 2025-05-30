@@ -21,24 +21,24 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
-  // Check if product is in favorites by comparing IDs safely
+  // Check if product is in favorites - handle both string and object types safely
   const isInFavorites = Array.isArray(favorites) ? 
     favorites.some(fav => {
       if (typeof fav === 'string') {
         return fav === product.id;
       } else if (fav && typeof fav === 'object' && 'id' in fav) {
-        return fav.id === product.id;
+        return (fav as any).id === product.id;
       }
       return false;
     }) : false;
   
-  // Calculate actual number of likes from favorites - count occurrences of this product ID
+  // Calculate actual number of likes from favorites
   const likesCount = Array.isArray(favorites) ? 
     favorites.filter(fav => {
       if (typeof fav === 'string') {
         return fav === product.id;
       } else if (fav && typeof fav === 'object' && 'id' in fav) {
-        return fav.id === product.id;
+        return (fav as any).id === product.id;
       }
       return false;
     }).length : 0;
@@ -48,10 +48,8 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
     e.stopPropagation();
     
     if (isInFavorites) {
-      // Remove from favorites using product ID
       removeFromFavorites(product.id);
     } else {
-      // Add to favorites using product ID only to match context expectations
       addToFavorites(product.id);
     }
   };
