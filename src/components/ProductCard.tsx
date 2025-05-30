@@ -1,84 +1,69 @@
 
-import React, { useState, useRef } from 'react';
-import { Heart, ShoppingCart, Eye, Star, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { useCart } from '@/contexts/CartContext';
+import { Heart, Star, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { useCart } from '@/contexts/CartContext';
 import { Product } from '@/hooks/useProducts';
 
 interface ProductCardProps {
   product: Product;
-  viewMode?: 'grid' | 'list' | 'single';
+  viewMode?: 'single' | 'grid';
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' }) => {
-  const navigate = useNavigate();
+const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
+  const { favorites, addToFavorites, removeFromFavorites } = useFavorites();
   const { addToCart } = useCart();
-  const { favorites, addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
 
-  // Calculate real favorite count based on how many users have favorited this product
-  const favoriteCount = favorites.filter(favId => favId === product.id).length;
-
-  const formatPrice = (price: number): string => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  };
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.discounted_price || product.original_price,
-      image: product.images[0],
-      quantity: 1
-    });
-  };
+  const isInFavorites = favorites.some(fav => fav.id === product.id);
+  
+  // Calculate actual number of likes from favorites
+  const likesCount = favorites.filter(fav => fav.id === product.id).length;
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (isFavorite(product.id)) {
+    
+    if (isInFavorites) {
       removeFromFavorites(product.id);
     } else {
-      addToFavorites(product.id);
+      addToFavorites(product);
     }
   };
 
-  const handleViewDetails = () => {
-    navigate(`/product/${product.id}`);
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product, 1);
   };
 
   const nextImage = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    setCurrentImageIndex((prev) => 
-      prev === product.images.length - 1 ? 0 : prev + 1
-    );
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (product.images && product.images.length > 1) {
+      setCurrentImageIndex((prev) => 
+        prev === product.images.length - 1 ? 0 : prev + 1
+      );
+    }
   };
 
   const prevImage = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    setCurrentImageIndex((prev) => 
-      prev === 0 ? product.images.length - 1 : prev - 1
-    );
-  };
-
-  const selectImage = (index: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentImageIndex(index);
-  };
-
-  const toggleMainImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (product.images.length > 1) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (product.images && product.images.length > 1) {
       setCurrentImageIndex((prev) => 
-        prev === product.images.length - 1 ? 0 : prev + 1
+        prev === 0 ? product.images.length - 1 : prev - 1
       );
     }
   };
@@ -92,145 +77,169 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
     touchEndX.current = e.targetTouches[0].clientX;
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    e.stopPropagation();
-    if (product.images.length <= 1) return;
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
 
-    const swipeDistance = touchStartX.current - touchEndX.current;
-    const minSwipeDistance = 50;
-
-    if (Math.abs(swipeDistance) > minSwipeDistance) {
-      if (swipeDistance > 0) {
-        // Swipe left - next image
-        nextImage();
-      } else {
-        // Swipe right - previous image
-        prevImage();
-      }
+    if (isLeftSwipe && product.images && product.images.length > 1) {
+      nextImage();
+    }
+    if (isRightSwipe && product.images && product.images.length > 1) {
+      prevImage();
     }
   };
 
-  if (viewMode === 'single') {
-    return (
-      <Card 
-        className="w-full hover:shadow-lg transition-all duration-300 cursor-pointer group bg-card border border-border/50 hover:border-primary/20"
-        onClick={handleViewDetails}
-      >
-        <div className="flex flex-col md:flex-row">
-          {/* Image Section */}
-          <div className="relative w-full md:w-64 h-48 md:h-32">
-            {/* Header elements overlay */}
-            <div className="absolute top-2 left-2 right-2 z-20 flex justify-between items-start">
-              {product.discount && product.discount > 0 && (
-                <Badge className="bg-destructive text-destructive-foreground">
-                  -{product.discount}%
+  // Auto-cycle images on hover (optional)
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isHovered && product.images && product.images.length > 1) {
+      interval = setInterval(() => {
+        nextImage();
+      }, 3000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isHovered, product.images]);
+
+  const formatPrice = (price: number): string => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  };
+
+  const discountPercentage = product.discounted_price 
+    ? Math.round(((product.original_price - product.discounted_price) / product.original_price) * 100)
+    : 0;
+
+  return (
+    <motion.div
+      whileHover={{ y: -4 }}
+      className={`bg-card rounded-xl shadow-sm border border-border overflow-hidden transition-all duration-300 hover:shadow-lg ${
+        viewMode === 'grid' ? 'max-w-sm' : 'w-full'
+      }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <Link to={`/product/${product.id}`} className="block">
+        <div className="relative overflow-hidden bg-muted/50">
+          <div 
+            className="relative aspect-square overflow-hidden"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={currentImageIndex}
+                src={product.images?.[currentImageIndex] || '/placeholder.svg'}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              />
+            </AnimatePresence>
+            
+            {/* Image Navigation Arrows */}
+            {product.images && product.images.length > 1 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={prevImage}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={nextImage}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+
+            {/* Image Indicators */}
+            {product.images && product.images.length > 1 && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                {product.images.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${
+                      index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                    }`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCurrentImageIndex(index);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Badges */}
+            <div className="absolute top-2 left-2 flex flex-col gap-1">
+              {product.featured && (
+                <Badge variant="secondary" className="bg-primary/90 text-primary-foreground">
+                  <Star className="w-3 h-3 mr-1" />
+                  Vedette
                 </Badge>
               )}
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 bg-background/80 hover:bg-background/90 backdrop-blur-sm"
-                  onClick={handleFavoriteToggle}
-                >
-                  <Heart 
-                    className={`h-4 w-4 ${
-                      isFavorite(product.id) 
-                        ? 'fill-red-500 text-red-500' 
-                        : 'text-muted-foreground hover:text-red-500'
-                    }`} 
-                  />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 bg-background/80 hover:bg-background/90 backdrop-blur-sm"
-                  onClick={handleViewDetails}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              </div>
+              {discountPercentage > 0 && (
+                <Badge variant="destructive" className="bg-red-500/90">
+                  -{discountPercentage}%
+                </Badge>
+              )}
+              {product.stock <= 5 && product.stock > 0 && (
+                <Badge variant="outline" className="bg-orange-500/90 text-white border-orange-500">
+                  Stock limité
+                </Badge>
+              )}
+              {product.stock === 0 && (
+                <Badge variant="outline" className="bg-gray-500/90 text-white border-gray-500">
+                  Rupture
+                </Badge>
+              )}
             </div>
 
-            {/* Main Image */}
-            <div 
-              className="relative w-full h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
+            {/* Favorite Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 bg-white/80 hover:bg-white/90 backdrop-blur-sm"
+              onClick={handleFavoriteToggle}
             >
-              <img
-                src={product.images[currentImageIndex] || product.images[0]}
-                alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-pointer"
-                onClick={toggleMainImage}
+              <Heart
+                className={`h-4 w-4 transition-colors ${
+                  isInFavorites ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                }`}
               />
-              
-              {/* Navigation arrows for main image */}
-              {product.images.length > 1 && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 bg-background/80 hover:bg-background/90 backdrop-blur-sm z-10"
-                    onClick={prevImage}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 bg-background/80 hover:bg-background/90 backdrop-blur-sm z-10"
-                    onClick={nextImage}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-
-              {/* Thumbnail images overlaid on main image */}
-              {product.images.length > 1 && (
-                <div className="absolute bottom-2 left-2 flex gap-1 z-10">
-                  {product.images.slice(0, 4).map((image, index) => (
-                    <div
-                      key={index}
-                      className={`w-8 h-8 rounded border-2 overflow-hidden cursor-pointer transition-all ${
-                        index === currentImageIndex 
-                          ? 'border-primary shadow-lg' 
-                          : 'border-white/60 hover:border-white'
-                      }`}
-                      onClick={(e) => selectImage(index, e)}
-                    >
-                      <img
-                        src={image}
-                        alt={`${product.name} ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
-                  {product.images.length > 4 && (
-                    <div className="w-8 h-8 rounded border-2 border-white/60 bg-background/80 flex items-center justify-center">
-                      <span className="text-xs text-foreground">+{product.images.length - 4}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            </Button>
           </div>
+        </div>
 
-          {/* Content Section */}
-          <CardContent className="p-4 flex-1 flex flex-col justify-between">
-            <div className="space-y-2">
-              <h3 className="font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                {product.name}
-              </h3>
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {product.description}
-              </p>
-              
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <span className="text-lg font-bold text-primary">
+        {/* Product Info */}
+        <div className="p-4">
+          <div className="space-y-2">
+            <h3 className="font-semibold text-foreground line-clamp-2 leading-tight">
+              {product.name}
+            </h3>
+            
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {product.description}
+            </p>
+
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-foreground">
                     {formatPrice(product.discounted_price || product.original_price)} FC
                   </span>
                   {product.discounted_price && (
@@ -239,179 +248,39 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                     </span>
                   )}
                 </div>
+                
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-1">
+                    <Heart className="h-3 w-3 text-red-500" />
+                    <span className="text-xs text-muted-foreground">
+                      {likesCount}
+                    </span>
+                  </div>
+                  {product.popular && product.popular > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Star className="h-3 w-3 text-yellow-500" />
+                      <span className="text-xs text-muted-foreground">
+                        {product.popular}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Heart className="h-4 w-4" />
-                  <span>{favoriteCount}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span>4.5</span>
-                </div>
-              </div>
-            </div>
-
-            <Button
-              onClick={handleAddToCart}
-              size="sm"
-              className="w-full mt-3"
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Ajouter au panier
-            </Button>
-          </CardContent>
-        </div>
-      </Card>
-    );
-  }
-
-  // Regular grid/list view
-  return (
-    <Card 
-      className="group hover:shadow-lg transition-all duration-300 cursor-pointer bg-card border border-border/50 hover:border-primary/20"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={handleViewDetails}
-    >
-      {/* Header elements overlay */}
-      <div className="absolute top-2 left-2 right-2 z-20 flex justify-between items-start">
-        {product.discount && product.discount > 0 && (
-          <Badge className="bg-destructive text-destructive-foreground">
-            -{product.discount}%
-          </Badge>
-        )}
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 bg-background/80 hover:bg-background/90 backdrop-blur-sm"
-            onClick={handleFavoriteToggle}
-          >
-            <Heart 
-              className={`h-4 w-4 ${
-                isFavorite(product.id) 
-                  ? 'fill-red-500 text-red-500' 
-                  : 'text-muted-foreground hover:text-red-500'
-              }`} 
-            />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 bg-background/80 hover:bg-background/90 backdrop-blur-sm"
-            onClick={handleViewDetails}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Image */}
-      <div 
-        className="relative aspect-square overflow-hidden rounded-t-lg"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <img
-          src={product.images[currentImageIndex] || product.images[0]}
-          alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-pointer"
-          onClick={toggleMainImage}
-        />
-        
-        {/* Navigation arrows for main image */}
-        {product.images.length > 1 && isHovered && (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 bg-background/80 hover:bg-background/90 backdrop-blur-sm z-10"
-              onClick={prevImage}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 bg-background/80 hover:bg-background/90 backdrop-blur-sm z-10"
-              onClick={nextImage}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </>
-        )}
-
-        {/* Thumbnail images overlaid on main image */}
-        {product.images.length > 1 && (
-          <div className="absolute bottom-2 left-2 flex gap-1 z-10">
-            {product.images.slice(0, 4).map((image, index) => (
-              <div
-                key={index}
-                className={`w-8 h-8 rounded border-2 overflow-hidden cursor-pointer transition-all ${
-                  index === currentImageIndex 
-                    ? 'border-primary shadow-lg' 
-                    : 'border-white/60 hover:border-white'
-                }`}
-                onClick={(e) => selectImage(index, e)}
+              <Button
+                size="sm"
+                onClick={handleAddToCart}
+                disabled={product.stock === 0}
+                className="shrink-0"
               >
-                <img
-                  src={image}
-                  alt={`${product.name} ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-            {product.images.length > 4 && (
-              <div className="w-8 h-8 rounded border-2 border-white/60 bg-background/80 flex items-center justify-center">
-                <span className="text-xs text-foreground">+{product.images.length - 4}</span>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <CardContent className="p-4">
-        <div className="space-y-2">
-          <h3 className="font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-            {product.name}
-          </h3>
-          
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-primary">
-              {formatPrice(product.discounted_price || product.original_price)} FC
-            </span>
-            {product.discounted_price && (
-              <span className="text-sm text-muted-foreground line-through">
-                {formatPrice(product.original_price)} FC
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Heart className="h-4 w-4" />
-              <span>{favoriteCount}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span>4.5</span>
+                <ShoppingCart className="h-4 w-4 mr-1" />
+                {product.stock === 0 ? 'Rupture' : 'Ajouter'}
+              </Button>
             </div>
           </div>
         </div>
-
-        <Button
-          onClick={handleAddToCart}
-          size="sm"
-          className="w-full mt-3"
-        >
-          <ShoppingCart className="w-4 h-4 mr-2" />
-          Ajouter
-        </Button>
-      </CardContent>
-    </Card>
+      </Link>
+    </motion.div>
   );
 };
 
