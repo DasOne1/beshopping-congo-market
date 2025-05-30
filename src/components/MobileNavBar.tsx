@@ -14,11 +14,11 @@ export function MobileNavBar() {
   const isMobile = useIsMobile();
   
   const navItems = [
-    { icon: Home, path: '/', label: 'Home' },
-    { icon: Search, path: '/products', label: 'Search' },
-    { icon: ShoppingCart, path: '/cart', label: 'Cart', count: cart.length },
-    { icon: Heart, path: '/favorites', label: 'Favorites', count: favorites.length },
-    { icon: User, path: '/account', label: 'Account' },
+    { icon: Home, path: '/' },
+    { icon: Search, path: '/products' },
+    { icon: ShoppingCart, path: '/cart', count: cart.length },
+    { icon: Heart, path: '/favorites', count: favorites.length },
+    { icon: User, path: '/account' },
   ];
 
   // Afficher seulement sur mobile
@@ -34,9 +34,9 @@ export function MobileNavBar() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="bg-background/95 backdrop-blur-md shadow-lg border-t border-border/50">
-        <div className="flex justify-around items-center">
+    <div className="fixed bottom-0 left-0 right-0 z-50 safe-area-pb">
+      <div className="bg-background/95 backdrop-blur-md shadow-lg border-t border-border/50 px-2 py-1">
+        <div className="flex justify-around items-center max-w-md mx-auto">
           {navItems.map((item) => {
             const active = isActive(item.path);
             const ItemIcon = item.icon;
@@ -46,35 +46,26 @@ export function MobileNavBar() {
                 key={item.path} 
                 to={item.path}
                 className={cn(
-                  "relative flex flex-col items-center justify-center p-3 transition-all duration-300",
-                  active ? "text-primary" : "text-foreground/60"
+                  "relative flex items-center justify-center p-3 transition-all duration-200 rounded-xl",
+                  active ? "text-primary" : "text-foreground/60 hover:text-foreground/80"
                 )}
               >
                 {active && (
                   <motion.div
-                    layoutId="bubble"
-                    className="absolute inset-0 bg-primary/20 dark:bg-primary/30 rounded-full z-0"
+                    layoutId="mobile-nav-bubble"
+                    className="absolute inset-0 bg-primary/20 dark:bg-primary/30 rounded-xl"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
-                <div className="relative">
-                  <ItemIcon className={cn(
-                    "relative z-10 w-5 h-5",
-                    active ? "text-primary" : "text-foreground/60"
-                  )} />
+                <div className="relative flex items-center justify-center">
+                  <ItemIcon className="w-6 h-6" />
                   
                   {item.count && item.count > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center z-20">
-                      {item.count}
+                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium shadow-sm">
+                      {item.count > 99 ? '99+' : item.count}
                     </span>
                   )}
                 </div>
-                <span className={cn(
-                  "text-xs mt-1 relative z-10",
-                  active ? "font-medium text-primary" : "text-foreground/60"
-                )}>
-                  {item.label}
-                </span>
               </Link>
             );
           })}

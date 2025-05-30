@@ -33,7 +33,6 @@ const Header = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle search query
     console.log('Search for:', searchQuery);
     setIsSearchOpen(false);
   };
@@ -62,7 +61,7 @@ const Header = () => {
             <Logo size="small" asLink />
             <Link to="/" className="hidden sm:block">
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                BeShop
+                BeShopping
               </span>
             </Link>
           </div>

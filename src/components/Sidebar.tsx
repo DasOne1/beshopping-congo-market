@@ -33,11 +33,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   };
   
   const menuItems = [
-    { icon: Home, label: 'Home', path: '/' },
-    { icon: ShoppingBag, label: 'Products', path: '/products' },
-    { icon: Heart, label: 'Favorites', path: '/favorites', badge: favorites.length },
-    { icon: User, label: 'Account', path: '/account' },
-    { icon: Info, label: 'About Us', path: '/about' },
+    { icon: Home, label: 'Accueil', path: '/' },
+    { icon: ShoppingBag, label: 'Produits', path: '/products' },
+    { icon: Heart, label: 'Favoris', path: '/favorites', badge: favorites.length },
+    { icon: User, label: 'Compte', path: '/account' },
+    { icon: Info, label: 'À propos', path: '/about' },
     { icon: Phone, label: 'Contact', path: '/contact' },
   ];
 
@@ -47,12 +47,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         <DrawerHeader className="flex items-center justify-between border-b pb-2">
           <Link to="/" onClick={onClose} className="flex items-center space-x-2">
             <Logo size="small" />
-            <span className="text-lg font-bold text-primary">BeShop</span>
+            <span className="text-lg font-bold text-primary">BeShopping</span>
           </Link>
           <DrawerClose asChild>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="h-5 w-5" />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">Fermer</span>
             </Button>
           </DrawerClose>
         </DrawerHeader>
@@ -83,7 +83,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           <Separator className="my-4" />
           
           <div className="flex items-center justify-between px-3 py-2">
-            <span>Theme mode</span>
+            <span>Mode thème</span>
             <button onClick={toggleTheme} className="p-1">
               <ThemeToggle />
             </button>
@@ -93,7 +93,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         <DrawerFooter className="border-t pt-2">
           <Button asChild variant="default" className="w-full">
             <Link to="/contact" onClick={onClose}>
-              Contact Support
+              Support Contact
             </Link>
           </Button>
         </DrawerFooter>

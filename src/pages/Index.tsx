@@ -58,7 +58,7 @@ const Index = () => {
               className="space-y-4 md:space-y-6"
             >
               <div className="space-y-2">
-                <Badge className="mb-2">Nouveau sur BeShop Congo</Badge>
+                <Badge className="mb-2">Nouveau sur BeShopping Congo</Badge>
                 <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight">
                   Découvrez les
                   <span className="text-primary block"> meilleurs produits</span>
@@ -182,7 +182,7 @@ const Index = () => {
             className="text-center mb-8 md:mb-12"
           >
             <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              Pourquoi choisir BeShop Congo ?
+              Pourquoi choisir BeShopping Congo ?
             </h2>
           </motion.div>
 
