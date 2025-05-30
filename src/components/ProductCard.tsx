@@ -35,13 +35,7 @@ const ProductCard = ({ product, viewMode = 'grid' }: ProductCardProps) => {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: displayPrice,
-      image: product.images?.[0] || '',
-      quantity: 1
-    });
+    addToCart(product, 1);
   };
 
   const handleCardClick = () => {
