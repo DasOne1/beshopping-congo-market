@@ -12,7 +12,8 @@ import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Bookmark, ShoppingCart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 export function FeaturedGallery() {
   const [api, setApi] = useState<any>();
@@ -34,7 +35,7 @@ export function FeaturedGallery() {
     
     const interval = setInterval(() => {
       api.scrollNext();
-    }, 5000);
+    }, 4000);
     
     return () => clearInterval(interval);
   }, [api, autoplay]);
@@ -56,12 +57,8 @@ export function FeaturedGallery() {
     return (
       <section className="py-4 mb-6">
         <div className="container px-2 sm:px-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-gray-200 aspect-[4/3] rounded-2xl mb-3"></div>
-              </div>
-            ))}
+          <div className="animate-pulse">
+            <div className="bg-gradient-to-r from-orange-400 to-orange-500 rounded-2xl h-48 mb-3"></div>
           </div>
         </div>
       </section>
@@ -71,15 +68,6 @@ export function FeaturedGallery() {
   return (
     <section className="py-4 mb-6">
       <div className="container px-2 sm:px-4">
-        <motion.h2 
-          className="text-xl md:text-2xl font-semibold mb-4 pl-1 border-l-4 border-primary"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          Explore New Fashion Trends
-        </motion.h2>
-        
         <div className="relative" 
           onMouseEnter={() => setAutoplay(false)}
           onMouseLeave={() => setAutoplay(true)}
@@ -91,42 +79,49 @@ export function FeaturedGallery() {
           >
             <CarouselContent>
               {featuredProducts.map((product) => (
-                <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3">
-                  <div className="p-1">
-                    <Link to={`/product/${product.id}`} className="block">
-                      <div className="glass-effect overflow-hidden relative group rounded-2xl">
-                        <div className="absolute top-3 left-3 z-10 bg-white/80 dark:bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
-                          <span className="text-yellow-400 mr-1">★</span>
-                          <span className="text-sm font-medium">{(Math.random() * 2 + 3).toFixed(1)}</span>
-                        </div>
-                        
-                        <div className="absolute top-3 right-3 z-10">
-                          <div className="glass-effect rounded-full p-2">
-                            <Bookmark size={16} className="text-primary" />
-                          </div>
-                        </div>
-                        
+                <CarouselItem key={product.id}>
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-400 to-orange-500 h-48 md:h-56">
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute top-4 right-4 w-32 h-32 border-2 border-white rounded-full"></div>
+                      <div className="absolute bottom-4 right-8 w-16 h-16 border border-white rounded-full"></div>
+                    </div>
+                    
+                    <div className="relative z-10 flex items-center justify-between h-full p-6">
+                      <div className="flex-1 text-white">
+                        <h3 className="text-lg md:text-2xl font-bold mb-2">
+                          Offre Spéciale !
+                        </h3>
+                        <p className="text-sm md:text-base mb-4 opacity-90">
+                          {product.name}
+                        </p>
+                        <Link to={`/product/${product.id}`}>
+                          <Button 
+                            variant="secondary" 
+                            size="sm"
+                            className="bg-white text-orange-500 hover:bg-white/90"
+                          >
+                            Acheter
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                      
+                      <div className="relative">
                         <img 
                           src={product.images[0]} 
                           alt={product.name}
-                          className="w-full aspect-[4/3] object-cover transition-transform duration-300 group-hover:scale-105"
+                          className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full border-4 border-white/30"
                         />
-                        <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/70 via-black/40 to-transparent text-white">
-                          <h3 className="font-medium truncate">{product.name}</h3>
-                          <p className="text-sm opacity-90">{product.original_price.toLocaleString()} CDF</p>
-                          
-                          <div className="absolute bottom-4 right-4 bg-primary rounded-full p-2 shadow-lg">
-                            <ShoppingCart size={18} className="text-white" />
-                          </div>
+                        <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                          ${Math.floor(product.original_price / 1000)}
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   </div>
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="absolute top-1/2 -left-4 -translate-y-1/2 hidden md:flex" />
-            <CarouselNext className="absolute top-1/2 -right-4 -translate-y-1/2 hidden md:flex" />
           </Carousel>
           
           <div className="flex justify-center mt-4 gap-2">
@@ -135,8 +130,8 @@ export function FeaturedGallery() {
                 key={index}
                 onClick={() => api?.scrollTo(index)}
                 className={cn(
-                  "w-2 h-2 rounded-full transition-colors duration-300",
-                  current === index ? "bg-primary" : "bg-primary/30"
+                  "w-2 h-2 rounded-full transition-all duration-300",
+                  current === index ? "bg-orange-500 w-6" : "bg-gray-300"
                 )}
                 aria-label={`Go to slide ${index + 1}`}
               />

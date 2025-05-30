@@ -9,6 +9,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import CategoryCarousel from '@/components/CategoryCarousel';
+import { FeaturedGallery } from '@/components/FeaturedGallery';
 import WhatsAppContact from '@/components/WhatsAppContact';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
@@ -120,84 +121,32 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Featured Products Carousel */}
+      <FeaturedGallery />
+
       {/* Categories Carousel */}
       <CategoryCarousel />
 
-      {/* Products by Category */}
-      {productsByCategory.map((group, groupIndex) => (
-        <section key={group.category.id} className="py-8 md:py-16">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="mb-8 md:mb-12"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold">{group.category.name}</h2>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => navigate(`/products?category=${group.category.id}`)}
-                >
-                  Voir tout
-                </Button>
-              </div>
-            </motion.div>
-
-            {productsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="bg-gray-200 aspect-square rounded-lg mb-3"></div>
-                    <div className="bg-gray-200 h-4 rounded mb-2"></div>
-                    <div className="bg-gray-200 h-3 rounded mb-2"></div>
-                    <div className="bg-gray-200 h-6 rounded"></div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 0.8 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
-              >
-                {group.products.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 * index }}
-                  >
-                    <ProductCard product={product} />
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-          </div>
-        </section>
-      ))}
-
-      {/* Popular Items */}
-      <section className="py-8 md:py-16 bg-muted/30">
+      {/* Top Selling Products */}
+      <section className="py-6">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="mb-8 md:mb-12"
+            className="mb-6"
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl md:text-3xl font-bold">Popular Items</h2>
-              <Button variant="ghost" onClick={() => navigate('/products')}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Top Selling</h2>
+              <Button variant="ghost" onClick={() => navigate('/products')} className="text-sm">
                 See All
               </Button>
             </div>
           </motion.div>
 
           {productsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-              {[...Array(8)].map((_, i) => (
+            <div className="grid grid-cols-2 gap-3">
+              {[...Array(4)].map((_, i) => (
                 <div key={i} className="animate-pulse">
                   <div className="bg-gray-200 aspect-square rounded-lg mb-3"></div>
                   <div className="bg-gray-200 h-4 rounded mb-2"></div>
@@ -211,9 +160,9 @@ const Index = () => {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.8 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
+              className="grid grid-cols-2 gap-3"
             >
-              {(popularProducts.length > 0 ? popularProducts : featuredProducts).slice(0, 8).map((product, index) => (
+              {(popularProducts.length > 0 ? popularProducts : featuredProducts).slice(0, 4).map((product, index) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -227,6 +176,49 @@ const Index = () => {
           )}
         </div>
       </section>
+
+      {/* Products by Category */}
+      {productsByCategory.slice(0, 2).map((group, groupIndex) => (
+        <section key={group.category.id} className="py-6">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="mb-6"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">{group.category.name}</h2>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate(`/products?category=${group.category.id}`)}
+                  className="text-sm"
+                >
+                  Voir tout
+                </Button>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.8 }}
+              className="grid grid-cols-2 gap-3"
+            >
+              {group.products.slice(0, 4).map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 * index }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+      ))}
 
       {/* Features Section */}
       <section className="py-8 md:py-16">

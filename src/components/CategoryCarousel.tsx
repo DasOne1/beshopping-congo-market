@@ -8,7 +8,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import CategoryCard from '@/components/CategoryCard';
 import { useCategories } from '@/hooks/useCategories';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useNavigate } from 'react-router-dom';
@@ -38,16 +37,16 @@ const CategoryCarousel = () => {
 
   if (isLoading) {
     return (
-      <section className="py-8 md:py-16 bg-muted/30">
+      <section className="py-6">
         <div className="container mx-auto px-4">
-          <div className="mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6">Shop Markets</h2>
+          <div className="mb-6">
+            <h2 className="text-xl font-bold mb-4">Categories</h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+          <div className="flex gap-4 overflow-hidden">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-gray-200 aspect-square rounded-lg mb-3"></div>
-                <div className="bg-gray-200 h-4 rounded mb-2"></div>
+              <div key={i} className="flex flex-col items-center animate-pulse">
+                <div className="w-16 h-16 bg-gray-200 rounded-full mb-2"></div>
+                <div className="bg-gray-200 h-3 w-12 rounded"></div>
               </div>
             ))}
           </div>
@@ -57,16 +56,17 @@ const CategoryCarousel = () => {
   }
 
   return (
-    <section className="py-8 md:py-16 bg-muted/30">
+    <section className="py-6">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-8 md:mb-12"
+          className="mb-6"
         >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold">Shop Markets</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Categories</h2>
+            <button className="text-sm text-primary">See All</button>
           </div>
         </motion.div>
 
@@ -84,24 +84,30 @@ const CategoryCarousel = () => {
               loop: true,
             }}
           >
-            <CarouselContent className="-ml-2 md:-ml-4">
+            <CarouselContent className="-ml-2">
               {categories?.map((category, index) => (
-                <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/5">
+                <CarouselItem key={category.id} className="pl-2 basis-auto">
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.1 * index }}
+                    className="flex flex-col items-center cursor-pointer"
+                    onClick={() => handleCategoryClick(category.id)}
                   >
-                    <CategoryCard
-                      {...category}
-                      onClick={() => handleCategoryClick(category.id)}
-                    />
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 mb-2 border-2 border-gray-200 hover:border-primary transition-colors">
+                      <img 
+                        src={category.image || `/placeholder.svg`} 
+                        alt={category.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-center max-w-[60px] truncate">
+                      {category.name}
+                    </span>
                   </motion.div>
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="hidden md:flex -left-12" />
-            <CarouselNext className="hidden md:flex -right-12" />
           </Carousel>
         </motion.div>
       </div>
