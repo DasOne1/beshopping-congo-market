@@ -10,7 +10,7 @@ export interface Product {
   discount?: number;
   images: string[];
   stock: number;
-  category: string;
+  category?: string; // Made optional to fix TypeScript errors
   category_id?: string;
   tags: string[];
   variants?: ProductVariant[];

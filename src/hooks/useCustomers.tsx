@@ -35,21 +35,56 @@ export const useCustomers = () => {
 
   const createCustomer = useMutation({
     mutationFn: async (customer: Omit<Customer, 'id' | 'created_at' | 'updated_at'>) => {
+      // Vérifier d'abord si le client existe déjà par téléphone ou email
+      let existingCustomer = null;
+      
+      if (customer.phone) {
+        const { data: phoneCustomer } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('phone', customer.phone)
+          .single();
+        existingCustomer = phoneCustomer;
+      }
+      
+      if (!existingCustomer && customer.email) {
+        const { data: emailCustomer } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('email', customer.email)
+          .single();
+        existingCustomer = emailCustomer;
+      }
+
+      if (existingCustomer) {
+        return existingCustomer;
+      }
+
+      // Créer un nouveau client
       const { data, error } = await supabase
         .from('customers')
-        .insert([customer])
+        .insert([{
+          ...customer,
+          total_spent: 0,
+          orders_count: 0,
+          status: 'active'
+        }])
         .select()
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      toast({
-        title: "Client créé",
-        description: "Le client a été créé avec succès",
-      });
+      
+      // Ne pas afficher de toast si c'est un client existant
+      if (data.created_at && new Date(data.created_at).getTime() > Date.now() - 5000) {
+        toast({
+          title: "Client créé",
+          description: "Le client a été créé avec succès",
+        });
+      }
     },
     onError: (error: any) => {
       toast({

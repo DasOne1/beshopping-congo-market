@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useOrders } from '@/hooks/useOrders';
+import { useCustomers } from '@/hooks/useCustomers';
 import WhatsAppContact from '@/components/WhatsAppContact';
 import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
 
@@ -24,6 +26,8 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const { toast } = useToast();
+  const { createOrder } = useOrders();
+  const { createCustomer } = useCustomers();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -38,28 +42,78 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
     }
 
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
 
-    // Préparer les détails de la commande
-    const details = {
-      customerName,
-      customerPhone,
-      customerAddress,
-      total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
-      orderType: 'form' as const
-    };
+    try {
+      // Créer le client d'abord
+      const customerData = {
+        name: customerName,
+        phone: customerPhone,
+        address: { street: customerAddress }
+      };
 
-    setOrderDetails(details);
-    setShowConfirmation(true);
+      const newCustomer = await createCustomer.mutateAsync(customerData);
 
-    // Réinitialiser le formulaire
-    setCustomerName('');
-    setCustomerPhone('');
-    setCustomerAddress('');
+      // Préparer les articles de la commande
+      const orderItems = cartProducts?.map(item => ({
+        product_id: item.product?.id,
+        product_name: item.product?.name || 'Produit inconnu',
+        product_image: item.product?.images?.[0],
+        quantity: item.quantity,
+        unit_price: item.product?.discounted_price || item.product?.original_price || 0,
+        total_price: (item.product?.discounted_price || item.product?.original_price || 0) * item.quantity
+      })) || [];
 
-    if (onOrderComplete) {
-      onOrderComplete();
+      // Créer la commande
+      const orderData = {
+        customer_id: newCustomer.id,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        shipping_address: { street: customerAddress },
+        subtotal: subtotal || 0,
+        total_amount: subtotal || 0,
+        status: 'pending' as const,
+        payment_status: 'pending'
+      };
+
+      await createOrder.mutateAsync({
+        order: orderData,
+        items: orderItems
+      });
+
+      // Préparer les détails de la commande pour la confirmation
+      const details = {
+        customerName,
+        customerPhone,
+        customerAddress,
+        total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
+        orderType: 'form' as const
+      };
+
+      setOrderDetails(details);
+      setShowConfirmation(true);
+
+      // Réinitialiser le formulaire
+      setCustomerName('');
+      setCustomerPhone('');
+      setCustomerAddress('');
+
+      if (onOrderComplete) {
+        onOrderComplete();
+      }
+
+      toast({
+        title: "Commande créée",
+        description: "Votre commande a été enregistrée avec succès !",
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Une erreur est survenue lors de la création de la commande.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -84,7 +138,7 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
     return message;
   };
 
-  const handleWhatsAppOrder = () => {
+  const handleWhatsAppOrder = async () => {
     if (!customerName || !customerPhone || !customerAddress) {
       toast({
         title: "Erreur",
@@ -94,25 +148,76 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
       return;
     }
 
-    // Préparer les détails de la commande WhatsApp
-    const details = {
-      customerName,
-      customerPhone,
-      customerAddress,
-      total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
-      orderType: 'whatsapp' as const
-    };
+    try {
+      // Créer le client d'abord
+      const customerData = {
+        name: customerName,
+        phone: customerPhone,
+        address: { street: customerAddress }
+      };
 
-    setOrderDetails(details);
-    setShowConfirmation(true);
+      const newCustomer = await createCustomer.mutateAsync(customerData);
 
-    // Réinitialiser le formulaire
-    setCustomerName('');
-    setCustomerPhone('');
-    setCustomerAddress('');
+      // Préparer les articles de la commande
+      const orderItems = cartProducts?.map(item => ({
+        product_id: item.product?.id,
+        product_name: item.product?.name || 'Produit inconnu',
+        product_image: item.product?.images?.[0],
+        quantity: item.quantity,
+        unit_price: item.product?.discounted_price || item.product?.original_price || 0,
+        total_price: (item.product?.discounted_price || item.product?.original_price || 0) * item.quantity
+      })) || [];
 
-    if (onOrderComplete) {
-      onOrderComplete();
+      // Créer la commande WhatsApp
+      const orderData = {
+        customer_id: newCustomer.id,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        whatsapp_number: customerPhone,
+        shipping_address: { street: customerAddress },
+        subtotal: subtotal || 0,
+        total_amount: subtotal || 0,
+        status: 'pending' as const,
+        payment_status: 'pending'
+      };
+
+      await createOrder.mutateAsync({
+        order: orderData,
+        items: orderItems
+      });
+
+      // Préparer les détails de la commande WhatsApp
+      const details = {
+        customerName,
+        customerPhone,
+        customerAddress,
+        total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
+        orderType: 'whatsapp' as const
+      };
+
+      setOrderDetails(details);
+      setShowConfirmation(true);
+
+      // Réinitialiser le formulaire
+      setCustomerName('');
+      setCustomerPhone('');
+      setCustomerAddress('');
+
+      if (onOrderComplete) {
+        onOrderComplete();
+      }
+
+      toast({
+        title: "Commande WhatsApp créée",
+        description: "Votre commande a été enregistrée et sera envoyée via WhatsApp !",
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Une erreur est survenue lors de la création de la commande WhatsApp.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -159,6 +264,7 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
               className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
               size="lg"
               onClick={handleSubmit}
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>

@@ -1,7 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { useCustomers } from './useCustomers';
 
 export interface OrderItem {
   id: string;
@@ -39,6 +39,7 @@ export interface Order {
 
 export const useOrders = () => {
   const queryClient = useQueryClient();
+  const { updateCustomerStats } = useCustomers();
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
@@ -95,10 +96,23 @@ export const useOrders = () => {
 
       if (itemsError) throw itemsError;
 
+      // Mettre à jour les statistiques du client si un customer_id est fourni
+      if (order.customer_id) {
+        try {
+          await updateCustomerStats.mutateAsync({
+            customerId: order.customer_id,
+            orderAmount: order.total_amount
+          });
+        } catch (error) {
+          console.error('Erreur lors de la mise à jour des statistiques client:', error);
+        }
+      }
+
       return newOrder;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
       toast({
         title: "Commande créée",
         description: "La commande a été créée avec succès",
