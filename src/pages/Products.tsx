@@ -144,7 +144,7 @@ const Products = () => {
         {/* Sticky Controls */}
         <div className="sticky top-16 md:top-20 z-40 bg-background/95 backdrop-blur-sm border-b pb-4 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="flex items-center gap-4 w-full sm:w-auto relative">
               <Button
                 variant="outline"
                 size="sm"
@@ -155,7 +155,7 @@ const Products = () => {
                 Filtres
               </Button>
               
-              {/* Barre de recherche avec overlay */}
+              {/* Barre de recherche avec overlay centré */}
               <div className="relative" ref={searchRef}>
                 <Button
                   variant="ghost"
@@ -166,26 +166,32 @@ const Products = () => {
                   <Search className="h-4 w-4" />
                 </Button>
                 
-                {/* Overlay de recherche */}
+                {/* Overlay de recherche centré */}
                 {isSearchExpanded && (
-                  <div className="absolute top-0 left-0 z-50 bg-background border rounded-md shadow-lg p-2 min-w-64">
-                    <div className="flex items-center gap-2">
-                      <Search className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Rechercher des produits..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="border-0 focus-visible:ring-0 px-0"
-                        autoFocus
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsSearchExpanded(false)}
-                        className="p-1 h-6 w-6"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
+                  <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/20" onClick={() => setIsSearchExpanded(false)} />
+                    
+                    {/* Search overlay */}
+                    <div className="relative bg-background border rounded-lg shadow-xl p-4 mx-4 w-full max-w-md">
+                      <div className="flex items-center gap-2">
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Rechercher des produits..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="border-0 focus-visible:ring-0 px-0"
+                          autoFocus
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsSearchExpanded(false)}
+                          className="p-1 h-6 w-6"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
