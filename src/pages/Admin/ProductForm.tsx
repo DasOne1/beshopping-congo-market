@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +15,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { Loader2, Save, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '@/components/Admin/AdminLayout';
+import ImageUpload from '@/components/Admin/ImageUpload';
 import { Json } from '@/integrations/supabase/types';
 
 const productSchema = z.object({
@@ -21,16 +23,17 @@ const productSchema = z.object({
   description: z.string().min(1, 'La description est requise'),
   original_price: z.string().min(1, 'Le prix est requis'),
   discounted_price: z.string().optional(),
+  discount: z.string().optional(),
   stock: z.string().min(1, 'Le stock est requis'),
-  category_id: z.string().min(1, 'La catégorie est requise'),
+  category_id: z.string().optional(),
   images: z.array(z.string()).min(1, 'Au moins une image est requise'),
   featured: z.boolean(),
-  popular: z.number().default(0),
+  popular: z.string().default('0'),
   sku: z.string().optional(),
   weight: z.string().optional(),
   dimensions: z.record(z.unknown()).optional(),
   status: z.enum(['active', 'draft', 'archived']),
-  tags: z.array(z.string()).default([])
+  tags: z.string().default('')
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -41,44 +44,62 @@ const ProductForm = () => {
   const { categories, isLoading: isLoadingCategories } = useCategories();
   const { createProduct, updateProduct, products, isLoading: isLoadingProduct } = useProducts();
 
-  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<ProductFormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: '',
       description: '',
       original_price: '',
       discounted_price: '',
+      discount: '',
       stock: '',
       category_id: '',
       images: [],
       featured: false,
       status: 'draft',
-      popular: 0,
+      popular: '0',
       sku: '',
       weight: '',
       dimensions: {},
-      tags: []
+      tags: ''
     }
   });
+
+  const watchedImages = watch('images');
+  const watchedOriginalPrice = watch('original_price');
+  const watchedDiscountedPrice = watch('discounted_price');
+
+  // Auto-calculate discount percentage
+  React.useEffect(() => {
+    if (watchedOriginalPrice && watchedDiscountedPrice) {
+      const original = parseFloat(watchedOriginalPrice);
+      const discounted = parseFloat(watchedDiscountedPrice);
+      if (original > 0 && discounted > 0 && discounted < original) {
+        const discountPercent = Math.round(((original - discounted) / original) * 100);
+        setValue('discount', discountPercent.toString());
+      }
+    }
+  }, [watchedOriginalPrice, watchedDiscountedPrice, setValue]);
 
   useEffect(() => {
     if (id) {
       const product = products.find(p => p.id === id);
       if (product) {
         setValue('name', product.name);
-        setValue('description', product.description);
+        setValue('description', product.description || '');
         setValue('original_price', product.original_price.toString());
         setValue('discounted_price', product.discounted_price ? product.discounted_price.toString() : '');
+        setValue('discount', product.discount ? product.discount.toString() : '');
         setValue('stock', product.stock.toString());
-        setValue('category_id', product.category_id);
-        setValue('images', product.images);
-        setValue('featured', product.featured);
-        setValue('status', product.status as 'active' | 'draft' | 'archived');
-        setValue('popular', product.popular);
+        setValue('category_id', product.category_id || '');
+        setValue('images', product.images || []);
+        setValue('featured', product.featured || false);
+        setValue('status', product.status as 'active' | 'draft' | 'archived' || 'draft');
+        setValue('popular', product.popular?.toString() || '0');
         setValue('sku', product.sku || '');
         setValue('weight', product.weight ? product.weight.toString() : '');
         setValue('dimensions', (product.dimensions as Record<string, unknown>) || {});
-        setValue('tags', product.tags);
+        setValue('tags', Array.isArray(product.tags) ? product.tags.join(', ') : '');
       }
     }
   }, [id, setValue, products]);
@@ -89,17 +110,18 @@ const ProductForm = () => {
         name: data.name,
         description: data.description,
         original_price: parseFloat(data.original_price),
-        discounted_price: data.discounted_price ? parseFloat(data.discounted_price) : undefined,
+        discounted_price: data.discounted_price ? parseFloat(data.discounted_price) : null,
+        discount: data.discount ? parseInt(data.discount) : null,
         stock: parseInt(data.stock),
-        category_id: data.category_id,
+        category_id: data.category_id || null,
         images: data.images,
         featured: data.featured,
-        popular: data.popular,
-        sku: data.sku,
-        weight: data.weight ? parseFloat(data.weight) : undefined,
+        popular: parseInt(data.popular || '0'),
+        sku: data.sku || null,
+        weight: data.weight ? parseFloat(data.weight) : null,
         dimensions: data.dimensions as Json,
         status: data.status,
-        tags: Array.isArray(data.tags) ? data.tags : (data.tags as string).split(',').map(tag => tag.trim())
+        tags: data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : []
       };
 
       if (id) {
@@ -107,10 +129,14 @@ const ProductForm = () => {
       } else {
         await createProduct.mutateAsync(productData);
       }
-      navigate('/admin/products');
+      navigate('/admin/catalog');
     } catch (error) {
       console.error('Error saving product:', error);
     }
+  };
+
+  const handleImagesChange = (images: string[]) => {
+    setValue('images', images);
   };
 
   return (
@@ -154,6 +180,9 @@ const ProductForm = () => {
                     placeholder="Nom du produit"
                     required
                   />
+                  {errors.name && (
+                    <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -165,18 +194,22 @@ const ProductForm = () => {
                     rows={4}
                     required
                   />
+                  {errors.description && (
+                    <p className="text-sm text-red-500 mt-1">{errors.description.message}</p>
+                  )}
                 </div>
 
                 <div>
-                  <Label htmlFor="category">Catégorie</Label>
+                  <Label htmlFor="category_id">Catégorie</Label>
                   <Select 
-                    {...register('category_id')}
+                    onValueChange={(value) => setValue('category_id', value)}
+                    value={watch('category_id') || ''}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner une catégorie" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Aucune catégorie</SelectItem>
+                      <SelectItem value="">Aucune catégorie</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
@@ -184,6 +217,15 @@ const ProductForm = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="sku">SKU</Label>
+                  <Input
+                    id="sku"
+                    {...register('sku')}
+                    placeholder="SKU-001"
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -204,8 +246,13 @@ const ProductForm = () => {
                       id="original_price"
                       {...register('original_price')}
                       placeholder="0"
+                      type="number"
+                      step="0.01"
                       required
                     />
+                    {errors.original_price && (
+                      <p className="text-sm text-red-500 mt-1">{errors.original_price.message}</p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="discounted_price">Prix réduit (FC)</Label>
@@ -213,27 +260,38 @@ const ProductForm = () => {
                       id="discounted_price"
                       {...register('discounted_price')}
                       placeholder="0"
+                      type="number"
+                      step="0.01"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
+                    <Label htmlFor="discount">Remise (%)</Label>
+                    <Input
+                      id="discount"
+                      {...register('discount')}
+                      placeholder="0"
+                      type="number"
+                      readOnly
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Calculé automatiquement
+                    </p>
+                  </div>
+                  <div>
                     <Label htmlFor="stock">Stock disponible *</Label>
                     <Input
                       id="stock"
                       {...register('stock')}
                       placeholder="0"
+                      type="number"
                       required
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="sku">SKU</Label>
-                    <Input
-                      id="sku"
-                      {...register('sku')}
-                      placeholder="SKU-001"
-                    />
+                    {errors.stock && (
+                      <p className="text-sm text-red-500 mt-1">{errors.stock.message}</p>
+                    )}
                   </div>
                 </div>
 
@@ -262,7 +320,8 @@ const ProductForm = () => {
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="featured"
-                    {...register('featured')}
+                    checked={watch('featured')}
+                    onCheckedChange={(checked) => setValue('featured', checked)}
                   />
                   <Label htmlFor="featured">Produit vedette</Label>
                 </div>
@@ -270,7 +329,8 @@ const ProductForm = () => {
                 <div>
                   <Label htmlFor="status">Statut</Label>
                   <Select 
-                    {...register('status')}
+                    onValueChange={(value) => setValue('status', value as 'active' | 'draft' | 'archived')}
+                    value={watch('status')}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -284,43 +344,40 @@ const ProductForm = () => {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Images et tags */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Images et tags</CardTitle>
-                <CardDescription>
-                  Gestion des images et des tags du produit
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="images">Images du produit *</Label>
-                  <Input
-                    id="images"
-                    {...register('images.0')}
-                    placeholder="URL de l'image"
-                    required
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Ajoutez l'URL de l'image principale du produit
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="tags">Tags</Label>
-                  <Input
-                    id="tags"
-                    {...register('tags')}
-                    placeholder="Tags séparés par des virgules"
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Séparez les tags par des virgules
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
+
+          {/* Images et tags */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Images et tags</CardTitle>
+              <CardDescription>
+                Gestion des images et des tags du produit
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ImageUpload
+                label="Images du produit *"
+                images={watchedImages}
+                onImagesChange={handleImagesChange}
+                maxImages={5}
+              />
+              {errors.images && (
+                <p className="text-sm text-red-500">{errors.images.message}</p>
+              )}
+
+              <div>
+                <Label htmlFor="tags">Tags</Label>
+                <Input
+                  id="tags"
+                  {...register('tags')}
+                  placeholder="Tags séparés par des virgules"
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Séparez les tags par des virgules
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-6">

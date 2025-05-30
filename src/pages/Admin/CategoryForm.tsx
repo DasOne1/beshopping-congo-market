@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,14 +13,14 @@ import { useCategories } from '@/hooks/useCategories';
 import { Loader2, Save, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '@/components/Admin/AdminLayout';
+import ImageUpload from '@/components/Admin/ImageUpload';
 
 const categorySchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
-  description: z.string().min(1, 'La description est requise'),
-  slug: z.string().optional(),
+  slug: z.string().min(1, 'Le slug est requis'),
+  description: z.string().optional(),
   image: z.string().optional(),
-  parentId: z.string().optional(),
-  status: z.enum(['active', 'inactive'])
+  parent_id: z.string().optional()
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -29,22 +30,42 @@ const CategoryForm = () => {
   const navigate = useNavigate();
   const { createCategory, updateCategory, categories, isLoading: isLoadingCategory } = useCategories();
 
-  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<CategoryFormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: '',
+      slug: '',
       description: '',
-      status: 'active'
+      image: '',
+      parent_id: ''
     }
   });
+
+  const watchedName = watch('name');
+  const watchedImage = watch('image');
+
+  // Auto-generate slug from name
+  React.useEffect(() => {
+    if (watchedName && !id) {
+      const slug = watchedName
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+      setValue('slug', slug);
+    }
+  }, [watchedName, setValue, id]);
 
   useEffect(() => {
     if (id) {
       const category = categories.find(cat => cat.id === id);
       if (category) {
         setValue('name', category.name);
-        setValue('description', category.description);
-        setValue('status', 'active');
+        setValue('slug', category.slug);
+        setValue('description', category.description || '');
+        setValue('image', category.image || '');
+        setValue('parent_id', category.parent_id || '');
       }
     }
   }, [id, setValue, categories]);
@@ -53,11 +74,10 @@ const CategoryForm = () => {
     try {
       const categoryData = {
         name: data.name,
-        description: data.description,
-        slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-'),
-        image: data.image || '/placeholder.svg',
-        parentId: data.parentId,
-        status: data.status
+        slug: data.slug,
+        description: data.description || null,
+        image: data.image || null,
+        parent_id: data.parent_id || null
       };
 
       if (id) {
@@ -68,6 +88,14 @@ const CategoryForm = () => {
       navigate('/admin/categories');
     } catch (error) {
       console.error('Error saving category:', error);
+    }
+  };
+
+  const handleImageChange = (images: string[]) => {
+    if (images.length > 0) {
+      setValue('image', images[0]);
+    } else {
+      setValue('image', '');
     }
   };
 
@@ -112,45 +140,42 @@ const CategoryForm = () => {
                       placeholder="Nom de la catégorie"
                       required
                     />
+                    {errors.name && (
+                      <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
+                    )}
                   </div>
 
                   <div>
-                    <Label htmlFor="description">Description *</Label>
+                    <Label htmlFor="slug">Slug *</Label>
+                    <Input
+                      id="slug"
+                      {...register('slug')}
+                      placeholder="slug-de-la-categorie"
+                      required
+                    />
+                    {errors.slug && (
+                      <p className="text-sm text-red-500 mt-1">{errors.slug.message}</p>
+                    )}
+                    <p className="text-sm text-muted-foreground mt-1">
+                      URL de la catégorie (généré automatiquement à partir du nom)
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
                       {...register('description')}
                       placeholder="Description de la catégorie"
                       rows={4}
-                      required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="slug">Slug</Label>
-                    <Input
-                      id="slug"
-                      {...register('slug')}
-                      placeholder="slug-de-la-categorie"
-                    />
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Laissez vide pour générer automatiquement à partir du nom
-                    </p>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="image">Image</Label>
-                    <Input
-                      id="image"
-                      {...register('image')}
-                      placeholder="URL de l'image"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="parentId">Catégorie parente</Label>
+                    <Label htmlFor="parent_id">Catégorie parente</Label>
                     <Select
-                      onValueChange={(value) => setValue('parentId', value)}
-                      defaultValue=""
+                      onValueChange={(value) => setValue('parent_id', value || '')}
+                      value={watch('parent_id') || ''}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionner une catégorie parente" />
@@ -167,22 +192,15 @@ const CategoryForm = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
 
-                  <div>
-                    <Label htmlFor="status">Statut</Label>
-                    <Select
-                      onValueChange={(value) => setValue('status', value as 'active' | 'inactive')}
-                      defaultValue="active"
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un statut" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-4">
+                  <ImageUpload
+                    label="Image de la catégorie"
+                    images={watchedImage ? [watchedImage] : []}
+                    onImagesChange={handleImageChange}
+                    maxImages={1}
+                  />
                 </div>
               </div>
 
