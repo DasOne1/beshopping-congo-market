@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -34,6 +33,7 @@ export const useProducts = () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .eq('status', 'active')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -44,12 +44,12 @@ export const useProducts = () => {
       console.log('Produits chargés:', data?.length);
       return data as Product[];
     },
-    retry: 2,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
+    retry: 1,
+    retryDelay: 500,
     refetchOnWindowFocus: false,
-    staleTime: 2 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
+    staleTime: 30 * 1000, // 30 secondes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: false, // Désactiver l'actualisation automatique
   });
 
   const { data: featuredProducts = [] } = useQuery({
@@ -70,10 +70,10 @@ export const useProducts = () => {
       
       return data as Product[];
     },
-    retry: 2,
+    retry: 1,
     refetchOnWindowFocus: false,
-    staleTime: 3 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const { data: popularProducts = [] } = useQuery({
@@ -94,10 +94,10 @@ export const useProducts = () => {
       
       return data as Product[];
     },
-    retry: 2,
+    retry: 1,
     refetchOnWindowFocus: false,
-    staleTime: 3 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const createProduct = useMutation({

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -24,17 +23,18 @@ export const useCategories = () => {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('name', { ascending: true });
 
       if (error) throw error;
       console.log('Catégories chargées:', data?.length);
       return data as Category[];
     },
-    retry: 2,
+    retry: 1,
+    retryDelay: 500,
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes - catégories changent moins souvent
-    gcTime: 20 * 60 * 1000, // 20 minutes
-    refetchInterval: 10 * 60 * 1000, // Actualisation automatique toutes les 10 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes - catégories changent moins souvent
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchInterval: false, // Désactiver l'actualisation automatique
   });
 
   const createCategory = useMutation({

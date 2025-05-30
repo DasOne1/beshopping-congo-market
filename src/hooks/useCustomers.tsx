@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -31,6 +30,12 @@ export const useCustomers = () => {
       if (error) throw error;
       return data as Customer[];
     },
+    retry: 1,
+    retryDelay: 500,
+    refetchOnWindowFocus: false,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchInterval: false, // Désactiver l'actualisation automatique
   });
 
   const createCustomer = useMutation({

@@ -55,6 +55,12 @@ export const useOrders = () => {
       if (error) throw error;
       return data as Order[];
     },
+    retry: 1,
+    retryDelay: 500,
+    refetchOnWindowFocus: false,
+    staleTime: 30 * 1000, // 30 secondes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: false, // Désactiver l'actualisation automatique
   });
 
   const { data: recentOrders = [] } = useQuery({
@@ -69,6 +75,10 @@ export const useOrders = () => {
       if (error) throw error;
       return data as Order[];
     },
+    retry: 1,
+    refetchOnWindowFocus: false,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const createOrder = useMutation({

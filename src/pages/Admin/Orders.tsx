@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useOrders } from '@/hooks/useOrders';
+import OrderSkeleton from '@/components/OrderSkeleton';
 import { Loader2, Search, Package, Truck, CheckCircle, XCircle, Calendar, DollarSign, User, Phone } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -58,8 +59,24 @@ const Orders = () => {
   if (isLoading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin" />
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Commandes</h1>
+              <p className="text-muted-foreground">Gérez toutes les commandes de votre boutique</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <div className="h-10 bg-gray-200 rounded animate-pulse" />
+            </div>
+            <div className="h-10 w-full md:w-[200px] bg-gray-200 rounded animate-pulse" />
+          </div>
+
+          <div className="grid gap-4">
+            <OrderSkeleton count={5} />
+          </div>
         </div>
       </AdminLayout>
     );

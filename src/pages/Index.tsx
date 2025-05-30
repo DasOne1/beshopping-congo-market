@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import ProductSkeleton from '@/components/ProductSkeleton';
 import CategoryCarousel from '@/components/CategoryCarousel';
 import { FeaturedGallery } from '@/components/FeaturedGallery';
 import WhatsAppContact from '@/components/WhatsAppContact';
@@ -32,7 +33,7 @@ const Index = () => {
   useRealtimeSync();
   
   const { products, featuredProducts, popularProducts, isLoading: productsLoading } = useProducts();
-  const { categories } = useCategories();
+  const { categories, isLoading: categoriesLoading } = useCategories();
   const { trackEvent } = useAnalytics();
 
   const [currentHero, setCurrentHero] = useState(0);
@@ -141,47 +142,63 @@ const Index = () => {
         </div>
 
         {/* Products by Category - Une seule carte par ligne sur mobile */}
-        {productsByCategory.map(group => (
-          <section key={group.category.id} className="py-4 md:py-6">
+        {productsLoading || categoriesLoading ? (
+          <section className="py-4 md:py-6">
             <div className="container mx-auto px-4">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="mb-4 md:mb-6"
-              >
+              <div className="mb-4 md:mb-6">
                 <div className="flex justify-between items-center mb-3 md:mb-4">
-                  <h2 className="text-lg md:text-xl font-bold">{group.category.name}</h2>
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => navigate(`/products?category=${group.category.id}`)}
-                    className="text-xs md:text-sm"
-                  >
-                    Voir tout
-                  </Button>
+                  <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+                  <div className="h-8 bg-gray-200 rounded w-20 animate-pulse"></div>
                 </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 0.8 }}
-                className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6"
-              >
-                {group.products.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 * index }}
-                  >
-                    <ProductCard product={product} viewMode="single" />
-                  </motion.div>
-                ))}
-              </motion.div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+                <ProductSkeleton count={8} />
+              </div>
             </div>
           </section>
-        ))}
+        ) : (
+          productsByCategory.map(group => (
+            <section key={group.category.id} className="py-4 md:py-6">
+              <div className="container mx-auto px-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                  className="mb-4 md:mb-6"
+                >
+                  <div className="flex justify-between items-center mb-3 md:mb-4">
+                    <h2 className="text-lg md:text-xl font-bold">{group.category.name}</h2>
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => navigate(`/products?category=${group.category.id}`)}
+                      className="text-xs md:text-sm"
+                    >
+                      Voir tout
+                    </Button>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  transition={{ duration: 0.8 }}
+                  className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6"
+                >
+                  {group.products.map((product, index) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.1 * index }}
+                    >
+                      <ProductCard product={product} viewMode="single" />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
+            </section>
+          ))
+        )}
 
         {/* Footer avec padding pour éviter que le contenu soit caché par la navbar mobile */}
         <div className="pb-16 md:pb-0">
