@@ -11,6 +11,7 @@ interface WhatsAppContactProps {
   size?: "default" | "sm" | "lg" | "icon";
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   useAlternate?: boolean;
+  onCustomClick?: () => void;
 }
 
 const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
@@ -20,13 +21,19 @@ const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
   className = "",
   size = "default",
   variant = "default",
-  useAlternate = false
+  useAlternate = false,
+  onCustomClick
 }) => {
   // Utiliser le WhatsApp officiel par défaut, et le business en alternative
   const defaultPhoneNumber = useAlternate ? "243123456789" : "243978100940";
   const finalPhoneNumber = phoneNumber || defaultPhoneNumber;
 
   const handleWhatsAppClick = () => {
+    // Si on a une fonction personnalisée, l'exécuter d'abord
+    if (onCustomClick) {
+      onCustomClick();
+    }
+    
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${finalPhoneNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');

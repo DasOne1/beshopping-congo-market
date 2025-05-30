@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import WhatsAppContact from '@/components/WhatsAppContact';
+import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
 
 interface OrderFormProps {
   onOrderComplete?: () => void;
@@ -20,6 +21,8 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
   const { toast } = useToast();
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -38,10 +41,22 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
     await new Promise((resolve) => setTimeout(resolve, 1500));
     setIsSubmitting(false);
 
-    toast({
-      title: "Commande enregistrée!",
-      description: "Votre commande a été enregistrée avec succès.",
-    });
+    // Préparer les détails de la commande
+    const details = {
+      customerName,
+      customerPhone,
+      customerAddress,
+      total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
+      orderType: 'form' as const
+    };
+
+    setOrderDetails(details);
+    setShowConfirmation(true);
+
+    // Réinitialiser le formulaire
+    setCustomerName('');
+    setCustomerPhone('');
+    setCustomerAddress('');
 
     if (onOrderComplete) {
       onOrderComplete();
@@ -69,75 +84,115 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
     return message;
   };
 
+  const handleWhatsAppOrder = () => {
+    if (!customerName || !customerPhone || !customerAddress) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs avant de commander via WhatsApp.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Préparer les détails de la commande WhatsApp
+    const details = {
+      customerName,
+      customerPhone,
+      customerAddress,
+      total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
+      orderType: 'whatsapp' as const
+    };
+
+    setOrderDetails(details);
+    setShowConfirmation(true);
+
+    // Réinitialiser le formulaire
+    setCustomerName('');
+    setCustomerPhone('');
+    setCustomerAddress('');
+
+    if (onOrderComplete) {
+      onOrderComplete();
+    }
+  };
+
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Informations de livraison</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-4">
-          <div>
-            <Label htmlFor="name">Nom complet</Label>
-            <Input
-              id="name"
-              placeholder="Votre nom complet"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+    <>
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle>Informations de livraison</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4">
+            <div>
+              <Label htmlFor="name">Nom complet</Label>
+              <Input
+                id="name"
+                placeholder="Votre nom complet"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">Numéro de téléphone</Label>
+              <Input
+                id="phone"
+                placeholder="Votre numéro de téléphone"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="address">Adresse de livraison</Label>
+              <Input
+                id="address"
+                placeholder="Votre adresse de livraison"
+                value={customerAddress}
+                onChange={(e) => setCustomerAddress(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col space-y-4">
+            <Button 
+              type="submit" 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+              size="lg"
+              onClick={handleSubmit}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Passer la commande
+                </>
+              )}
+            </Button>
+
+            <div className="text-center text-sm text-gray-500">ou</div>
+
+            <WhatsAppContact
+              phoneNumber="243978100940"
+              message={generateWhatsAppMessage()}
+              className="w-full bg-whatsapp hover:bg-whatsapp-dark text-white"
+              size="lg"
+              children="Commander via WhatsApp"
+              onCustomClick={handleWhatsAppOrder}
             />
           </div>
-          <div>
-            <Label htmlFor="phone">Numéro de téléphone</Label>
-            <Input
-              id="phone"
-              placeholder="Votre numéro de téléphone"
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="address">Adresse de livraison</Label>
-            <Input
-              id="address"
-              placeholder="Votre adresse de livraison"
-              value={customerAddress}
-              onChange={(e) => setCustomerAddress(e.target.value)}
-            />
-          </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="flex flex-col space-y-4">
-          <Button 
-            type="submit" 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
-            size="lg"
-            onClick={handleSubmit}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Envoi en cours...
-              </>
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Passer la commande
-              </>
-            )}
-          </Button>
-
-          <div className="text-center text-sm text-gray-500">ou</div>
-
-          <WhatsAppContact
-            phoneNumber="243978100940"
-            message={generateWhatsAppMessage()}
-            className="w-full bg-whatsapp hover:bg-whatsapp-dark text-white"
-            size="lg"
-          >
-            Commander via WhatsApp
-          </WhatsAppContact>
-        </div>
-      </CardContent>
-    </Card>
+      <OrderConfirmationDialog
+        isOpen={showConfirmation}
+        onClose={() => setShowConfirmation(false)}
+        orderDetails={orderDetails}
+      />
+    </>
   );
 };
 
