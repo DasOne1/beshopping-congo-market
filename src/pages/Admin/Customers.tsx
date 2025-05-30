@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,18 +12,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import AdminLayout from '@/components/Admin/AdminLayout';
 
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  orders_count: number;
-  total_spent: number;
-  last_order_date?: string;
-  created_at: string;
-  status: 'active' | 'inactive';
-}
-
 const Customers = () => {
   const { customers, isLoading } = useCustomers();
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,13 +19,12 @@ const Customers = () => {
 
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (customer.phone || '').toLowerCase().includes(searchTerm.toLowerCase());
+      customer.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusColor = (status: Customer['status']) => {
+  const getStatusColor = (status?: string) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
       case 'inactive': return 'bg-red-100 text-red-800';
@@ -84,7 +72,7 @@ const Customers = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Rechercher par nom, email ou numéro de téléphone..."
+              placeholder="Rechercher par nom ou email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -119,7 +107,7 @@ const Customers = () => {
                       </CardDescription>
                     </div>
                   </div>
-                  <Badge className={getStatusColor(customer.status as 'active' | 'inactive')}>
+                  <Badge className={getStatusColor(customer.status)}>
                     {customer.status || 'active'}
                   </Badge>
                 </div>

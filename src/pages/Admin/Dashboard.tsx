@@ -1,52 +1,27 @@
+
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShoppingCart, Package, Users, TrendingUp, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ShoppingCart, Package, Users, TrendingUp } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import AdminLayout from '@/components/Admin/AdminLayout';
 
-interface DashboardData {
-  total_revenue: number;
-  total_orders: number;
-  total_customers: number;
-  average_order_value: number;
-  recent_orders: {
-    id: string;
-    order_number: string;
-    customer_name: string;
-    total: number;
-    status: string;
-    created_at: string;
-  }[];
-  top_products: {
-    id: string;
-    name: string;
-    total_sales: number;
-  }[];
-  low_stock_products: {
-    id: string;
-    name: string;
-    stock: number;
-  }[];
-}
-
 const Dashboard = () => {
-  const { stats: dashboard, isLoading } = useDashboard();
+  const { stats, isLoading } = useDashboard();
 
   if (isLoading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  if (!dashboard) {
-    return (
-      <AdminLayout>
-        <div className="text-center py-12">
-          <p className="text-gray-500">Aucune donnée disponible</p>
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <div className="h-8 bg-gray-200 rounded w-16"></div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
         </div>
       </AdminLayout>
     );
@@ -71,7 +46,7 @@ const Dashboard = () => {
               <ShoppingCart className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{dashboard.totalOrders || 0}</div>
+              <div className="text-2xl font-bold text-blue-600">{stats?.totalOrders || 0}</div>
               <p className="text-xs text-muted-foreground">
                 +2.1% par rapport au mois dernier
               </p>
@@ -84,7 +59,7 @@ const Dashboard = () => {
               <Package className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{dashboard.topProducts?.length || 0}</div>
+              <div className="text-2xl font-bold text-green-600">{stats?.totalProducts || 0}</div>
               <p className="text-xs text-muted-foreground">
                 +4 nouveaux cette semaine
               </p>
@@ -97,7 +72,7 @@ const Dashboard = () => {
               <Users className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{dashboard.totalCustomers || 0}</div>
+              <div className="text-2xl font-bold text-purple-600">{stats?.totalCustomers || 0}</div>
               <p className="text-xs text-muted-foreground">
                 +12 nouveaux ce mois
               </p>
@@ -111,7 +86,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">
-                {dashboard.totalRevenue ? `${dashboard.totalRevenue.toLocaleString()} FC` : '0 FC'}
+                {stats?.totalRevenue ? `${stats.totalRevenue.toLocaleString()} FC` : '0 FC'}
               </div>
               <p className="text-xs text-muted-foreground">
                 +8.3% par rapport au mois dernier
@@ -128,7 +103,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {dashboard.topProducts?.map((product, index) => (
+                {stats?.topProducts?.map((product, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <span className="text-sm font-medium">{product.name}</span>
                     <span className="text-sm text-blue-600 font-semibold">{product.sales} ventes</span>
@@ -146,7 +121,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {dashboard.recentOrders?.map((order, index) => (
+                {stats?.recentOrders?.map((order, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <span className="text-sm font-medium">Commande #{order.id.slice(0, 8)}</span>
                     <span className="text-sm text-green-600 font-semibold">{order.total_amount} FC</span>

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { Json } from '@/integrations/supabase/types';
 
 export interface Product {
   id: string;
@@ -14,11 +13,11 @@ export interface Product {
   stock: number;
   category_id?: string;
   tags: string[]; // Rendu obligatoire pour correspondre au type global
-  featured: boolean;
-  popular: number;
+  featured?: boolean;
+  popular?: number;
   sku?: string;
   weight?: number;
-  dimensions?: Json;
+  dimensions?: any;
   status?: string;
   created_at?: string;
   updated_at?: string;
@@ -116,7 +115,7 @@ export const useProducts = () => {
       console.log('Création d\'un nouveau produit...');
       const { data, error } = await supabase
         .from('products')
-        .insert({
+        .insert([{
           name: product.name,
           description: product.description,
           original_price: product.original_price,
@@ -127,12 +126,12 @@ export const useProducts = () => {
           category_id: product.category_id,
           tags: product.tags,
           featured: product.featured,
-          popular: product.popular,
+          popular: product.popular || 0,
           sku: product.sku,
           weight: product.weight,
           dimensions: product.dimensions,
           status: product.status || 'active'
-        })
+        }])
         .select()
         .single();
 
@@ -153,7 +152,7 @@ export const useProducts = () => {
         description: "Le produit a été créé avec succès",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       console.error('Erreur lors de la création du produit:', error);
       toast({
         title: "Erreur",
@@ -193,7 +192,7 @@ export const useProducts = () => {
         description: "Le produit a été mis à jour avec succès",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       console.error('Erreur lors de la mise à jour du produit:', error);
       toast({
         title: "Erreur",
@@ -228,7 +227,7 @@ export const useProducts = () => {
         description: "Le produit a été supprimé avec succès",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       console.error('Erreur lors de la suppression du produit:', error);
       toast({
         title: "Erreur",

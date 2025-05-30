@@ -1,115 +1,99 @@
-import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useProducts, Product } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
-import { useProducts } from '@/hooks/useProducts';
-import { Loader2, Save, ArrowLeft } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import ImageUpload from '@/components/Admin/ImageUpload';
 import AdminLayout from '@/components/Admin/AdminLayout';
-import { Json } from '@/integrations/supabase/types';
-
-const productSchema = z.object({
-  name: z.string().min(1, 'Le nom est requis'),
-  description: z.string().min(1, 'La description est requise'),
-  original_price: z.string().min(1, 'Le prix est requis'),
-  discounted_price: z.string().optional(),
-  stock: z.string().min(1, 'Le stock est requis'),
-  category_id: z.string().min(1, 'La catégorie est requise'),
-  images: z.array(z.string()).min(1, 'Au moins une image est requise'),
-  featured: z.boolean(),
-  popular: z.number().default(0),
-  sku: z.string().optional(),
-  weight: z.string().optional(),
-  dimensions: z.record(z.unknown()).optional(),
-  status: z.enum(['active', 'draft', 'archived']),
-  tags: z.array(z.string()).default([])
-});
-
-type ProductFormData = z.infer<typeof productSchema>;
 
 const ProductForm = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
-  const { categories, isLoading: isLoadingCategories } = useCategories();
-  const { createProduct, updateProduct, products, isLoading: isLoadingProduct } = useProducts();
-
-  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      original_price: '',
-      discounted_price: '',
-      stock: '',
-      category_id: '',
-      images: [],
-      featured: false,
-      status: 'draft',
-      popular: 0,
-      sku: '',
-      weight: '',
-      dimensions: {},
-      tags: []
-    }
+  const { id } = useParams();
+  const isEditing = !!id;
+  
+  const { products, createProduct, updateProduct } = useProducts();
+  const { categories } = useCategories();
+  
+  const [formData, setFormData] = useState<Partial<Product>>({
+    name: '',
+    description: '',
+    original_price: 0,
+    discounted_price: 0,
+    stock: 0,
+    category_id: null,
+    images: [],
+    tags: [],
+    featured: false,
+    status: 'active'
   });
+  
+  const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
-    if (id) {
+    if (isEditing && id && products.length > 0) {
       const product = products.find(p => p.id === id);
       if (product) {
-        setValue('name', product.name);
-        setValue('description', product.description);
-        setValue('original_price', product.original_price.toString());
-        setValue('discounted_price', product.discounted_price ? product.discounted_price.toString() : '');
-        setValue('stock', product.stock.toString());
-        setValue('category_id', product.category_id);
-        setValue('images', product.images);
-        setValue('featured', product.featured);
-        setValue('status', product.status as 'active' | 'draft' | 'archived');
-        setValue('popular', product.popular);
-        setValue('sku', product.sku || '');
-        setValue('weight', product.weight ? product.weight.toString() : '');
-        setValue('dimensions', (product.dimensions as Record<string, unknown>) || {});
-        setValue('tags', product.tags);
+        setFormData({
+          ...product,
+          category_id: product.category_id || null
+        });
       }
     }
-  }, [id, setValue, products]);
+  }, [isEditing, id, products]);
 
-  const onSubmit = async (data: ProductFormData) => {
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImagesChange = (images: string[]) => {
+    setFormData(prev => ({ ...prev, images }));
+  };
+
+  const handleAddTag = () => {
+    if (newTag.trim() && formData.tags && !formData.tags.includes(newTag.trim())) {
+      setFormData(prev => ({ 
+        ...prev, 
+        tags: [...(prev.tags || []), newTag.trim()] 
+      }));
+      setNewTag('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      tags: (prev.tags || []).filter(tag => tag !== tagToRemove) 
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.description || !formData.original_price) {
+      return;
+    }
+
     try {
-      const productData = {
-        name: data.name,
-        description: data.description,
-        original_price: parseFloat(data.original_price),
-        discounted_price: data.discounted_price ? parseFloat(data.discounted_price) : undefined,
-        stock: parseInt(data.stock),
-        category_id: data.category_id,
-        images: data.images,
-        featured: data.featured,
-        popular: data.popular,
-        sku: data.sku,
-        weight: data.weight ? parseFloat(data.weight) : undefined,
-        dimensions: data.dimensions as Json,
-        status: data.status,
-        tags: Array.isArray(data.tags) ? data.tags : (data.tags as string).split(',').map(tag => tag.trim())
+      const submitData = {
+        ...formData,
+        category_id: formData.category_id === 'none' ? null : formData.category_id
       };
 
-      if (id) {
-        await updateProduct.mutateAsync({ id, ...productData });
+      if (isEditing && id) {
+        await updateProduct.mutateAsync({ ...submitData, id } as Product & { id: string });
       } else {
-        await createProduct.mutateAsync(productData);
+        await createProduct.mutateAsync(submitData as Omit<Product, 'id' | 'created_at' | 'updated_at'>);
       }
-      navigate('/admin/products');
+      navigate('/admin/catalog');
     } catch (error) {
-      console.error('Error saving product:', error);
+      console.error('Erreur lors de la sauvegarde:', error);
     }
   };
 
@@ -127,15 +111,15 @@ const ProductForm = () => {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {id ? 'Modifier le produit' : 'Ajouter un produit'}
+              {isEditing ? 'Modifier le produit' : 'Ajouter un produit'}
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              {id ? 'Modifiez les informations du produit' : 'Créez un nouveau produit'}
+              {isEditing ? 'Modifiez les informations du produit' : 'Créez un nouveau produit'}
             </p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Informations principales */}
             <Card>
@@ -150,7 +134,8 @@ const ProductForm = () => {
                   <Label htmlFor="name">Nom du produit *</Label>
                   <Input
                     id="name"
-                    {...register('name')}
+                    value={formData.name || ''}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
                     placeholder="Nom du produit"
                     required
                   />
@@ -160,7 +145,8 @@ const ProductForm = () => {
                   <Label htmlFor="description">Description *</Label>
                   <Textarea
                     id="description"
-                    {...register('description')}
+                    value={formData.description || ''}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
                     placeholder="Description du produit"
                     rows={4}
                     required
@@ -170,7 +156,8 @@ const ProductForm = () => {
                 <div>
                   <Label htmlFor="category">Catégorie</Label>
                   <Select 
-                    {...register('category_id')}
+                    value={formData.category_id || 'none'} 
+                    onValueChange={(value) => handleInputChange('category_id', value === 'none' ? null : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner une catégorie" />
@@ -202,67 +189,41 @@ const ProductForm = () => {
                     <Label htmlFor="original_price">Prix original (FC) *</Label>
                     <Input
                       id="original_price"
-                      {...register('original_price')}
+                      type="number"
+                      value={formData.original_price || 0}
+                      onChange={(e) => handleInputChange('original_price', parseInt(e.target.value) || 0)}
                       placeholder="0"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="discounted_price">Prix réduit (FC)</Label>
+                    <Label htmlFor="discounted_price">Prix promotionnel (FC)</Label>
                     <Input
                       id="discounted_price"
-                      {...register('discounted_price')}
+                      type="number"
+                      value={formData.discounted_price || 0}
+                      onChange={(e) => handleInputChange('discounted_price', parseInt(e.target.value) || 0)}
                       placeholder="0"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="stock">Stock disponible *</Label>
-                    <Input
-                      id="stock"
-                      {...register('stock')}
-                      placeholder="0"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="sku">SKU</Label>
-                    <Input
-                      id="sku"
-                      {...register('sku')}
-                      placeholder="SKU-001"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="weight">Poids (kg)</Label>
-                    <Input
-                      id="weight"
-                      {...register('weight')}
-                      placeholder="0.0"
-                      type="number"
-                      step="0.1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="popular">Popularité</Label>
-                    <Input
-                      id="popular"
-                      {...register('popular')}
-                      placeholder="0"
-                      type="number"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="stock">Stock disponible</Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    value={formData.stock || 0}
+                    onChange={(e) => handleInputChange('stock', parseInt(e.target.value) || 0)}
+                    placeholder="0"
+                  />
                 </div>
 
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="featured"
-                    {...register('featured')}
+                    checked={formData.featured || false}
+                    onCheckedChange={(checked) => handleInputChange('featured', checked)}
                   />
                   <Label htmlFor="featured">Produit vedette</Label>
                 </div>
@@ -270,53 +231,78 @@ const ProductForm = () => {
                 <div>
                   <Label htmlFor="status">Statut</Label>
                   <Select 
-                    {...register('status')}
+                    value={formData.status || 'active'} 
+                    onValueChange={(value) => handleInputChange('status', value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="active">Actif</SelectItem>
-                      <SelectItem value="draft">Brouillon</SelectItem>
-                      <SelectItem value="archived">Archivé</SelectItem>
+                      <SelectItem value="inactive">Inactif</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </CardContent>
             </Card>
+          </div>
 
-            {/* Images et tags */}
+          {/* Images et tags */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Images et tags</CardTitle>
+                <CardTitle>Images du produit</CardTitle>
                 <CardDescription>
-                  Gestion des images et des tags du produit
+                  Ajoutez des images pour présenter votre produit
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ImageUpload
+                  images={formData.images || []}
+                  onImagesChange={handleImagesChange}
+                  label=""
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Tags et métadonnées</CardTitle>
+                <CardDescription>
+                  Mots-clés pour améliorer la recherche
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="images">Images du produit *</Label>
-                  <Input
-                    id="images"
-                    {...register('images.0')}
-                    placeholder="URL de l'image"
-                    required
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Ajoutez l'URL de l'image principale du produit
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="tags">Tags</Label>
-                  <Input
-                    id="tags"
-                    {...register('tags')}
-                    placeholder="Tags séparés par des virgules"
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Séparez les tags par des virgules
-                  </p>
+                  <Label>Ajouter des tags</Label>
+                  <div className="flex gap-2 mb-3">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Nouveau tag"
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                    />
+                    <Button type="button" onClick={handleAddTag} size="sm">
+                      Ajouter
+                    </Button>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {(formData.tags || []).map((tag, index) => (
+                      <div key={index} className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
+                        {tag}
+                        <Button
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-4 w-4 p-0 hover:bg-red-200 hover:text-red-800 rounded-full"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -333,11 +319,14 @@ const ProductForm = () => {
             </Button>
             <Button 
               type="submit"
-              disabled={isSubmitting}
+              disabled={createProduct.isPending || updateProduct.isPending}
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Save className="mr-2 h-4 w-4" />
-              {isSubmitting ? 'En cours...' : (id ? 'Mettre à jour' : 'Créer le produit')}
+              {createProduct.isPending || updateProduct.isPending 
+                ? (isEditing ? 'Mise à jour...' : 'Création...') 
+                : (isEditing ? 'Mettre à jour' : 'Créer le produit')
+              }
             </Button>
           </div>
         </form>

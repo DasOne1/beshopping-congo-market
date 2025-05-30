@@ -1,3 +1,4 @@
+
 /* Minimal reset for our orange glassmorphism theme */
 
 #root {
@@ -10,13 +11,10 @@
 /* Enhanced glass effect with more opacity for better readability */
 .glass-effect {
   background: rgba(255, 255, 255, 0.65);
-  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  will-change: backdrop-filter;
 }
 
 .dark .glass-effect {
@@ -27,13 +25,10 @@
 /* Enhanced glass effect specifically for navigation */
 .enhanced-glass-effect {
   background: rgba(255, 255, 255, 0.85);
-  -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  will-change: backdrop-filter;
 }
 
 .dark .enhanced-glass-effect {
@@ -49,22 +44,16 @@
   right: 0;
   padding: 0.5rem;
   z-index: 50;
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
 }
 
 .mobile-nav {
   background: rgba(255, 255, 255, 0.8);
-  -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border-radius: 1.5rem;
   padding: 0.75rem;
   display: flex;
   justify-content: space-around;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  will-change: backdrop-filter;
 }
 
 .dark .mobile-nav {
@@ -78,7 +67,6 @@
   align-items: center;
   padding: 0.5rem 1rem;
   border-radius: 1rem;
-  -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
 }
 
@@ -106,11 +94,9 @@
     rgba(255, 115, 22, 0.3) 100%
   );
   background-size: 400% 400%;
-  -webkit-animation: gradient 15s ease infinite;
   animation: gradient 15s ease infinite;
   position: relative;
   overflow: hidden;
-  will-change: background-position;
 }
 
 /* Add animated particles to the background */
@@ -125,22 +111,8 @@
     radial-gradient(circle at 25% 25%, rgba(255, 154, 90, 0.2) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(255, 115, 22, 0.2) 0%, transparent 50%);
   opacity: 0.7;
-  -webkit-animation: pulse-gentle 10s ease-in-out infinite alternate;
   animation: pulse-gentle 10s ease-in-out infinite alternate;
   z-index: -1;
-  will-change: opacity;
-}
-
-@-webkit-keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
 }
 
 @keyframes gradient {
@@ -159,8 +131,8 @@
 .text-gradient {
   background: linear-gradient(to right, #ff9a5a, #f97316);
   -webkit-background-clip: text;
-  background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
   color: transparent;
 }
 
@@ -201,122 +173,84 @@
 /* Page transition animations */
 .page-transition-enter {
   opacity: 0;
-  -webkit-transform: translateY(10px);
   transform: translateY(10px);
 }
 
 .page-transition-enter-active {
   opacity: 1;
-  -webkit-transform: translateY(0);
   transform: translateY(0);
-  -webkit-transition: opacity 0.3s ease, -webkit-transform 0.3s ease;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .page-transition-exit {
   opacity: 1;
-  -webkit-transform: translateY(0);
   transform: translateY(0);
 }
 
 .page-transition-exit-active {
   opacity: 0;
-  -webkit-transform: translateY(10px);
   transform: translateY(10px);
-  -webkit-transition: opacity 0.3s ease, -webkit-transform 0.3s ease;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 /* Improved fluid animations */
-@-webkit-keyframes float {
-  0% {
-    -webkit-transform: translateY(0px);
-    transform: translateY(0px);
-  }
-  50% {
-    -webkit-transform: translateY(-10px);
-    transform: translateY(-10px);
-  }
-  100% {
-    -webkit-transform: translateY(0px);
-    transform: translateY(0px);
-  }
-}
-
 @keyframes float {
   0% {
-    -webkit-transform: translateY(0px);
     transform: translateY(0px);
   }
   50% {
-    -webkit-transform: translateY(-10px);
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
   100% {
-    -webkit-transform: translateY(0px);
     transform: translateY(0px);
   }
 }
 
 .animate-float {
-  -webkit-animation: float 3s ease-in-out infinite;
-  animation: float 3s ease-in-out infinite;
-  will-change: transform;
-}
-
-@-webkit-keyframes pulse-gentle {
-  0% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 0.8;
-  }
-  100% {
-    opacity: 0.5;
-  }
+  animation: float 4s ease-in-out infinite;
 }
 
 @keyframes pulse-gentle {
   0% {
-    opacity: 0.5;
+    opacity: 0.6;
+    transform: scale(1);
   }
   50% {
     opacity: 0.8;
+    transform: scale(1.03);
   }
   100% {
-    opacity: 0.5;
+    opacity: 0.6;
+    transform: scale(1);
   }
 }
 
 .animate-pulse-gentle {
-  -webkit-animation: pulse-gentle 3s ease-in-out infinite;
-  animation: pulse-gentle 3s ease-in-out infinite;
-  will-change: opacity;
+  animation: pulse-gentle 4s ease-in-out infinite;
 }
 
-/* Hover effects */
+/* Subtle hover effects */
 .subtle-hover {
-  -webkit-transition: all 0.2s ease;
-  transition: all 0.2s ease;
-}
-
-.subtle-hover:hover {
-  -webkit-transform: translateY(-2px);
-  transform: translateY(-2px);
-}
-
-.card-hover {
-  -webkit-transition: all 0.3s ease;
   transition: all 0.3s ease;
 }
 
-.card-hover:hover {
-  -webkit-transform: translateY(-4px);
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+.subtle-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(249, 115, 22, 0.12);
 }
 
-/* Hero section styles */
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s ease;
+  will-change: transform;
+}
+
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(249, 115, 22, 0.15);
+}
+
+/* Hero section styling with improved animation */
 .hero-section {
   position: relative;
   overflow: hidden;
@@ -325,143 +259,140 @@
 .hero-bg-circle {
   position: absolute;
   border-radius: 50%;
-  opacity: 0.1;
-  -webkit-filter: blur(40px);
-  filter: blur(40px);
+  background: radial-gradient(circle, rgba(255, 154, 90, 0.3) 0%, rgba(255, 154, 90, 0) 70%);
+  z-index: 0;
 }
 
 .hero-bg-circle-1 {
-  width: 300px;
-  height: 300px;
-  background: #FF9A5A;
+  width: 400px;
+  height: 400px;
   top: -100px;
   left: -100px;
-  -webkit-animation: float 6s ease-in-out infinite;
-  animation: float 6s ease-in-out infinite;
+  animation: pulse-gentle 7s ease-in-out infinite;
 }
 
 .hero-bg-circle-2 {
-  width: 400px;
-  height: 400px;
-  background: #F97316;
-  bottom: -200px;
-  right: -200px;
-  -webkit-animation: float 8s ease-in-out infinite reverse;
-  animation: float 8s ease-in-out infinite reverse;
+  width: 300px;
+  height: 300px;
+  bottom: -50px;
+  right: -50px;
+  animation: pulse-gentle 5s ease-in-out infinite reverse;
+  animation-delay: 1s;
 }
 
-/* Category card styles */
+/* Category cards with improved animations */
 .category-card {
-  position: relative;
-  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   border-radius: 1rem;
-  -webkit-transition: all 0.3s ease;
-  transition: all 0.3s ease;
+  overflow: hidden;
+  height: 100%;
 }
 
 .category-card:hover {
-  -webkit-transform: translateY(-4px);
-  transform: translateY(-4px);
+  transform: scale(1.02);
+  box-shadow: 0 15px 30px rgba(249, 115, 22, 0.1);
 }
 
 .category-card-icon {
-  -webkit-transition: all 0.3s ease;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-origin: center;
 }
 
 .category-card:hover .category-card-icon {
-  -webkit-transform: scale(1.1);
-  transform: scale(1.1);
+  transform: scale(1.15) rotate(5deg);
 }
 
-/* Layout styles */
+/* Fix for layout stability */
 .layout-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
   position: relative;
 }
 
 .content-wrapper {
   flex: 1;
-  padding-top: 4rem;
-  padding-bottom: 4rem;
+  width: 100%;
   position: relative;
   z-index: 1;
 }
 
-/* Variant options */
+/* Product variant options styling for cart page */
 .variant-options {
   display: flex;
-  gap: 0.5rem;
   flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .color-option {
-  width: 2rem;
-  height: 2rem;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
-  -webkit-transition: all 0.2s ease;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .color-option.selected {
-  border-color: #F97316;
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px #FF9A5A;
 }
 
 .size-option {
-  padding: 0.5rem 1rem;
-  border: 1px solid #e5e7eb;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 0.5rem;
-  cursor: pointer;
-  -webkit-transition: all 0.2s ease;
-  transition: all 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   background: white;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .size-option.selected {
-  background: #F97316;
+  background: #FF9A5A;
   color: white;
-  border-color: #F97316;
+  border-color: #FF9A5A;
 }
 
-/* Footer styles */
+/* Simplified footer styling */
 .footer-simple {
-  background: rgba(255, 255, 255, 0.8);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  padding: 1.5rem 0;
+  font-size: 0.875rem;
 }
 
 .footer-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 1rem;
   justify-content: center;
+  margin-bottom: 1rem;
 }
 
 .footer-link {
-  color: #4b5563;
-  -webkit-transition: color 0.2s ease;
+  color: #666;
   transition: color 0.2s ease;
 }
 
 .footer-link:hover {
-  color: #F97316;
+  color: #FF9A5A;
 }
 
-/* Admin card styles */
+/* Admin section improvements */
 .admin-card {
-  background: rgba(255, 255, 255, 0.8);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  -webkit-transition: all 0.3s ease;
   transition: all 0.3s ease;
+  border-radius: 1rem;
+  overflow: hidden;
 }
 
 .admin-card:hover {
-  -webkit-transform: translateY(-4px);
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }

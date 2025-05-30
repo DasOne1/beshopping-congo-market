@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,20 +10,9 @@ import { useSettings } from '@/hooks/useSettings';
 import { useForm } from 'react-hook-form';
 import { Loader2, Building, Mail, Phone, MapPin, DollarSign, Truck } from 'lucide-react';
 
-interface SettingsFormData {
-  company_name: string;
-  company_email: string;
-  company_phone: string;
-  company_address: string;
-  currency: string;
-  tax_rate: string;
-  shipping_fee: string;
-  free_shipping_threshold: string;
-}
-
 const Settings = () => {
   const { settings, isLoading, updateSetting } = useSettings();
-  const { register, handleSubmit, setValue } = useForm<SettingsFormData>();
+  const { register, handleSubmit, setValue } = useForm();
 
   React.useEffect(() => {
     if (settings) {
@@ -31,13 +21,13 @@ const Settings = () => {
       setValue('company_phone', settings.company_phone);
       setValue('company_address', JSON.stringify(settings.company_address, null, 2));
       setValue('currency', settings.currency);
-      setValue('tax_rate', settings.tax_rate.toString());
-      setValue('shipping_fee', settings.shipping_fee.toString());
-      setValue('free_shipping_threshold', settings.free_shipping_threshold.toString());
+      setValue('tax_rate', settings.tax_rate);
+      setValue('shipping_fee', settings.shipping_fee);
+      setValue('free_shipping_threshold', settings.free_shipping_threshold);
     }
   }, [settings, setValue]);
 
-  const onSubmit = async (data: SettingsFormData) => {
+  const onSubmit = async (data: any) => {
     try {
       // Update company info
       await updateSetting.mutateAsync({ key: 'company_name', value: data.company_name });

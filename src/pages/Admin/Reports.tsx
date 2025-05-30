@@ -1,49 +1,14 @@
+
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Download, Filter, Loader2 } from 'lucide-react';
-import { useReports } from '@/hooks/useReports';
-import AdminLayout from '@/components/Admin/AdminLayout';
-
-interface ReportData {
-  sales_report: {
-    total_sales: number;
-    total_orders: number;
-    average_order_value: number;
-    sales_by_date: {
-      date: string;
-      sales: number;
-    }[];
-  };
-  products_report: {
-    total_products: number;
-    low_stock_products: number;
-    out_of_stock_products: number;
-    top_selling_products: {
-      id: string;
-      name: string;
-      total_sales: number;
-      quantity_sold: number;
-    }[];
-  };
-  customers_report: {
-    total_customers: number;
-    new_customers: number;
-    returning_customers: number;
-    top_customers: {
-      id: string;
-      name: string;
-      total_spent: number;
-      orders_count: number;
-    }[];
-  };
-}
+import { Download, Filter } from 'lucide-react';
 
 const salesData = [
   { name: 'Jan', sales: 4000, profit: 2400 },
@@ -58,37 +23,14 @@ const salesData = [
 const Reports = () => {
   const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [reportType, setReportType] = useState<'sales' | 'products' | 'customers'>('sales');
-  const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'year'>('month');
-  const { data: reports, isLoading, generateReport } = useReports<ReportData>();
+  const [reportType, setReportType] = useState("sales");
 
-  const handleGenerateReport = async () => {
-    try {
-      await generateReport.mutateAsync({ type: reportType, dateRange });
-    } catch (error) {
-      console.error('Error generating report:', error);
-    }
+  const handleGenerateReport = () => {
+    toast({
+      title: "Report Generated",
+      description: "Your report is being prepared for download.",
+    });
   };
-
-  if (isLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  if (!reports) {
-    return (
-      <AdminLayout>
-        <div className="text-center py-12">
-          <p className="text-gray-500">Aucune donnée disponible</p>
-        </div>
-      </AdminLayout>
-    );
-  }
 
   return (
     <div className="container py-8">
@@ -117,13 +59,13 @@ const Reports = () => {
           <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-medium">Sales Overview</h3>
-              <Select value={reportType} onValueChange={(value) => setReportType(value as 'sales' | 'products' | 'customers')}>
+              <Select value={reportType} onValueChange={setReportType}>
                 <SelectTrigger className="w-36">
                   <SelectValue placeholder="Report Type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="sales">Sales</SelectItem>
-                  <SelectItem value="products">Products</SelectItem>
+                  <SelectItem value="orders">Orders</SelectItem>
                   <SelectItem value="customers">Customers</SelectItem>
                 </SelectContent>
               </Select>
@@ -145,21 +87,20 @@ const Reports = () => {
           <h3 className="font-medium mb-2">Generate Report</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm mb-1">Date Range</label>
-              <Select value={dateRange} onValueChange={(value) => setDateRange(value as 'today' | 'week' | 'month' | 'year')}>
+              <label className="block text-sm mb-1">Report Type</label>
+              <Select defaultValue="sales">
                 <SelectTrigger>
-                  <SelectValue placeholder="Select date range" />
+                  <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                  <SelectItem value="year">This Year</SelectItem>
+                  <SelectItem value="sales">Sales Report</SelectItem>
+                  <SelectItem value="inventory">Inventory Report</SelectItem>
+                  <SelectItem value="customers">Customer Report</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="block text-sm mb-1">Date</label>
+              <label className="block text-sm mb-1">Date Range</label>
               <Calendar
                 mode="single"
                 selected={date}
