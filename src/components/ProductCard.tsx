@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Heart, ShoppingCart, Eye, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,8 +21,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
   const { favorites, addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
-  // Calculate real favorite count - count how many users have this product in favorites
+  // Calculate real favorite count based on how many users have favorited this product
   const favoriteCount = favorites.filter(favId => favId === product.id).length;
 
   const formatPrice = (price: number): string => {
@@ -53,15 +55,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
     navigate(`/product/${product.id}`);
   };
 
-  const nextImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const nextImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setCurrentImageIndex((prev) => 
       prev === product.images.length - 1 ? 0 : prev + 1
     );
   };
 
-  const prevImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const prevImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setCurrentImageIndex((prev) => 
       prev === 0 ? product.images.length - 1 : prev - 1
     );
@@ -78,6 +80,33 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
       setCurrentImageIndex((prev) => 
         prev === product.images.length - 1 ? 0 : prev + 1
       );
+    }
+  };
+
+  // Touch handlers for swipe functionality
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (product.images.length <= 1) return;
+
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(swipeDistance) > minSwipeDistance) {
+      if (swipeDistance > 0) {
+        // Swipe left - next image
+        nextImage();
+      } else {
+        // Swipe right - previous image
+        prevImage();
+      }
     }
   };
 
@@ -124,7 +153,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
             </div>
 
             {/* Main Image */}
-            <div className="relative w-full h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
+            <div 
+              className="relative w-full h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               <img
                 src={product.images[currentImageIndex] || product.images[0]}
                 alt={product.name}
@@ -275,7 +309,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
       </div>
 
       {/* Main Image */}
-      <div className="relative aspect-square overflow-hidden rounded-t-lg">
+      <div 
+        className="relative aspect-square overflow-hidden rounded-t-lg"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <img
           src={product.images[currentImageIndex] || product.images[0]}
           alt={product.name}

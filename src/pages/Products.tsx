@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, Grid, List, SlidersHorizontal, AlertCircle, Columns2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -26,7 +27,7 @@ const Products = () => {
   const categoryFromUrl = searchParams.get('category');
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('featured');
+  const [sortBy, setSortBy] = useState('all'); // Changed from 'featured' to 'all'
   const [viewMode, setViewMode] = useState<ViewMode>('single');
   const [priceRange, setPriceRange] = useState([0, 1000000]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
@@ -82,8 +83,10 @@ const Products = () => {
           return (b.popular || 0) - (a.popular || 0);
         case 'newest':
           return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-        default: // featured
+        case 'featured':
           return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+        default: // 'all' - no specific sorting, just by creation date
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
       }
     });
 
@@ -112,7 +115,7 @@ const Products = () => {
     setPriceRange([0, 1000000]);
     setShowOnlyInStock(false);
     setShowOnlyFeatured(false);
-    setSortBy('featured');
+    setSortBy('all'); // Changed from 'featured' to 'all'
   };
 
   const formatPrice = (price: number): string => {
@@ -166,6 +169,7 @@ const Products = () => {
                   <SelectValue placeholder="Trier par" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
                   <SelectItem value="featured">En vedette</SelectItem>
                   <SelectItem value="newest">Plus récent</SelectItem>
                   <SelectItem value="popular">Populaire</SelectItem>
@@ -335,7 +339,6 @@ const Products = () => {
                     <ProductCard 
                       product={product} 
                       viewMode={viewMode === 'grid' ? 'grid' : 'single'}
-                      className="w-full"
                     />
                   </motion.div>
                 ))}
