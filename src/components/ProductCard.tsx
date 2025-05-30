@@ -1,174 +1,138 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Heart, ShoppingCart } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Heart, ShoppingCart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
-import { useFavorites } from '@/contexts/FavoritesContext';
 import { useCart } from '@/contexts/CartContext';
-import { Product } from '@/hooks/useProducts';
-import ProductImageCarousel from './ProductImageCarousel';
+import { useFavorites } from '@/contexts/FavoritesContext';
+import { Product } from '@/types';
 
 interface ProductCardProps {
   product: Product;
-  viewMode?: 'grid' | 'list';
+  viewMode?: 'grid' | 'list' | 'single';
 }
 
-const ProductCard = ({ product, viewMode = 'grid' }: ProductCardProps) => {
-  const navigate = useNavigate();
-  const { favorites, addToFavorites, removeFromFavorites } = useFavorites();
-  const { addToCart } = useCart();
-  
-  const isFavorite = favorites.some(fav => fav.id === product.id);
-  const displayPrice = product.discounted_price || product.original_price;
-  const hasDiscount = product.discounted_price && product.discounted_price < product.original_price;
+const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' }) => {
+  const { addToCart, isInCart } = useCart();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product.id, 1);
+  };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (isFavorite) {
+    if (isFavorite(product.id)) {
       removeFromFavorites(product.id);
     } else {
-      addToFavorites(product);
+      addToFavorites(product.id);
     }
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    addToCart(product, 1);
+  const formatPrice = (price: number): string => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
 
-  const handleCardClick = () => {
-    navigate(`/products/${product.id}`);
-  };
+  const discountPercentage = product.discounted_price 
+    ? Math.round(((product.original_price - product.discounted_price) / product.original_price) * 100)
+    : 0;
 
-  if (viewMode === 'list') {
-    return (
-      <motion.div
-        whileHover={{ scale: 1.02 }}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer"
-        onClick={handleCardClick}
-      >
-        <div className="flex p-4">
-          <div className="w-32 h-32 flex-shrink-0">
-            <ProductImageCarousel 
-              images={product.images || []} 
-              productName={product.name}
-              className="w-full h-full"
-            />
-          </div>
-          
-          <div className="flex-1 ml-4">
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
-                {product.name}
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleToggleFavorite}
-                className={`ml-2 ${isFavorite ? 'text-red-500' : 'text-gray-400'}`}
-              >
-                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-              </Button>
-            </div>
-            
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
-              {product.description}
-            </p>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-gray-900 dark:text-white">
-                  {displayPrice} FC
-                </span>
-                {hasDiscount && (
-                  <>
-                    <span className="text-sm text-gray-500 line-through">
-                      {product.original_price} FC
-                    </span>
-                    {product.discount && (
-                      <Badge variant="destructive" className="text-xs">
-                        -{product.discount}%
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </div>
-              
-              <Button
-                size="sm"
-                onClick={handleAddToCart}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <ShoppingCart className="h-4 w-4 mr-1" />
-                Ajouter
-              </Button>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
+  const cardClasses = viewMode === 'single' 
+    ? "w-full max-w-sm mx-auto" 
+    : viewMode === 'list' 
+    ? "w-full" 
+    : "w-full";
 
   return (
     <motion.div
-      whileHover={{ scale: 1.05 }}
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer"
-      onClick={handleCardClick}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
+      className={cardClasses}
     >
-      <div className="relative">
-        <ProductImageCarousel 
-          images={product.images || []} 
-          productName={product.name}
-          className="aspect-square"
-        />
-        
-        {hasDiscount && product.discount && (
-          <Badge variant="destructive" className="absolute top-2 left-2">
-            -{product.discount}%
-          </Badge>
-        )}
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleToggleFavorite}
-          className={`absolute top-2 right-2 bg-white/80 hover:bg-white/90 ${
-            isFavorite ? 'text-red-500' : 'text-gray-600'
-          }`}
-        >
-          <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-        </Button>
-      </div>
-      
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-          {product.name}
-        </h3>
-        
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-gray-900 dark:text-white">
-              {displayPrice} FC
-            </span>
-            {hasDiscount && (
-              <span className="text-sm text-gray-500 line-through">
-                {product.original_price} FC
-              </span>
-            )}
-          </div>
+      <Card className="group relative overflow-hidden border border-border/40 hover:border-border/80 hover:shadow-lg transition-all duration-300 bg-card">
+        <div className="relative">
+          <Link to={`/product/${product.id}`}>
+            <div className="aspect-square overflow-hidden bg-muted">
+              <img 
+                src={product.images?.[0] || '/placeholder.svg'} 
+                alt={product.name} 
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+          </Link>
+          
+          {/* Discount badge */}
+          {discountPercentage > 0 && (
+            <Badge className="absolute top-2 left-2 bg-red-500 text-white">
+              -{discountPercentage}%
+            </Badge>
+          )}
+          
+          {/* Favorite button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 bg-background/80 hover:bg-background"
+            onClick={handleToggleFavorite}
+          >
+            <Heart 
+              className={`h-4 w-4 ${isFavorite(product.id) ? 'fill-red-500 text-red-500' : ''}`} 
+            />
+          </Button>
         </div>
         
-        <Button
-          size="sm"
-          onClick={handleAddToCart}
-          className="w-full bg-blue-600 hover:bg-blue-700"
-        >
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          Ajouter au panier
-        </Button>
-      </div>
+        <CardContent className="p-3">
+          <Link to={`/product/${product.id}`}>
+            <h3 className="font-medium text-sm line-clamp-2 mb-2 text-foreground hover:text-primary transition-colors">
+              {product.name}
+            </h3>
+          </Link>
+          
+          <div className="flex items-center gap-1 mb-2">
+            {[...Array(5)].map((_, i) => (
+              <Star 
+                key={i} 
+                className={`h-3 w-3 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+              />
+            ))}
+            <span className="text-xs text-muted-foreground ml-1">(4.0)</span>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              {product.discounted_price ? (
+                <>
+                  <span className="font-bold text-primary text-sm">
+                    {formatPrice(product.discounted_price)} FC
+                  </span>
+                  <span className="text-xs text-muted-foreground line-through">
+                    {formatPrice(product.original_price)} FC
+                  </span>
+                </>
+              ) : (
+                <span className="font-bold text-primary text-sm">
+                  {formatPrice(product.original_price)} FC
+                </span>
+              )}
+            </div>
+            
+            <Button 
+              onClick={handleAddToCart}
+              disabled={isInCart(product.id)}
+              className="w-full h-8 text-xs"
+            >
+              <ShoppingCart className="h-3 w-3 mr-1" />
+              {isInCart(product.id) ? 'Dans le panier' : 'Ajouter'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 };
