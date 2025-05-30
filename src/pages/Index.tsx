@@ -89,34 +89,6 @@ const Index = () => {
                 </Button>
               </div>
             </motion.div>
-            
-            {/* <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="grid grid-cols-2 gap-3 md:gap-4">
-                {featuredProducts.slice(0, 4).map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.4, delay: 0.1 * index }}
-                    className={index % 2 === 0 ? "mt-4 md:mt-8" : ""}
-                  >
-                    <div className="relative group overflow-hidden rounded-lg shadow-lg">
-                      <img 
-                        src={product.images[0]} 
-                        alt={product.name}
-                        className="w-full h-32 md:h-48 object-cover transition-transform group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-                    </div>
-                  </motion.div> */}
-                ))}
-              </div>
-            </motion.div>
           </div>
         </div>
       </section>
