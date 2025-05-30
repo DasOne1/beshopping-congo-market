@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, ShoppingBag, Grid, List } from 'lucide-react';
@@ -8,6 +9,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import ProductSkeleton from '@/components/ProductSkeleton';
+import FilterSidebar from '@/components/FilterSidebar';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useSearchParams } from 'react-router-dom';
@@ -20,11 +22,18 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [priceRange, setPriceRange] = useState([0, 10000]);
+  const [appliedFilters, setAppliedFilters] = useState({
+    category: '',
+    priceRange: [0, 10000]
+  });
 
   useEffect(() => {
     const categoryFromUrl = searchParams.get('category');
     if (categoryFromUrl) {
       setSelectedCategory(categoryFromUrl);
+      setAppliedFilters(prev => ({ ...prev, category: categoryFromUrl }));
     }
   }, [searchParams]);
 
@@ -34,8 +43,10 @@ const Products = () => {
     .filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = !selectedCategory || product.category_id === selectedCategory;
-      return matchesSearch && matchesCategory;
+      const matchesCategory = !appliedFilters.category || product.category_id === appliedFilters.category;
+      const productPrice = product.discounted_price || product.original_price;
+      const matchesPrice = productPrice >= appliedFilters.priceRange[0] && productPrice <= appliedFilters.priceRange[1];
+      return matchesSearch && matchesCategory && matchesPrice;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -49,6 +60,24 @@ const Products = () => {
           return a.name.localeCompare(b.name);
       }
     });
+
+  const handleApplyFilters = () => {
+    setAppliedFilters({
+      category: selectedCategory,
+      priceRange: priceRange
+    });
+    setIsFilterOpen(false);
+  };
+
+  const handleClearFilters = () => {
+    setSelectedCategory('');
+    setPriceRange([0, 10000]);
+    setAppliedFilters({
+      category: '',
+      priceRange: [0, 10000]
+    });
+    setIsFilterOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,63 +99,79 @@ const Products = () => {
           </p>
         </motion.div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Rechercher des produits..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+        {/* Fixed Search and Controls Bar */}
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border mb-6 pb-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Rechercher des produits..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Nom (A-Z)</SelectItem>
+                <SelectItem value="price-low">Prix croissant</SelectItem>
+                <SelectItem value="price-high">Prix décroissant</SelectItem>
+                <SelectItem value="popular">Plus populaire</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsFilterOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Filter className="h-4 w-4" />
+                Filtres
+              </Button>
+              
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-          
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Toutes les catégories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Toutes les catégories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name">Nom (A-Z)</SelectItem>
-              <SelectItem value="price-low">Prix croissant</SelectItem>
-              <SelectItem value="price-high">Prix décroissant</SelectItem>
-              <SelectItem value="popular">Plus populaire</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
+
+        {/* Active Filters Display */}
+        {(appliedFilters.category || appliedFilters.priceRange[0] > 0 || appliedFilters.priceRange[1] < 10000) && (
+          <div className="mb-6 flex flex-wrap gap-2">
+            {appliedFilters.category && (
+              <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                Catégorie: {categories.find(cat => cat.id === appliedFilters.category)?.name}
+                <button onClick={() => setAppliedFilters(prev => ({ ...prev, category: '' }))}>×</button>
+              </div>
+            )}
+            {(appliedFilters.priceRange[0] > 0 || appliedFilters.priceRange[1] < 10000) && (
+              <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                Prix: {appliedFilters.priceRange[0]} - {appliedFilters.priceRange[1]} FC
+                <button onClick={() => setAppliedFilters(prev => ({ ...prev, priceRange: [0, 10000] }))}>×</button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Products Grid */}
         {isLoading ? (
@@ -163,6 +208,18 @@ const Products = () => {
           </div>
         )}
       </div>
+
+      {/* Filter Sidebar */}
+      <FilterSidebar
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        priceRange={priceRange}
+        onPriceRangeChange={setPriceRange}
+        onApplyFilters={handleApplyFilters}
+        onClearFilters={handleClearFilters}
+      />
 
       <Footer />
     </div>
