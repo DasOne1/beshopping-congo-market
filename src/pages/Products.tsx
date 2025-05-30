@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Grid, List, SlidersHorizontal, AlertCircle } from 'lucide-react';
+import { Search, Filter, Grid, List, SlidersHorizontal, AlertCircle, Columns2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -18,6 +18,8 @@ import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { motion, AnimatePresence } from 'framer-motion';
 
+type ViewMode = 'grid' | 'grid2' | 'list';
+
 const Products = () => {
   const { products, isLoading, error } = useProducts();
   const { categories } = useCategories();
@@ -26,7 +28,7 @@ const Products = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('featured');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid2');
   const [priceRange, setPriceRange] = useState([0, 1000000]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     categoryFromUrl ? [categoryFromUrl] : []
@@ -116,6 +118,25 @@ const Products = () => {
 
   const formatPrice = (price: number): string => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  };
+
+  const cycleViewMode = () => {
+    if (viewMode === 'grid2') {
+      setViewMode('list');
+    } else {
+      setViewMode('grid2');
+    }
+  };
+
+  const getGridClasses = () => {
+    switch (viewMode) {
+      case 'grid2':
+        return 'grid-cols-2';
+      case 'list':
+        return 'grid-cols-1';
+      default:
+        return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+    }
   };
 
   if (isLoading) {
@@ -269,10 +290,14 @@ const Products = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                  onClick={cycleViewMode}
                   className="border-border"
                 >
-                  {viewMode === 'grid' ? <List className="h-4 w-4" /> : <Grid className="h-4 w-4" />}
+                  {viewMode === 'grid2' ? (
+                    <List className="h-4 w-4" />
+                  ) : (
+                    <Columns2 className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -290,7 +315,7 @@ const Products = () => {
 
           {/* Loading state - Show skeleton cards while loading */}
           {isLoading && products.length === 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+            <div className={`grid ${getGridClasses()} gap-6 mb-6`}>
               {Array.from({ length: 8 }).map((_, index) => (
                 <motion.div
                   key={index}
@@ -326,11 +351,7 @@ const Products = () => {
           ) : (
             <AnimatePresence>
               <motion.div
-                className={`grid gap-6 ${
-                  viewMode === 'grid' 
-                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-                    : 'grid-cols-1'
-                }`}
+                className={`grid ${getGridClasses()} gap-6`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}

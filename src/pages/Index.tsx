@@ -145,7 +145,7 @@ const Index = () => {
           </motion.div>
 
           {productsLoading ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="animate-pulse">
                   <div className="bg-gray-200 aspect-square rounded-lg mb-3"></div>
@@ -160,7 +160,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.8 }}
-              className="grid grid-cols-2 gap-3"
+              className="grid grid-cols-1 gap-3"
             >
               {(popularProducts.length > 0 ? popularProducts : featuredProducts).slice(0, 4).map((product, index) => (
                 <motion.div
@@ -203,7 +203,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.8 }}
-              className="grid grid-cols-2 gap-3"
+              className="grid grid-cols-1 gap-3"
             >
               {group.products.slice(0, 4).map((product, index) => (
                 <motion.div
