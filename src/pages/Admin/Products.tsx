@@ -1,9 +1,12 @@
 
-import React from 'react';
-import { Plus, Edit, Trash2, Upload, Package } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, Edit, Trash2, Search, Filter, Package, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -13,11 +16,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
 import AdminLayout from '@/components/Admin/AdminLayout';
 
 const Products = () => {
   const navigate = useNavigate();
   const { products, isLoading, deleteProduct } = useProducts();
+  const { categories } = useCategories();
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [stockFilter, setStockFilter] = useState('all');
 
   const formatPrice = (price: number) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -29,13 +39,36 @@ const Products = () => {
     }
   };
 
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    return category?.name || 'Sans catégorie';
+  };
+
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
+      
+      const matchesCategory = categoryFilter === 'all' || product.category_id === categoryFilter;
+      
+      const matchesStock = stockFilter === 'all' || 
+                          (stockFilter === 'in-stock' && product.stock > 0) ||
+                          (stockFilter === 'low-stock' && product.stock > 0 && product.stock <= 5) ||
+                          (stockFilter === 'out-of-stock' && product.stock === 0);
+
+      return matchesSearch && matchesStatus && matchesCategory && matchesStock;
+    });
+  }, [products, searchTerm, statusFilter, categoryFilter, stockFilter]);
+
   if (isLoading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-96">
           <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <p className="text-gray-600 dark:text-gray-300">Chargement des produits...</p>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            <p className="text-muted-foreground">Chargement des produits...</p>
           </div>
         </div>
       </AdminLayout>
@@ -45,37 +78,114 @@ const Products = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-              <Package className="mr-3 h-6 w-6 text-blue-600" />
+            <h1 className="text-2xl font-bold text-foreground flex items-center">
+              <Package className="mr-3 h-6 w-6 text-primary" />
               Gestion des Produits
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Gérez votre catalogue de produits
+            <p className="text-muted-foreground mt-1">
+              Gérez votre catalogue de produits ({filteredProducts.length} sur {products.length})
             </p>
           </div>
           <Button 
             onClick={() => navigate('/admin/products/new')}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="shrink-0"
           >
             <Plus className="mr-2 h-4 w-4" />
             Ajouter un produit
           </Button>
         </div>
 
-        <Card className="shadow-sm">
-          <CardHeader className="bg-gray-50 dark:bg-gray-800/50">
-            <CardTitle className="text-lg">Liste des Produits ({products.length})</CardTitle>
-            <CardDescription>Gérez tous vos produits depuis cette interface</CardDescription>
+        {/* Filters */}
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <Filter className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Filtres</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Rechercher</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Nom ou description..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Catégorie</label>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Toutes les catégories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toutes les catégories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Stock</label>
+                <Select value={stockFilter} onValueChange={setStockFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tous les stocks" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les stocks</SelectItem>
+                    <SelectItem value="in-stock">En stock</SelectItem>
+                    <SelectItem value="low-stock">Stock faible (≤5)</SelectItem>
+                    <SelectItem value="out-of-stock">Rupture de stock</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Statut</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tous les statuts" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les statuts</SelectItem>
+                    <SelectItem value="active">Actif</SelectItem>
+                    <SelectItem value="inactive">Inactif</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Products Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Liste des Produits</CardTitle>
+            <CardDescription>
+              {filteredProducts.length} produit(s) trouvé(s)
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50 dark:bg-gray-800/50">
+                <TableHeader className="sticky top-0 bg-muted/50 z-10">
+                  <TableRow>
                     <TableHead className="w-[100px]">Image</TableHead>
-                    <TableHead>Nom</TableHead>
+                    <TableHead>Produit</TableHead>
+                    <TableHead>Catégorie</TableHead>
                     <TableHead>Prix</TableHead>
                     <TableHead>Stock</TableHead>
                     <TableHead>Statut</TableHead>
@@ -83,79 +193,107 @@ const Products = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  {filteredProducts.map((product) => (
+                    <TableRow key={product.id} className="hover:bg-muted/50">
                       <TableCell>
-                        {product.images && product.images.length > 0 ? (
-                          <img 
-                            src={product.images[0]} 
-                            alt={product.name} 
-                            className="w-16 h-12 object-cover rounded" 
-                          />
-                        ) : (
-                          <div className="w-16 h-12 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                            <Upload className="h-4 w-4 text-gray-400" />
-                          </div>
-                        )}
+                        <div className="w-16 h-12 rounded-lg overflow-hidden bg-muted">
+                          {product.images && product.images.length > 0 ? (
+                            <img 
+                              src={product.images[0]} 
+                              alt={product.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                              <Package className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-gray-100">{product.name}</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
+                        <div className="space-y-1">
+                          <div className="font-medium text-foreground line-clamp-1">
+                            {product.name}
+                          </div>
+                          <div className="text-sm text-muted-foreground line-clamp-1">
                             {product.description}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {product.featured && (
+                              <Badge variant="secondary" className="text-xs">
+                                Vedette
+                              </Badge>
+                            )}
+                            {product.discounted_price && (
+                              <Badge variant="destructive" className="text-xs">
+                                Promo
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                        <span className="text-sm text-muted-foreground">
+                          {getCategoryName(product.category_id || '')}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-medium text-foreground">
                             {formatPrice(product.discounted_price || product.original_price)} FC
                           </div>
                           {product.discounted_price && (
-                            <div className="text-sm text-gray-500 dark:text-gray-400 line-through">
+                            <div className="text-sm text-muted-foreground line-through">
                               {formatPrice(product.original_price)} FC
                             </div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          product.stock === 0 
-                            ? 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-500' 
-                            : product.stock <= 5 
-                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-500'
-                            : 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-500'
-                        }`}>
+                        <Badge 
+                          variant={
+                            product.stock === 0 ? 'destructive' :
+                            product.stock <= 5 ? 'secondary' : 'default'
+                          }
+                          className="text-xs"
+                        >
                           {product.stock === 0 ? 'Rupture' : `${product.stock} unités`}
-                        </span>
+                        </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          product.status === 'active' 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-500' 
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-500'
-                        }`}>
+                        <Badge 
+                          variant={product.status === 'active' ? 'default' : 'secondary'}
+                          className="text-xs"
+                        >
                           {product.status === 'active' ? 'Actif' : 'Inactif'}
-                        </span>
+                        </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
+                      <TableCell>
+                        <div className="flex gap-1 justify-end">
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                            onClick={() => navigate(`/product/${product.id}`)}
+                            className="h-8 w-8 p-0"
                           >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Modifier
+                            <Eye className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="destructive"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteProduct(product.id)}
                             disabled={deleteProduct.isPending}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                           >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Supprimer
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -164,11 +302,16 @@ const Products = () => {
                 </TableBody>
               </Table>
               
-              {products.length === 0 && (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                  <Package className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
+              {filteredProducts.length === 0 && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Package className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                   <p className="text-lg font-medium mb-2">Aucun produit trouvé</p>
-                  <p className="text-sm mb-4">Commencez par créer votre premier produit</p>
+                  <p className="text-sm mb-4">
+                    {products.length === 0 
+                      ? "Commencez par créer votre premier produit"
+                      : "Essayez de modifier vos filtres de recherche"
+                    }
+                  </p>
                   <Button onClick={() => navigate('/admin/products/new')} variant="outline">
                     Créer un produit
                   </Button>
