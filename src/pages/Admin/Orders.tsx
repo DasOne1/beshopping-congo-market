@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,11 +11,34 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import AdminLayout from '@/components/Admin/AdminLayout';
 
+interface Order {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  total_amount: number;
+  created_at?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  shipping_address?: string;
+  payment_status?: string;
+  order_items?: Array<{
+    id: string;
+    product_name: string;
+    quantity: number;
+    total_price: number;
+  }>;
+}
+
 const Orders = () => {
   const { orders, isLoading, updateOrderStatus } = useOrders();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  const handleOrderSelect = (order: Order) => {
+    setSelectedOrder(selectedOrder?.id === order.id ? null : order);
+  };
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = (order.order_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -25,7 +47,7 @@ const Orders = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: Order['status']) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'confirmed': return 'bg-blue-100 text-blue-800';
@@ -37,7 +59,7 @@ const Orders = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: Order['status']) => {
     switch (status) {
       case 'pending': return <Calendar className="w-4 h-4" />;
       case 'processing': return <Package className="w-4 h-4" />;
@@ -48,9 +70,9 @@ const Orders = () => {
     }
   };
 
-  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
+  const handleStatusUpdate = async (orderId: string, newStatus: Order['status']) => {
     try {
-      await updateOrderStatus.mutateAsync({ id: orderId, status: newStatus as any });
+      await updateOrderStatus.mutateAsync({ id: orderId, status: newStatus });
     } catch (error) {
       console.error('Error updating order status:', error);
     }
@@ -166,7 +188,7 @@ const Orders = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedOrder(selectedOrder?.id === order.id ? null : order)}
+                    onClick={() => handleOrderSelect(order)}
                   >
                     {selectedOrder?.id === order.id ? 'Masquer les détails' : 'Voir les détails'}
                   </Button>

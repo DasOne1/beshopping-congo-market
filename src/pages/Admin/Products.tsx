@@ -17,6 +17,26 @@ import {
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import AdminLayout from '@/components/Admin/AdminLayout';
+import ProductSkeleton from '@/components/ProductSkeleton';
+import { Loader2, Tag, DollarSign, BarChart2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { Link } from 'react-router-dom';
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  original_price: number;
+  discounted_price?: number;
+  stock: number;
+  category_id: string;
+  images: string[];
+  created_at: string;
+  featured: boolean;
+  status: 'active' | 'draft' | 'archived';
+  tags?: string[];
+}
 
 const Products = () => {
   const navigate = useNavigate();
@@ -60,6 +80,24 @@ const Products = () => {
       return matchesSearch && matchesStatus && matchesCategory && matchesStock;
     });
   }, [products, searchTerm, statusFilter, categoryFilter, stockFilter]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'default';
+      case 'draft': return 'secondary';
+      case 'archived': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active': return 'Actif';
+      case 'draft': return 'Brouillon';
+      case 'archived': return 'Archivé';
+      default: return 'Inconnu';
+    }
+  };
 
   if (isLoading) {
     return (
@@ -248,10 +286,10 @@ const Products = () => {
                       </TableCell>
                       <TableCell>
                         <Badge 
-                          variant={product.status === 'active' ? 'default' : 'secondary'}
+                          variant={getStatusColor(product.status)}
                           className="text-xs"
                         >
-                          {product.status === 'active' ? 'Actif' : 'Inactif'}
+                          {getStatusLabel(product.status)}
                         </Badge>
                       </TableCell>
                       <TableCell>
