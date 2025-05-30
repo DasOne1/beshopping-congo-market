@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, X, Grid3X3, List, Filter } from 'lucide-react';
@@ -36,6 +36,9 @@ const Products = () => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const itemsPerPage = 12;
 
+  // Ref pour la recherche
+  const searchRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (selectedCategoryId) {
       setSelectedCategory(selectedCategoryId);
@@ -48,6 +51,23 @@ const Products = () => {
       setIsSearchExpanded(true);
     }
   }, [searchQuery]);
+
+  // Gérer les clics en dehors de la recherche
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchExpanded(false);
+      }
+    };
+
+    if (isSearchExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSearchExpanded]);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,13 +124,6 @@ const Products = () => {
 
   const handleSearchIconClick = () => {
     setIsSearchExpanded(!isSearchExpanded);
-    if (!isSearchExpanded) {
-      // Focus on the input when it expands
-      setTimeout(() => {
-        const input = document.getElementById('search-input');
-        if (input) input.focus();
-      }, 100);
-    }
   };
 
   const isLoading = productsLoading || categoriesLoading;
@@ -142,8 +155,8 @@ const Products = () => {
                 Filtres
               </Button>
               
-              {/* Barre de recherche expansible */}
-              <div className="flex items-center gap-2">
+              {/* Barre de recherche avec overlay */}
+              <div className="relative" ref={searchRef}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -153,17 +166,30 @@ const Products = () => {
                   <Search className="h-4 w-4" />
                 </Button>
                 
-                <div className={`transition-all duration-300 overflow-hidden ${
-                  isSearchExpanded ? 'w-64 opacity-100' : 'w-0 opacity-0'
-                }`}>
-                  <Input
-                    id="search-input"
-                    placeholder="Rechercher des produits..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
+                {/* Overlay de recherche */}
+                {isSearchExpanded && (
+                  <div className="absolute top-0 left-0 z-50 bg-background border rounded-md shadow-lg p-2 min-w-64">
+                    <div className="flex items-center gap-2">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Rechercher des produits..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="border-0 focus-visible:ring-0 px-0"
+                        autoFocus
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsSearchExpanded(false)}
+                        className="p-1 h-6 w-6"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              
               </div>
               
               <span className="text-sm text-muted-foreground whitespace-nowrap">

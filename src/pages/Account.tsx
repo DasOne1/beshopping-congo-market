@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Calendar } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useFavorites } from '@/contexts/FavoritesContext';
@@ -104,9 +105,11 @@ const Account = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Produits sauvegardés pour plus tard
                 </p>
-                <Button variant="outline" className="w-full">
-                  Voir mes favoris
-                </Button>
+                <Link to="/favorites">
+                  <Button variant="outline" className="w-full">
+                    Voir mes favoris
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -128,9 +131,11 @@ const Account = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Articles prêts pour la commande
                 </p>
-                <Button variant="outline" className="w-full">
-                  Voir mon panier
-                </Button>
+                <Link to="/cart">
+                  <Button variant="outline" className="w-full">
+                    Voir mon panier
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
@@ -166,9 +171,11 @@ const Account = () => {
                       </div>
                     ))}
                     {favoriteProducts.length > 3 && (
-                      <Button variant="ghost" className="w-full">
-                        Voir tous les favoris ({favoriteProducts.length})
-                      </Button>
+                      <Link to="/favorites">
+                        <Button variant="ghost" className="w-full">
+                          Voir tous les favoris ({favoriteProducts.length})
+                        </Button>
+                      </Link>
                     )}
                   </div>
                 ) : (
@@ -210,9 +217,11 @@ const Account = () => {
                       </div>
                     ))}
                     {cartProducts.length > 3 && (
-                      <Button variant="ghost" className="w-full">
-                        Voir tout le panier ({cartProducts.length})
-                      </Button>
+                      <Link to="/cart">
+                        <Button variant="ghost" className="w-full">
+                          Voir tout le panier ({cartProducts.length})
+                        </Button>
+                      </Link>
                     )}
                   </div>
                 ) : (
@@ -237,10 +246,12 @@ const Account = () => {
                   <Package className="h-5 w-5" />
                   <span className="text-xs">Mes Commandes</span>
                 </Button>
-                <Button variant="outline" className="h-20 flex flex-col gap-2">
-                  <Heart className="h-5 w-5" />
-                  <span className="text-xs">Favoris</span>
-                </Button>
+                <Link to="/favorites">
+                  <Button variant="outline" className="h-20 flex flex-col gap-2 w-full">
+                    <Heart className="h-5 w-5" />
+                    <span className="text-xs">Favoris</span>
+                  </Button>
+                </Link>
                 <Button variant="outline" className="h-20 flex flex-col gap-2">
                   <User className="h-5 w-5" />
                   <span className="text-xs">Profil</span>
