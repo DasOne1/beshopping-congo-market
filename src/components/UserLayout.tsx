@@ -15,6 +15,7 @@ export default function UserLayout({ children }: UserLayoutProps) {
     <div className="min-h-screen bg-background">
       {children}
       <ScrollToTop />
+      {/* MobileNavBar toujours fixe en bas */}
       <MobileNavBar />
     </div>
   );

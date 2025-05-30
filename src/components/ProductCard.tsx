@@ -8,8 +8,6 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { useCart } from '@/contexts/CartContext';
 import { Product } from '@/hooks/useProducts';
 
-type FavoriteType = string | { id: string };
-
 interface ProductCardProps {
   product: Product;
   viewMode?: 'single' | 'grid';
@@ -23,15 +21,27 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
-  // Check if product is in favorites by comparing IDs
+  // Check if product is in favorites by comparing IDs safely
   const isInFavorites = Array.isArray(favorites) ? 
-    (favorites as FavoriteType[]).some(fav => (typeof fav === 'string' ? fav : fav.id) === product.id) :
-    false;
+    favorites.some(fav => {
+      if (typeof fav === 'string') {
+        return fav === product.id;
+      } else if (fav && typeof fav === 'object' && 'id' in fav) {
+        return fav.id === product.id;
+      }
+      return false;
+    }) : false;
   
   // Calculate actual number of likes from favorites - count occurrences of this product ID
   const likesCount = Array.isArray(favorites) ? 
-    (favorites as FavoriteType[]).filter(fav => (typeof fav === 'string' ? fav : fav.id) === product.id).length :
-    0;
+    favorites.filter(fav => {
+      if (typeof fav === 'string') {
+        return fav === product.id;
+      } else if (fav && typeof fav === 'object' && 'id' in fav) {
+        return fav.id === product.id;
+      }
+      return false;
+    }).length : 0;
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -41,8 +51,8 @@ const ProductCard = ({ product, viewMode = 'single' }: ProductCardProps) => {
       // Remove from favorites using product ID
       removeFromFavorites(product.id);
     } else {
-      // Add to favorites using le product object
-      addToFavorites(product);
+      // Add to favorites using product ID only to match context expectations
+      addToFavorites(product.id);
     }
   };
 
