@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, Grid, List, SlidersHorizontal, AlertCircle, Columns2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -147,6 +146,145 @@ const Products = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
+      {/* Sticky Filters */}
+      <div className="sticky top-14 md:top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border/40">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Rechercher des produits..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-background border-border"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[180px] bg-background border-border">
+                  <SelectValue placeholder="Trier par" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="featured">En vedette</SelectItem>
+                  <SelectItem value="newest">Plus récent</SelectItem>
+                  <SelectItem value="popular">Populaire</SelectItem>
+                  <SelectItem value="price-low">Prix: croissant</SelectItem>
+                  <SelectItem value="price-high">Prix: décroissant</SelectItem>
+                  <SelectItem value="name">Nom A-Z</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon" className="border-border">
+                    <SlidersHorizontal className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="bg-background border-border">
+                  <SheetHeader>
+                    <SheetTitle className="text-foreground">Filtres</SheetTitle>
+                    <SheetDescription className="text-muted-foreground">
+                      Affinez votre recherche avec ces filtres
+                    </SheetDescription>
+                  </SheetHeader>
+                  
+                  <div className="mt-6 space-y-6">
+                    {/* Categories */}
+                    <div>
+                      <h3 className="font-medium mb-3 text-foreground">Catégories</h3>
+                      <div className="space-y-2">
+                        {categories.map(category => (
+                          <div key={category.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={category.id}
+                              checked={selectedCategories.includes(category.id)}
+                              onCheckedChange={(checked) => 
+                                handleCategoryChange(category.id, checked)
+                              }
+                            />
+                            <label htmlFor={category.id} className="text-sm text-foreground">
+                              {category.name}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Price Range */}
+                    <div>
+                      <h3 className="font-medium mb-3 text-foreground">Gamme de prix</h3>
+                      <div className="px-2">
+                        <Slider
+                          value={priceRange}
+                          onValueChange={setPriceRange}
+                          max={1000000}
+                          min={0}
+                          step={10000}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                          <span>{formatPrice(priceRange[0])} FC</span>
+                          <span>{formatPrice(priceRange[1])} FC</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Filters */}
+                    <div>
+                      <h3 className="font-medium mb-3 text-foreground">Options</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="inStock"
+                            checked={showOnlyInStock}
+                            onCheckedChange={handleInStockChange}
+                          />
+                          <label htmlFor="inStock" className="text-sm text-foreground">
+                            En stock seulement
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="featured"
+                            checked={showOnlyFeatured}
+                            onCheckedChange={handleFeaturedChange}
+                          />
+                          <label htmlFor="featured" className="text-sm text-foreground">
+                            Produits vedettes
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button 
+                      onClick={clearFilters} 
+                      variant="outline" 
+                      className="w-full border-border"
+                    >
+                      Effacer les filtres
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={toggleViewMode}
+                className="border-border"
+              >
+                {viewMode === 'single' ? (
+                  <Columns2 className="h-4 w-4" />
+                ) : (
+                  <List className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <main className="container mx-auto px-4 py-8 pb-20 md:pb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -154,143 +292,6 @@ const Products = () => {
           transition={{ duration: 0.5 }}
         >
           <h1 className="text-2xl md:text-3xl font-bold mb-6 text-foreground">Nos Produits</h1>
-          
-          {/* Search and Controls */}
-          <div className="mb-6 space-y-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Rechercher des produits..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-background border-border"
-                />
-              </div>
-              
-              <div className="flex gap-2">
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[180px] bg-background border-border">
-                    <SelectValue placeholder="Trier par" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="featured">En vedette</SelectItem>
-                    <SelectItem value="newest">Plus récent</SelectItem>
-                    <SelectItem value="popular">Populaire</SelectItem>
-                    <SelectItem value="price-low">Prix: croissant</SelectItem>
-                    <SelectItem value="price-high">Prix: décroissant</SelectItem>
-                    <SelectItem value="name">Nom A-Z</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="border-border">
-                      <SlidersHorizontal className="h-4 w-4" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent className="bg-background border-border">
-                    <SheetHeader>
-                      <SheetTitle className="text-foreground">Filtres</SheetTitle>
-                      <SheetDescription className="text-muted-foreground">
-                        Affinez votre recherche avec ces filtres
-                      </SheetDescription>
-                    </SheetHeader>
-                    
-                    <div className="mt-6 space-y-6">
-                      {/* Categories */}
-                      <div>
-                        <h3 className="font-medium mb-3 text-foreground">Catégories</h3>
-                        <div className="space-y-2">
-                          {categories.map(category => (
-                            <div key={category.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={category.id}
-                                checked={selectedCategories.includes(category.id)}
-                                onCheckedChange={(checked) => 
-                                  handleCategoryChange(category.id, checked)
-                                }
-                              />
-                              <label htmlFor={category.id} className="text-sm text-foreground">
-                                {category.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Price Range */}
-                      <div>
-                        <h3 className="font-medium mb-3 text-foreground">Gamme de prix</h3>
-                        <div className="px-2">
-                          <Slider
-                            value={priceRange}
-                            onValueChange={setPriceRange}
-                            max={1000000}
-                            min={0}
-                            step={10000}
-                            className="w-full"
-                          />
-                          <div className="flex justify-between text-sm text-muted-foreground mt-2">
-                            <span>{formatPrice(priceRange[0])} FC</span>
-                            <span>{formatPrice(priceRange[1])} FC</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Additional Filters */}
-                      <div>
-                        <h3 className="font-medium mb-3 text-foreground">Options</h3>
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id="inStock"
-                              checked={showOnlyInStock}
-                              onCheckedChange={handleInStockChange}
-                            />
-                            <label htmlFor="inStock" className="text-sm text-foreground">
-                              En stock seulement
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id="featured"
-                              checked={showOnlyFeatured}
-                              onCheckedChange={handleFeaturedChange}
-                            />
-                            <label htmlFor="featured" className="text-sm text-foreground">
-                              Produits vedettes
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Button 
-                        onClick={clearFilters} 
-                        variant="outline" 
-                        className="w-full border-border"
-                      >
-                        Effacer les filtres
-                      </Button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={toggleViewMode}
-                  className="border-border"
-                >
-                  {viewMode === 'single' ? (
-                    <Columns2 className="h-4 w-4" />
-                  ) : (
-                    <List className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
 
           {/* Error state */}
           {error && (
@@ -300,28 +301,6 @@ const Products = () => {
                 Erreur lors du chargement des produits. Certains produits peuvent ne pas être affichés.
               </AlertDescription>
             </Alert>
-          )}
-
-          {/* Loading state - Show skeleton cards while loading */}
-          {isLoading && products.length === 0 && (
-            <div className={viewMode === 'grid' ? `grid ${getGridClasses()} gap-6 mb-6` : 'space-y-4 mb-6'}>
-              {Array.from({ length: 8 }).map((_, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-card rounded-lg border p-4"
-                >
-                  <div className="aspect-square bg-muted rounded-lg mb-4 animate-pulse" />
-                  <div className="space-y-2">
-                    <div className="h-4 bg-muted rounded animate-pulse" />
-                    <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
-                    <div className="h-6 bg-muted rounded w-1/2 animate-pulse" />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
           )}
 
           {/* Results Info */}

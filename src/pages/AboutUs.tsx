@@ -11,38 +11,38 @@ export default function AboutUs() {
     {
       id: 1,
       name: 'Sarah Johnson',
-      role: 'Founder & CEO',
-      bio: 'With over 10 years of experience in retail, Sarah founded BeShop with a vision to transform e-commerce in Congo.',
+      role: 'Fondatrice & PDG',
+      bio: 'Avec plus de 10 ans d\'expérience dans le commerce de détail, Sarah a fondé BeShop avec la vision de transformer le e-commerce au Congo.',
       image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&h=200&q=80'
     },
     {
       id: 2,
       name: 'Jean Pierre Lokonga',
-      role: 'Operations Manager',
-      bio: 'Jean oversees all aspects of our operations, ensuring smooth delivery and exceptional customer service.',
+      role: 'Directeur des Opérations',
+      bio: 'Jean supervise tous les aspects de nos opérations, garantissant une livraison fluide et un service client exceptionnel.',
       image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&h=200&q=80'
     },
     {
       id: 3,
       name: 'Marie Mutombo',
-      role: 'Customer Relations',
-      bio: 'Marie leads our customer support team, focusing on building strong relationships with our valued customers.',
+      role: 'Relations Clientèle',
+      bio: 'Marie dirige notre équipe de support client, se concentrant sur la construction de relations solides avec nos précieux clients.',
       image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&h=200&q=80'
     },
     {
       id: 4,
       name: 'David Mbemba',
-      role: 'Product Specialist',
-      bio: 'David ensures that we source only the highest quality products for our customers across Congo.',
+      role: 'Spécialiste Produits',
+      bio: 'David s\'assure que nous ne proposons que des produits de la plus haute qualité pour nos clients à travers le Congo.',
       image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&h=200&q=80'
     }
   ];
 
   const achievements = [
-    { number: '5,000+', label: 'Happy Customers' },
-    { number: '99%', label: 'Satisfaction Rate' },
-    { number: '24/7', label: 'Customer Support' },
-    { number: '1,200+', label: 'Products Available' }
+    { number: '5 000+', label: 'Clients Satisfaits' },
+    { number: '99%', label: 'Taux de Satisfaction' },
+    { number: '24/7', label: 'Support Client' },
+    { number: '1 200+', label: 'Produits Disponibles' }
   ];
   
   const containerAnimation = {
@@ -69,7 +69,7 @@ export default function AboutUs() {
       <Header />
       
       <main className="flex-1">
-        {/* Hero Section */}
+        {/* Section Héros */}
         <section className="py-16 bg-accent/20">
           <div className="container">
             <div className="flex flex-col md:flex-row items-center gap-8">
@@ -79,16 +79,16 @@ export default function AboutUs() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <h1 className="text-3xl md:text-5xl font-bold mb-4">About BeShop Congo</h1>
+                <h1 className="text-3xl md:text-5xl font-bold mb-4">À Propos de BeShop Congo</h1>
                 <p className="text-lg text-muted-foreground mb-6">
-                  We're building the future of e-commerce in Congo, one happy customer at a time.
+                  Nous construisons l'avenir du e-commerce au Congo, un client satisfait à la fois.
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <Button asChild>
-                    <Link to="/products">Explore Products</Link>
+                    <Link to="/products">Explorer les Produits</Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link to="/contact">Contact Us</Link>
+                    <Link to="/contact">Nous Contacter</Link>
                   </Button>
                 </div>
               </motion.div>
@@ -102,12 +102,12 @@ export default function AboutUs() {
                 <div className="relative h-64 md:h-80 rounded-lg overflow-hidden shadow-lg">
                   <img 
                     src="https://images.unsplash.com/photo-1516733968668-dbdce39c4651?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" 
-                    alt="BeShop Store" 
+                    alt="Magasin BeShop" 
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4 text-white">
-                    <p className="text-sm font-medium">Our mission is to provide quality products with exceptional service</p>
+                    <p className="text-sm font-medium">Notre mission est de fournir des produits de qualité avec un service exceptionnel</p>
                   </div>
                 </div>
               </motion.div>
@@ -115,7 +115,7 @@ export default function AboutUs() {
           </div>
         </section>
 
-        {/* Our Story */}
+        {/* Notre Histoire */}
         <section className="py-16">
           <div className="container">
             <motion.div
@@ -124,12 +124,12 @@ export default function AboutUs() {
               transition={{ duration: 0.5 }}
               className="text-center max-w-3xl mx-auto mb-12"
             >
-              <h2 className="text-3xl font-bold mb-4">Our Story</h2>
+              <h2 className="text-3xl font-bold mb-4">Notre Histoire</h2>
               <div className="w-16 h-1 bg-primary mx-auto mb-6 rounded-full" />
               <p className="text-lg">
-                Founded in 2022, BeShop Congo was born from a simple idea: make online shopping accessible, 
-                convenient and trustworthy for everyone in the Democratic Republic of Congo. 
-                What started as a small operation has grown into Congo's most trusted online marketplace.
+                Fondé en 2022, BeShop Congo est né d'une idée simple : rendre les achats en ligne accessibles, 
+                pratiques et fiables pour tous en République Démocratique du Congo. 
+                Ce qui a commencé comme une petite opération est devenu la place de marché en ligne la plus fiable du Congo.
               </p>
             </motion.div>
             
@@ -140,21 +140,21 @@ export default function AboutUs() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <h3 className="text-2xl font-semibold">Our Vision</h3>
+                <h3 className="text-2xl font-semibold">Notre Vision</h3>
                 <p>
-                  To be the leading e-commerce platform in Congo, revolutionizing how people shop by providing 
-                  easy access to quality products and exceptional customer service.
+                  Être la plateforme e-commerce leader au Congo, révolutionnant la façon dont les gens font leurs achats en 
+                  fournissant un accès facile à des produits de qualité et un service client exceptionnel.
                 </p>
                 
-                <h3 className="text-2xl font-semibold pt-4">Our Mission</h3>
+                <h3 className="text-2xl font-semibold pt-4">Notre Mission</h3>
                 <p>
-                  We strive to make online shopping accessible to all Congolese by offering:
+                  Nous nous efforçons de rendre les achats en ligne accessibles à tous les Congolais en offrant :
                 </p>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>High-quality, authentic products at competitive prices</li>
-                  <li>Exceptional, personalized customer service via WhatsApp</li>
-                  <li>A user-friendly shopping experience optimized for mobile devices</li>
-                  <li>Reliable delivery options throughout Congo</li>
+                  <li>Des produits authentiques de haute qualité à des prix compétitifs</li>
+                  <li>Un service client exceptionnel et personnalisé via WhatsApp</li>
+                  <li>Une expérience d'achat conviviale optimisée pour les appareils mobiles</li>
+                  <li>Des options de livraison fiables dans tout le Congo</li>
                 </ul>
               </motion.div>
               
@@ -182,7 +182,7 @@ export default function AboutUs() {
           </div>
         </section>
 
-        {/* Core Values */}
+        {/* Valeurs Fondamentales */}
         <section className="py-16 bg-muted/30">
           <div className="container">
             <motion.div
@@ -191,10 +191,10 @@ export default function AboutUs() {
               transition={{ duration: 0.5 }}
               className="text-center max-w-3xl mx-auto mb-12"
             >
-              <h2 className="text-3xl font-bold mb-4">Our Values</h2>
+              <h2 className="text-3xl font-bold mb-4">Nos Valeurs</h2>
               <div className="w-16 h-1 bg-primary mx-auto mb-6 rounded-full" />
               <p className="text-lg">
-                At BeShop Congo, we're guided by a set of core values that define who we are and how we operate.
+                Chez BeShop Congo, nous sommes guidés par un ensemble de valeurs fondamentales qui définissent qui nous sommes et comment nous opérons.
               </p>
             </motion.div>
             
@@ -213,9 +213,9 @@ export default function AboutUs() {
                         <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
                       </svg>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">Quality</h3>
+                    <h3 className="text-xl font-semibold mb-2">Qualité</h3>
                     <p className="text-muted-foreground flex-1">
-                      We only offer products that meet our strict quality standards. Every item is carefully selected to ensure customer satisfaction.
+                      Nous ne proposons que des produits qui répondent à nos normes de qualité strictes. Chaque article est soigneusement sélectionné pour garantir la satisfaction du client.
                     </p>
                   </CardContent>
                 </Card>
@@ -237,9 +237,9 @@ export default function AboutUs() {
                         <path d="m16 4 5 5"/>
                       </svg>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">Trust</h3>
+                    <h3 className="text-xl font-semibold mb-2">Confiance</h3>
                     <p className="text-muted-foreground flex-1">
-                      We build trust through transparency, authentic products, and reliable service. Your confidence in us is our most valuable asset.
+                      Nous construisons la confiance par la transparence, des produits authentiques et un service fiable. Votre confiance en nous est notre atout le plus précieux.
                     </p>
                   </CardContent>
                 </Card>
@@ -260,9 +260,9 @@ export default function AboutUs() {
                         <circle cx="12" cy="12" r="10"/>
                       </svg>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">Accessibility</h3>
+                    <h3 className="text-xl font-semibold mb-2">Accessibilité</h3>
                     <p className="text-muted-foreground flex-1">
-                      We make online shopping accessible to all Congolese by optimizing for mobile, offering WhatsApp support, and ensuring a seamless experience.
+                      Nous rendons les achats en ligne accessibles à tous les Congolais en optimisant pour mobile, en offrant un support WhatsApp et en garantissant une expérience fluide.
                     </p>
                   </CardContent>
                 </Card>
@@ -271,7 +271,7 @@ export default function AboutUs() {
           </div>
         </section>
 
-        {/* Team Section */}
+        {/* Section Équipe */}
         <section className="py-16">
           <div className="container">
             <motion.div
@@ -280,10 +280,10 @@ export default function AboutUs() {
               transition={{ duration: 0.5 }}
               className="text-center max-w-3xl mx-auto mb-12"
             >
-              <h2 className="text-3xl font-bold mb-4">Meet Our Team</h2>
+              <h2 className="text-3xl font-bold mb-4">Rencontrez Notre Équipe</h2>
               <div className="w-16 h-1 bg-primary mx-auto mb-6 rounded-full" />
               <p className="text-lg">
-                The dedicated professionals behind BeShop Congo are committed to providing you with the best online shopping experience.
+                Les professionnels dévoués derrière BeShop Congo sont engagés à vous fournir la meilleure expérience d'achat en ligne.
               </p>
             </motion.div>
             
@@ -315,7 +315,7 @@ export default function AboutUs() {
           </div>
         </section>
 
-        {/* Call to Action */}
+        {/* Appel à l'Action */}
         <section className="py-12 bg-primary text-primary-foreground">
           <div className="container">
             <motion.div
@@ -324,9 +324,9 @@ export default function AboutUs() {
               transition={{ duration: 0.5 }}
               className="text-center max-w-3xl mx-auto"
             >
-              <h2 className="text-3xl font-bold mb-4">Ready to Shop with BeShop?</h2>
+              <h2 className="text-3xl font-bold mb-4">Prêt à Acheter avec BeShop ?</h2>
               <p className="text-lg mb-8 opacity-90">
-                Join thousands of satisfied customers who trust BeShop Congo for their shopping needs.
+                Rejoignez des milliers de clients satisfaits qui font confiance à BeShop Congo pour leurs besoins d'achat.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <Button 
@@ -334,7 +334,7 @@ export default function AboutUs() {
                   variant="secondary" 
                   size="lg"
                 >
-                  <Link to="/products">Browse Products</Link>
+                  <Link to="/products">Parcourir les Produits</Link>
                 </Button>
                 <Button 
                   asChild 
@@ -342,7 +342,7 @@ export default function AboutUs() {
                   size="lg"
                   className="border-primary-foreground hover:bg-primary-foreground hover:text-primary"
                 >
-                  <Link to="/contact">Contact Us</Link>
+                  <Link to="/contact">Nous Contacter</Link>
                 </Button>
               </div>
             </motion.div>

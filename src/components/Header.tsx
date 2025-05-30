@@ -44,29 +44,32 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-40 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
       <div className="container flex h-14 md:h-16 items-center">
-        {/* Logo et nom - à gauche */}
-        <div className="flex items-center space-x-3 mr-8">
-          <Logo size="small" asLink />
-          <Link to="/" className="hidden sm:block">
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              BeShop
-            </span>
-          </Link>
+        {/* Menu Button et Logo - à gauche */}
+        <div className="flex items-center space-x-3">
+          {/* Mobile Menu Button */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden"
+            onClick={toggleMenu}
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Menu</span>
+          </Button>
+
+          {/* Logo */}
+          <div className="flex items-center space-x-3">
+            <Logo size="small" asLink />
+            <Link to="/" className="hidden sm:block">
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                BeShop
+              </span>
+            </Link>
+          </div>
         </div>
 
-        {/* Mobile Menu Button */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="md:hidden mr-2"
-          onClick={toggleMenu}
-        >
-          <Menu className="h-5 w-5" />
-          <span className="sr-only">Menu</span>
-        </Button>
-
         {/* Desktop Navigation - centré */}
-        <nav className="hidden md:flex items-center space-x-6 flex-1">
+        <nav className="hidden md:flex items-center space-x-6 flex-1 ml-8">
           <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
             Accueil
           </Link>
@@ -84,15 +87,17 @@ const Header = () => {
           </Link>
         </nav>
 
-        {/* Right Icons */}
+        {/* Right Icons - dans l'ordre spécifié */}
         <div className="flex items-center space-x-1 md:space-x-2 ml-auto">
           <Button variant="ghost" size="icon" onClick={toggleSearch} className="hidden sm:flex">
             <Search className="h-5 w-5" />
             <span className="sr-only">Recherche</span>
           </Button>
           
+          {/* Theme Toggle */}
           <ThemeToggle />
           
+          {/* Favorites */}
           <Link to="/favorites" className="relative">
             <Button variant="ghost" size="icon">
               <Heart className="h-5 w-5" />
@@ -105,6 +110,7 @@ const Header = () => {
             </Button>
           </Link>
           
+          {/* Cart */}
           <Link to="/cart" className="relative">
             <Button variant="ghost" size="icon">
               <ShoppingBag className="h-5 w-5" />
