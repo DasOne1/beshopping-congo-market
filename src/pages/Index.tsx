@@ -172,65 +172,6 @@ const Index = () => {
         </section>
       ))}
 
-      {/* Features Section */}
-      <section className="py-8 md:py-16">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-8 md:mb-12"
-          >
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              Pourquoi choisir BeShopping Congo ?
-            </h2>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.8 }}
-            className="grid md:grid-cols-3 gap-6 md:gap-8"
-          >
-            <Card className="text-center p-4 md:p-6">
-              <CardContent className="pt-4 md:pt-6">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Truck className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-                </div>
-                <h3 className="text-lg md:text-xl font-semibold mb-2">Livraison rapide</h3>
-                <p className="text-sm md:text-base text-muted-foreground">
-                  Livraison dans toute la RDC en 24-48h pour Kinshasa
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center p-4 md:p-6">
-              <CardContent className="pt-4 md:pt-6">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Shield className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-                </div>
-                <h3 className="text-lg md:text-xl font-semibold mb-2">Garantie qualité</h3>
-                <p className="text-sm md:text-base text-muted-foreground">
-                  Tous nos produits sont garantis et vérifiés
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center p-4 md:p-6">
-              <CardContent className="pt-4 md:pt-6">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Star className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-                </div>
-                <h3 className="text-lg md:text-xl font-semibold mb-2">Service client</h3>
-                <p className="text-sm md:text-base text-muted-foreground">
-                  Support WhatsApp disponible 7j/7 pour vous accompagner
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-      </section>
-
       <Footer />
     </>
   );

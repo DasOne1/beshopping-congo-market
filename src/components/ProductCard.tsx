@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Heart, Star } from 'lucide-react';
+import { ShoppingCart, Heart, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
@@ -57,6 +57,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className, viewMode 
     setSelectedImageIndex(index);
   };
 
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedImageIndex((prev) => (prev + 1) % product.images.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+  };
+
   return (
     <motion.div
       whileHover={{ y: -2 }}
@@ -64,85 +74,102 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className, viewMode 
       className={cn("group cursor-pointer w-full", className)}
       onClick={handleProductClick}
     >
-      <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-card h-full flex flex-col">
-        {/* Header */}
-        <CardHeader className="p-3 pb-2">
-          <div className="flex justify-between items-start">
-            <div className="flex gap-2">
-              {hasDiscount && (
-                <Badge className="bg-red-500 hover:bg-red-600 text-xs">
-                  -{product.discount}%
-                </Badge>
-              )}
-              {product.featured && (
-                <Badge className="bg-primary text-xs">
-                  Vedette
-                </Badge>
-              )}
+      <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-card h-[420px] flex flex-col">
+        {/* Image principale avec header overlay */}
+        <div className="relative flex-1 overflow-hidden bg-muted/50">
+          {/* Header overlay */}
+          <div className="absolute top-0 left-0 right-0 z-20 p-3 bg-gradient-to-b from-black/20 to-transparent">
+            <div className="flex justify-between items-start">
+              <div className="flex gap-2">
+                {hasDiscount && (
+                  <Badge className="bg-red-500 hover:bg-red-600 text-xs">
+                    -{product.discount}%
+                  </Badge>
+                )}
+                {product.featured && (
+                  <Badge className="bg-primary text-xs">
+                    Vedette
+                  </Badge>
+                )}
+              </div>
+              <Button
+                size="sm"
+                onClick={handleToggleFavorite}
+                variant="ghost"
+                className={`h-6 w-6 p-0 bg-white/80 hover:bg-white ${
+                  isFavorite ? 'text-red-500' : 'text-gray-600'
+                }`}
+              >
+                <Heart className={`h-3 w-3 ${isFavorite ? 'fill-current' : ''}`} />
+              </Button>
             </div>
-            <Button
-              size="sm"
-              onClick={handleToggleFavorite}
-              variant="ghost"
-              className={`h-6 w-6 p-0 ${
-                isFavorite ? 'text-red-500' : 'text-gray-600'
-              }`}
-            >
-              <Heart className={`h-3 w-3 ${isFavorite ? 'fill-current' : ''}`} />
-            </Button>
           </div>
-        </CardHeader>
 
-        {/* Main - Image principale */}
-        <div className="relative flex-1 overflow-hidden bg-muted/50 mx-3">
+          {/* Image principale */}
           <div className="aspect-square">
             <img
               src={product.images[selectedImageIndex] || '/placeholder.svg'}
               alt={product.name}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 rounded-lg"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
+
+          {/* Navigation des images si plusieurs images */}
+          {hasMultipleImages && viewMode !== 'list' && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={prevImage}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-1 h-8 w-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={nextImage}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-1 h-8 w-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+
+          {/* Thumbnails superposées sur l'image principale */}
+          {hasMultipleImages && viewMode !== 'list' && (
+            <div className="absolute bottom-2 left-2 right-2 z-10">
+              <div className="flex gap-1 justify-center">
+                {product.images.slice(0, 4).map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => handleThumbnailClick(e, index)}
+                    className={cn(
+                      "w-10 h-10 rounded-md overflow-hidden border-2 transition-all flex-shrink-0",
+                      selectedImageIndex === index 
+                        ? "border-white shadow-lg scale-110" 
+                        : "border-white/50 hover:border-white/80"
+                    )}
+                  >
+                    <img
+                      src={image}
+                      alt={`${product.name} ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Thumbnails - uniquement si plusieurs images et pas en mode liste */}
-        {hasMultipleImages && viewMode !== 'list' && (
-          <div className="px-3 py-2">
-            <div className="flex gap-1 overflow-x-auto">
-              {product.images.slice(0, 4).map((image, index) => (
-                <button
-                  key={index}
-                  onClick={(e) => handleThumbnailClick(e, index)}
-                  className={cn(
-                    "w-12 h-12 rounded-md overflow-hidden border transition-all flex-shrink-0",
-                    selectedImageIndex === index 
-                      ? "border-primary shadow-md scale-110" 
-                      : "border-gray-200 hover:border-gray-300"
-                  )}
-                >
-                  <img
-                    src={image}
-                    alt={`${product.name} ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Footer */}
-        <CardFooter className="p-3 pt-2">
+        {/* Footer compact */}
+        <CardFooter className="p-3">
           <div className="w-full space-y-2">
             <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
               {product.name}
             </h3>
             
-            {viewMode !== 'list' && (
-              <p className="text-xs text-muted-foreground line-clamp-2">
-                {product.description}
-              </p>
-            )}
-
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
