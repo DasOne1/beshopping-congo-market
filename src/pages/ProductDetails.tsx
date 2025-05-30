@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import ProductImageCarousel from '@/components/ProductImageCarousel';
 import WhatsAppContact from '@/components/WhatsAppContact';
 import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
@@ -24,7 +25,6 @@ const ProductDetails = () => {
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites();
   const { trackEvent } = useAnalytics();
   
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   
   console.log('ProductDetails - productId:', productId);
@@ -152,53 +152,30 @@ const ProductDetails = () => {
 
         {/* Product Details */}
         <div className="grid md:grid-cols-2 gap-8 mb-16">
-          {/* Images */}
+          {/* Images avec carrousel */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="space-y-4">
-              <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
-                <img
-                  src={product.images[selectedImageIndex]}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-                {product.discount && product.discount > 0 && (
-                  <Badge className="absolute top-4 left-4">
-                    -{product.discount}%
-                  </Badge>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleShare}
-                  className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm"
-                >
-                  <Share2 className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              {product.images.length > 1 && (
-                <div className="flex gap-2">
-                  {product.images.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImageIndex(index)}
-                      className={`flex-1 aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                        selectedImageIndex === index ? 'border-primary' : 'border-transparent'
-                      }`}
-                    >
-                      <img
-                        src={image}
-                        alt={`${product.name} ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
+            <div className="relative">
+              <ProductImageCarousel
+                images={product.images || []}
+                productName={product.name}
+              />
+              {product.discount && product.discount > 0 && (
+                <Badge className="absolute top-4 left-4 z-10">
+                  -{product.discount}%
+                </Badge>
               )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleShare}
+                className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm z-10"
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
             </div>
           </motion.div>
 
@@ -220,7 +197,7 @@ const ProductDetails = () => {
                 </div>
                 <Separator orientation="vertical" className="h-4" />
                 <span className="text-sm text-muted-foreground">
-                  {product.popular > 0 ? `${product.popular} vendus` : 'Nouveau'}
+                  {product.popular && product.popular > 0 ? `${product.popular} vendus` : 'Nouveau'}
                 </span>
               </div>
             </div>
@@ -242,14 +219,14 @@ const ProductDetails = () => {
 
             {/* Stock Status */}
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span className={product.stock > 0 ? 'text-green-600' : 'text-red-600'}>
-                {product.stock > 0 ? `${product.stock} en stock` : 'Rupture de stock'}
+              <div className={`w-2 h-2 rounded-full ${product.stock && product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className={product.stock && product.stock > 0 ? 'text-green-600' : 'text-red-600'}>
+                {product.stock && product.stock > 0 ? `${product.stock} en stock` : 'Rupture de stock'}
               </span>
             </div>
 
             {/* Quantity Selector */}
-            {product.stock > 0 && (
+            {product.stock && product.stock > 0 && (
               <div className="flex items-center gap-4">
                 <span className="font-medium">Quantité:</span>
                 <div className="flex items-center gap-2">
@@ -265,8 +242,8 @@ const ProductDetails = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                    disabled={quantity >= product.stock}
+                    onClick={() => setQuantity(Math.min(product.stock || 1, quantity + 1))}
+                    disabled={quantity >= (product.stock || 1)}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -280,7 +257,7 @@ const ProductDetails = () => {
                 size="lg"
                 className="flex-1"
                 onClick={handleAddToCart}
-                disabled={product.stock <= 0}
+                disabled={!product.stock || product.stock <= 0}
               >
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 Ajouter au panier

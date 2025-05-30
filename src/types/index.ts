@@ -3,19 +3,15 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  original_price: number; // Added this required field
-  originalPrice?: number; // Keep for compatibility
+  original_price: number;
   discounted_price?: number;
-  discountedPrice?: number;
   discount?: number;
   images: string[];
   stock: number;
-  category?: string; // Made optional to fix TypeScript errors
   category_id?: string;
   tags: string[];
-  variants?: ProductVariant[];
-  featured: boolean;
-  popular: number; // Number of orders, higher means more popular
+  featured?: boolean;
+  popular?: number;
   sku?: string;
   weight?: number;
   dimensions?: any;
@@ -24,43 +20,42 @@ export interface Product {
   updated_at?: string;
 }
 
-export interface ProductVariant {
-  id: string;
-  name: string; // e.g., "Size", "Color"
-  options: string[]; // e.g., ["S", "M", "L"] or ["Red", "Blue", "Green"]
-}
-
-export interface CartItem {
-  productId: string;
-  quantity: number;
-  selectedVariants?: {
-    [key: string]: string; // e.g., { "Size": "M", "Color": "Red" }
-  };
-}
-
 export interface Category {
   id: string;
   name: string;
-  slug: string;
   description?: string;
   image?: string;
-  parentId?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface User {
+export interface Customer {
   id: string;
   name: string;
-  role: 'admin' | 'manager' | 'support' | 'customer';
+  email: string;
   phone?: string;
-  email?: string;
+  address?: string;
+  orders_count?: number;
+  total_spent?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Order {
   id: string;
-  items: CartItem[];
-  totalPrice: number;
+  customer_id: string;
+  total_amount: number;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
-  customerId?: string;
-  whatsappNumber: string;
-  createdAt: Date;
+  shipping_address: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  price: number;
+  created_at?: string;
 }

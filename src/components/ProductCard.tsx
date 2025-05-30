@@ -9,10 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { Product } from '@/types';
+import ProductImageCarousel from './ProductImageCarousel';
 
 interface ProductCardProps {
   product: Product;
-  viewMode?: 'grid' | 'list' | 'single';
+  viewMode?: 'grid' | 'list';
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' }) => {
@@ -43,11 +44,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
     ? Math.round(((product.original_price - product.discounted_price) / product.original_price) * 100)
     : 0;
 
-  const cardClasses = viewMode === 'single' 
-    ? "w-full max-w-sm mx-auto" 
-    : viewMode === 'list' 
-    ? "w-full" 
-    : "w-full";
+  const cardClasses = viewMode === 'list' ? "w-full" : "w-full";
 
   return (
     <motion.div
@@ -58,18 +55,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
       <Card className="group relative overflow-hidden border border-border/40 hover:border-border/80 hover:shadow-lg transition-all duration-300 bg-card">
         <div className="relative">
           <Link to={`/product/${product.id}`}>
-            <div className="aspect-square overflow-hidden bg-muted">
-              <img 
-                src={product.images?.[0] || '/placeholder.svg'} 
-                alt={product.name} 
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            </div>
+            <ProductImageCarousel
+              images={product.images || []}
+              productName={product.name}
+              className="w-full"
+            />
           </Link>
           
           {/* Discount badge */}
           {discountPercentage > 0 && (
-            <Badge className="absolute top-2 left-2 bg-red-500 text-white">
+            <Badge className="absolute top-2 left-2 bg-red-500 text-white z-10">
               -{discountPercentage}%
             </Badge>
           )}
@@ -78,7 +73,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 bg-background/80 hover:bg-background"
+            className="absolute top-2 right-2 bg-background/80 hover:bg-background z-10"
             onClick={handleToggleFavorite}
           >
             <Heart 

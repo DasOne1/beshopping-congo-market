@@ -1,105 +1,111 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { useAnalytics } from '@/hooks/useAnalytics';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, TrendingDown, Eye, ShoppingCart, DollarSign, Users, Loader2 } from 'lucide-react';
+import { TrendingUp, Users, ShoppingCart, DollarSign } from 'lucide-react';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import AdminLayout from '@/components/Admin/AdminLayout';
 
 const Analytics = () => {
   const { analytics, isLoading } = useAnalytics();
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
+      <AdminLayout>
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <div className="h-8 bg-gray-200 rounded w-16"></div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Analytics</h1>
-          <p className="text-muted-foreground">Analysez les performances de votre boutique</p>
+    <AdminLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Analytics</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Analyse détaillée de vos performances
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vues Produits</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalViews.toLocaleString()}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <TrendingUp className="w-3 h-3 mr-1 text-green-500" />
-              +12% par rapport au mois dernier
-            </div>
-          </CardContent>
-        </Card>
+        {/* KPI Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Vues Totales</CardTitle>
+              <TrendingUp className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{analytics.totalViews}</div>
+              <p className="text-xs text-muted-foreground">
+                Pages vues ce mois
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Achats</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalPurchases.toLocaleString()}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <TrendingUp className="w-3 h-3 mr-1 text-green-500" />
-              +8% par rapport au mois dernier
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="border-l-4 border-l-green-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Achats Totaux</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{analytics.totalPurchases}</div>
+              <p className="text-xs text-muted-foreground">
+                Commandes finalisées
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taux de Conversion</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.conversionRate.toFixed(1)}%</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <TrendingDown className="w-3 h-3 mr-1 text-red-500" />
-              -2% par rapport au mois dernier
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="border-l-4 border-l-purple-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Taux de Conversion</CardTitle>
+              <Users className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">{analytics.conversionRate.toFixed(1)}%</div>
+              <p className="text-xs text-muted-foreground">
+                Visiteurs → Acheteurs
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Panier Moyen</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.averageOrderValue.toLocaleString()} CDF</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <TrendingUp className="w-3 h-3 mr-1 text-green-500" />
-              +15% par rapport au mois dernier
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          <Card className="border-l-4 border-l-orange-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Panier Moyen</CardTitle>
+              <DollarSign className="h-4 w-4 text-orange-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">
+                {analytics.averageOrderValue.toLocaleString()} FC
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Valeur moyenne par commande
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
-      <Tabs defaultValue="sales" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="sales">Ventes</TabsTrigger>
-          <TabsTrigger value="customers">Clients</TabsTrigger>
-          <TabsTrigger value="products">Produits</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="sales" className="space-y-4">
+        {/* Charts */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Sales by Day */}
           <Card>
             <CardHeader>
-              <CardTitle>Évolution des Ventes (30 derniers jours)</CardTitle>
-              <CardDescription>Nombre de ventes et revenus par jour</CardDescription>
+              <CardTitle>Ventes par Jour (30 derniers jours)</CardTitle>
+              <CardDescription>Evolution quotidienne des ventes</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -107,117 +113,137 @@ const Analytics = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="date" 
-                    tickFormatter={(value) => new Date(value).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })}
+                    tickFormatter={(value) => new Date(value).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
                   />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
+                  <YAxis />
                   <Tooltip 
                     labelFormatter={(value) => new Date(value).toLocaleDateString('fr-FR')}
-                    formatter={(value: any, name: string) => [
-                      name === 'revenue' ? `${value.toLocaleString()} CDF` : value,
+                    formatter={(value, name) => [
+                      name === 'sales' ? `${value} ventes` : `${Number(value).toLocaleString()} FC`,
                       name === 'sales' ? 'Ventes' : 'Revenus'
                     ]}
                   />
-                  <Bar yAxisId="left" dataKey="sales" fill="#8884d8" name="sales" />
-                  <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#82ca9d" name="revenue" />
+                  <Line 
+                    type="monotone" 
+                    dataKey="sales" 
+                    stroke="#8884d8" 
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="customers" className="space-y-4">
+          {/* Revenue by Day */}
           <Card>
             <CardHeader>
-              <CardTitle>Segments de Clients</CardTitle>
-              <CardDescription>Répartition des clients par segment</CardDescription>
+              <CardTitle>Revenus par Jour</CardTitle>
+              <CardDescription>Evolution quotidienne des revenus</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={analytics.salesByDay}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="date" 
+                    tickFormatter={(value) => new Date(value).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+                  />
+                  <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} />
+                  <Tooltip 
+                    labelFormatter={(value) => new Date(value).toLocaleDateString('fr-FR')}
+                    formatter={(value) => [`${Number(value).toLocaleString()} FC`, 'Revenus']}
+                  />
+                  <Bar dataKey="revenue" fill="#82ca9d" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Customer Segments */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Segments de Clientèle</CardTitle>
+            <CardDescription>Répartition et revenus par segment</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-sm font-medium mb-4">Répartition par nombre de clients</h4>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
                       data={analytics.customerSegments}
                       cx="50%"
                       cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="count"
+                      label={({ segment, count }) => `${segment}: ${count}`}
                     >
                       {analytics.customerSegments.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value, name) => [value, 'Clients']} />
+                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-
-                <div className="space-y-4">
-                  {analytics.customerSegments.map((segment, index) => (
-                    <div key={segment.segment} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-4 h-4 rounded-full" 
-                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                        />
-                        <div>
-                          <div className="font-medium">{segment.segment}</div>
-                          <div className="text-sm text-muted-foreground">{segment.count} clients</div>
-                        </div>
-                      </div>
-                      <Badge variant="outline">
-                        {segment.revenue.toLocaleString()} CDF
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="products" className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium mb-4">Revenus par segment</h4>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={analytics.customerSegments} layout="horizontal">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" tickFormatter={(value) => `${(value / 1000).toFixed(0)}k FC`} />
+                    <YAxis dataKey="segment" type="category" width={100} />
+                    <Tooltip formatter={(value) => [`${Number(value).toLocaleString()} FC`, 'Revenus']} />
+                    <Bar dataKey="revenue" fill="#ffc658" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Summary Stats */}
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
-            <CardHeader>
-              <CardTitle>Produits les Plus Populaires</CardTitle>
-              <CardDescription>Basé sur le nombre de vues et d'achats</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {analytics.topProducts.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <ShoppingCart className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Aucune donnée de produit disponible pour le moment.</p>
-                  </div>
-                ) : (
-                  analytics.topProducts.map((product, index) => (
-                    <div key={product.product_name} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline">#{index + 1}</Badge>
-                        <div>
-                          <div className="font-medium">{product.product_name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {product.views} vues • {product.sales} ventes
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold">
-                          {((product.sales / product.views) * 100).toFixed(1)}%
-                        </div>
-                        <div className="text-xs text-muted-foreground">Conversion</div>
-                      </div>
-                    </div>
-                  ))
-                )}
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {analytics.customerSegments.reduce((sum, segment) => sum + segment.count, 0)}
+                </div>
+                <p className="text-sm text-muted-foreground">Total Clients</p>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {analytics.salesByDay.reduce((sum, day) => sum + day.sales, 0)}
+                </div>
+                <p className="text-sm text-muted-foreground">Ventes (30j)</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {analytics.salesByDay.reduce((sum, day) => sum + day.revenue, 0).toLocaleString()} FC
+                </div>
+                <p className="text-sm text-muted-foreground">Revenus (30j)</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </AdminLayout>
   );
 };
 
