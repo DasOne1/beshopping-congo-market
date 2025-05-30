@@ -59,15 +59,15 @@ const Index = () => {
   })).filter(group => group.products.length > 0) || [];
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* Header fixe */}
+    <div className="min-h-screen bg-background">
+      {/* Header fixe qui reste toujours visible */}
       <Header />
       
       {/* Main content avec padding pour éviter que le contenu soit caché par le header fixe */}
       <main className="pt-14 md:pt-16">
-        {/* Hero Section - Amélioration du responsive et gestion du débordement */}
+        {/* Hero Section */}
         <section
-          className="relative overflow-hidden py-12 md:py-20 min-h-[420px] md:min-h-[480px] flex items-center"
+          className="relative py-12 md:py-20 min-h-[420px] md:min-h-[480px] flex items-center"
           style={{
             backgroundImage: `url(${heroImages[currentHero]})`,
             backgroundSize: 'cover',
@@ -130,17 +130,17 @@ const Index = () => {
 
         {/* Categories Carousel - Sticky mais en dessous du header fixe */}
         <div className="sticky top-14 md:top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border/40">
-          <div className="flex justify-center items-center w-full overflow-hidden">
+          <div className="w-full">
             <CategoryCarousel />
           </div>
         </div>
 
-        {/* Featured Products Carousel - Amélioration du conteneur */}
-        <div className="w-full overflow-hidden">
+        {/* Featured Products Carousel */}
+        <div className="w-full">
           <FeaturedGallery />
         </div>
 
-        {/* Products by Category - One per line avec amélioration responsive */}
+        {/* Products by Category - Une seule carte par ligne sur mobile */}
         {productsByCategory.map(group => (
           <section key={group.category.id} className="py-4 md:py-6">
             <div className="container mx-auto px-4">
@@ -166,7 +166,7 @@ const Index = () => {
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 transition={{ duration: 0.8 }}
-                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6"
+                className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6"
               >
                 {group.products.map((product, index) => (
                   <motion.div

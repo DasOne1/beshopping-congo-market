@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -40,7 +41,7 @@ const Header = () => {
   const favoriteQuantity = favorites.length;
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
       <div className="container flex h-14 md:h-16 items-center">
         {/* Menu Button et Logo - à gauche */}
         <div className="flex items-center space-x-3">
