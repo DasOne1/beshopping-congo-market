@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -39,9 +40,9 @@ const CategoryCarousel = () => {
       <section className="py-6">
         <div className="container mx-auto px-4">
           <div className="mb-6">
-            <h2 className="text-xl font-bold mb-4">Categories</h2>
+            <h2 className="text-xl font-bold mb-4 text-center">Categories</h2>
           </div>
-          <div className="flex gap-4 overflow-hidden">
+          <div className="flex justify-center gap-4 overflow-hidden">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex flex-col items-center animate-pulse">
                 <div className="w-16 h-16 bg-gray-200 rounded-full mb-2"></div>
@@ -63,9 +64,8 @@ const CategoryCarousel = () => {
           transition={{ duration: 0.6 }}
           className="mb-6"
         >
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-center items-center mb-4">
             <h2 className="text-xl font-bold">Categories</h2>
-            <button className="text-sm text-primary">See All</button>
           </div>
         </motion.div>
 
@@ -73,24 +73,24 @@ const CategoryCarousel = () => {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
-          className="relative"
+          className="relative flex justify-center"
         >
           <Carousel 
             setApi={setApi}
-            className="w-full"
+            className="w-full max-w-4xl"
             opts={{
-              align: "start",
+              align: "center",
               loop: true,
             }}
           >
-            <CarouselContent className="-ml-2">
+            <CarouselContent className="-ml-2 flex justify-center">
               {categories?.map((category, index) => (
                 <CarouselItem key={category.id} className="pl-2 basis-auto">
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.1 * index }}
-                    className="flex flex-col items-center cursor-pointer"
+                    className="flex flex-col items-center cursor-pointer mx-2"
                     onClick={() => handleCategoryClick(category.id)}
                   >
                     <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 mb-2 border-2 border-gray-200 hover:border-primary transition-colors">

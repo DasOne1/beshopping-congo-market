@@ -34,6 +34,7 @@ const Products = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const itemsPerPage = 12;
 
   useEffect(() => {
@@ -45,6 +46,7 @@ const Products = () => {
   useEffect(() => {
     if (searchQuery) {
       setSearchTerm(searchQuery);
+      setIsSearchExpanded(true);
     }
   }, [searchQuery]);
 
@@ -88,6 +90,7 @@ const Products = () => {
     setPriceRange([0, 1000000]);
     setSortBy('newest');
     setCurrentPage(1);
+    setIsSearchExpanded(false);
     navigate('/products');
   };
 
@@ -97,6 +100,17 @@ const Products = () => {
       product_id: productId,
       session_id: sessionStorage.getItem('session_id') || 'anonymous'
     });
+  };
+
+  const handleSearchIconClick = () => {
+    setIsSearchExpanded(!isSearchExpanded);
+    if (!isSearchExpanded) {
+      // Focus on the input when it expands
+      setTimeout(() => {
+        const input = document.getElementById('search-input');
+        if (input) input.focus();
+      }, 100);
+    }
   };
 
   const isLoading = productsLoading || categoriesLoading;
@@ -128,15 +142,28 @@ const Products = () => {
                 Filtres
               </Button>
               
-              {/* Barre de recherche principale */}
-              <div className="relative flex-1 sm:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Rechercher des produits..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+              {/* Barre de recherche expansible */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSearchIconClick}
+                  className="p-2"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+                
+                <div className={`transition-all duration-300 overflow-hidden ${
+                  isSearchExpanded ? 'w-64 opacity-100' : 'w-0 opacity-0'
+                }`}>
+                  <Input
+                    id="search-input"
+                    placeholder="Rechercher des produits..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
               </div>
               
               <span className="text-sm text-muted-foreground whitespace-nowrap">

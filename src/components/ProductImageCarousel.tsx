@@ -1,6 +1,5 @@
 
 import React, { useState, useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ProductImageCarouselProps {
@@ -84,27 +83,8 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
         
-        {/* Boutons de navigation */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={previousImage}
-          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={nextImage}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-
-        {/* Miniatures sur l'image principale */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1 px-2 py-1 bg-black/20 backdrop-blur-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Miniatures toujours visibles sur l'image principale */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1 px-2 py-1 bg-black/20 backdrop-blur-sm rounded-lg">
           {images.map((image, index) => (
             <button
               key={index}

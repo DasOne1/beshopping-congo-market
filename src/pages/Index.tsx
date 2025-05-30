@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Truck, Shield, ArrowRight, Star, TrendingUp, Palette } from 'lucide-react';
@@ -191,7 +190,7 @@ const Index = () => {
                       whileInView={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.4, delay: 0.1 * index }}
                     >
-                      <ProductCard product={product} viewMode="single" />
+                      <ProductCard product={product} />
                     </motion.div>
                   ))}
                 </motion.div>
