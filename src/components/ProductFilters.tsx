@@ -38,7 +38,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 }) => {
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="left" className="w-80 sm:w-96">
+      <SheetContent side="left" className="w-72 sm:w-80">
         <SheetHeader>
           <SheetTitle>Filtres</SheetTitle>
           <SheetClose />

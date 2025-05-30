@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -15,6 +15,8 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
   className = ""
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
 
   if (!images || images.length === 0) {
     return (
@@ -44,10 +46,38 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      nextImage();
+    }
+    if (isRightSwipe) {
+      previousImage();
+    }
+  };
+
   return (
     <div className={`${className}`}>
       {/* Image principale avec miniatures et indicateurs superposés */}
-      <div className="relative aspect-square overflow-hidden rounded-lg group">
+      <div 
+        className="relative aspect-square overflow-hidden rounded-lg group"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <img
           src={images[currentImageIndex]}
           alt={`${productName} - Image ${currentImageIndex + 1}`}

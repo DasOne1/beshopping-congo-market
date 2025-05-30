@@ -9,6 +9,7 @@ import ProductCard from '@/components/ProductCard';
 import ProductSkeleton from '@/components/ProductSkeleton';
 import ProductFilters from '@/components/ProductFilters';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
@@ -116,7 +117,7 @@ const Products = () => {
         {/* Sticky Controls */}
         <div className="sticky top-16 md:top-20 z-40 bg-background/95 backdrop-blur-sm border-b pb-4 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
@@ -126,8 +127,20 @@ const Products = () => {
                 <Filter className="w-4 h-4" />
                 Filtres
               </Button>
-              <span className="text-sm text-muted-foreground">
-                {isLoading ? 'Chargement...' : `${sortedProducts.length} produit(s) trouvé(s)`}
+              
+              {/* Barre de recherche principale */}
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Rechercher des produits..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {isLoading ? 'Chargement...' : `${sortedProducts.length} produit(s)`}
               </span>
             </div>
 
