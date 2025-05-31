@@ -1,10 +1,14 @@
 
 import React, { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useOrders } from '@/hooks/useOrders';
 import { useCustomers } from '@/hooks/useCustomers';
@@ -18,10 +22,15 @@ interface OrderFormProps {
   formatPrice?: (price: number) => string;
 }
 
+const orderFormSchema = z.object({
+  customerName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
+  customerPhone: z.string().min(8, 'Le numéro de téléphone doit contenir au moins 8 chiffres').regex(/^[+]?[\d\s-()]+$/, 'Format de téléphone invalide'),
+  customerAddress: z.string().min(10, 'L\'adresse doit contenir au moins 10 caractères'),
+});
+
+type OrderFormData = z.infer<typeof orderFormSchema>;
+
 const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: OrderFormProps) => {
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [customerAddress, setCustomerAddress] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
@@ -29,26 +38,24 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
   const { createOrder } = useOrders();
   const { createCustomer } = useCustomers();
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const form = useForm<OrderFormData>({
+    resolver: zodResolver(orderFormSchema),
+    defaultValues: {
+      customerName: '',
+      customerPhone: '',
+      customerAddress: '',
+    },
+  });
 
-    if (!customerName || !customerPhone || !customerAddress) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleSubmit = async (data: OrderFormData) => {
     setIsSubmitting(true);
 
     try {
       // Créer le client d'abord
       const customerData = {
-        name: customerName,
-        phone: customerPhone,
-        address: { street: customerAddress }
+        name: data.customerName,
+        phone: data.customerPhone,
+        address: { street: data.customerAddress }
       };
 
       const newCustomer = await createCustomer.mutateAsync(customerData);
@@ -66,9 +73,9 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
       // Créer la commande
       const orderData = {
         customer_id: newCustomer.id,
-        customer_name: customerName,
-        customer_phone: customerPhone,
-        shipping_address: { street: customerAddress },
+        customer_name: data.customerName,
+        customer_phone: data.customerPhone,
+        shipping_address: { street: data.customerAddress },
         subtotal: subtotal || 0,
         total_amount: subtotal || 0,
         status: 'pending' as const,
@@ -82,9 +89,9 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
 
       // Préparer les détails de la commande pour la confirmation
       const details = {
-        customerName,
-        customerPhone,
-        customerAddress,
+        customerName: data.customerName,
+        customerPhone: data.customerPhone,
+        customerAddress: data.customerAddress,
         total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
         orderType: 'form' as const
       };
@@ -93,9 +100,7 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
       setShowConfirmation(true);
 
       // Réinitialiser le formulaire
-      setCustomerName('');
-      setCustomerPhone('');
-      setCustomerAddress('');
+      form.reset();
 
       if (onOrderComplete) {
         onOrderComplete();
@@ -118,7 +123,8 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
   };
 
   const generateWhatsAppMessage = () => {
-    let message = `Bonjour, je souhaite passer une commande avec les informations suivantes:\n\nNom: ${customerName}\nTéléphone: ${customerPhone}\nAdresse: ${customerAddress}`;
+    const formData = form.getValues();
+    let message = `Bonjour, je souhaite passer une commande avec les informations suivantes:\n\nNom: ${formData.customerName}\nTéléphone: ${formData.customerPhone}\nAdresse: ${formData.customerAddress}`;
     
     if (cartProducts && cartProducts.length > 0) {
       message += '\n\nProduits commandés:';
@@ -139,21 +145,24 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
   };
 
   const handleWhatsAppOrder = async () => {
-    if (!customerName || !customerPhone || !customerAddress) {
+    const isValid = await form.trigger();
+    if (!isValid) {
       toast({
         title: "Erreur",
-        description: "Veuillez remplir tous les champs avant de commander via WhatsApp.",
+        description: "Veuillez corriger les erreurs dans le formulaire avant de commander via WhatsApp.",
         variant: "destructive",
       });
       return;
     }
 
+    const formData = form.getValues();
+
     try {
       // Créer le client d'abord
       const customerData = {
-        name: customerName,
-        phone: customerPhone,
-        address: { street: customerAddress }
+        name: formData.customerName,
+        phone: formData.customerPhone,
+        address: { street: formData.customerAddress }
       };
 
       const newCustomer = await createCustomer.mutateAsync(customerData);
@@ -171,10 +180,10 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
       // Créer la commande WhatsApp
       const orderData = {
         customer_id: newCustomer.id,
-        customer_name: customerName,
-        customer_phone: customerPhone,
-        whatsapp_number: customerPhone,
-        shipping_address: { street: customerAddress },
+        customer_name: formData.customerName,
+        customer_phone: formData.customerPhone,
+        whatsapp_number: formData.customerPhone,
+        shipping_address: { street: formData.customerAddress },
         subtotal: subtotal || 0,
         total_amount: subtotal || 0,
         status: 'pending' as const,
@@ -188,9 +197,9 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
 
       // Préparer les détails de la commande WhatsApp
       const details = {
-        customerName,
-        customerPhone,
-        customerAddress,
+        customerName: formData.customerName,
+        customerPhone: formData.customerPhone,
+        customerAddress: formData.customerAddress,
         total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
         orderType: 'whatsapp' as const
       };
@@ -199,9 +208,7 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
       setShowConfirmation(true);
 
       // Réinitialiser le formulaire
-      setCustomerName('');
-      setCustomerPhone('');
-      setCustomerAddress('');
+      form.reset();
 
       if (onOrderComplete) {
         onOrderComplete();
@@ -228,68 +235,92 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
           <CardTitle>Informations de livraison</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4">
-            <div>
-              <Label htmlFor="name">Nom complet</Label>
-              <Input
-                id="name"
-                placeholder="Votre nom complet"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="customerName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom complet</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Votre nom complet"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div>
-              <Label htmlFor="phone">Numéro de téléphone</Label>
-              <Input
-                id="phone"
-                placeholder="Votre numéro de téléphone"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
+
+              <FormField
+                control={form.control}
+                name="customerPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Numéro de téléphone</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Votre numéro de téléphone"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div>
-              <Label htmlFor="address">Adresse de livraison</Label>
-              <Input
-                id="address"
-                placeholder="Votre adresse de livraison"
-                value={customerAddress}
-                onChange={(e) => setCustomerAddress(e.target.value)}
+
+              <FormField
+                control={form.control}
+                name="customerAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adresse de livraison</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Votre adresse de livraison"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </div>
 
-          <div className="flex flex-col space-y-4">
-            <Button 
-              type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
-              size="lg"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Envoi en cours...
-                </>
-              ) : (
-                <>
-                  <Send className="mr-2 h-4 w-4" />
-                  Passer la commande
-                </>
-              )}
-            </Button>
+              <div className="flex flex-col space-y-4">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+                  size="lg"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Envoi en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Passer la commande
+                    </>
+                  )}
+                </Button>
 
-            <div className="text-center text-sm text-gray-500">ou</div>
+                <div className="text-center text-sm text-gray-500">ou</div>
 
-            <WhatsAppContact
-              phoneNumber="243978100940"
-              message={generateWhatsAppMessage()}
-              className="w-full bg-whatsapp hover:bg-whatsapp-dark text-white"
-              size="lg"
-              children="Commander via WhatsApp"
-              onCustomClick={handleWhatsAppOrder}
-            />
-          </div>
+                <WhatsAppContact
+                  phoneNumber="243978100940"
+                  message={generateWhatsAppMessage()}
+                  className="w-full bg-whatsapp hover:bg-whatsapp-dark text-white"
+                  size="lg"
+                  children="Commander via WhatsApp"
+                  onCustomClick={handleWhatsAppOrder}
+                />
+              </div>
+            </form>
+          </Form>
         </CardContent>
       </Card>
 
