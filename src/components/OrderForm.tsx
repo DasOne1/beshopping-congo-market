@@ -6,12 +6,7 @@ import OrderFormFields from '@/components/OrderFormFields';
 import OrderFormButtons from '@/components/OrderFormButtons';
 import { useCart } from '@/contexts/CartContext';
 import { useTranslation } from 'react-i18next';
-
-interface FormData {
-  customerName: string;
-  customerPhone: string;
-  customerAddress: string;
-}
+import { FormData } from '@/hooks/useOrderForm';
 
 const OrderForm = ({ cartProducts, subtotal, formatPrice }: { 
   cartProducts?: any[], 
@@ -32,8 +27,9 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: {
     onSubmit(data);
   };
 
-  const handleWhatsAppSubmit = (data: FormData) => {
-    onWhatsAppSubmit(data);
+  const handleWhatsAppSubmit = () => {
+    const formData = form.getValues();
+    onWhatsAppSubmit(formData);
   };
 
   // Use props if provided, otherwise fall back to cart context

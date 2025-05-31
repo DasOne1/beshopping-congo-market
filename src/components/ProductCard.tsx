@@ -10,6 +10,7 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { toast } from '@/hooks/use-toast';
 
 export interface ProductCardProps {
   product: Product;
@@ -34,6 +35,21 @@ const ProductCard = ({ product, viewMode = 'grid' }: ProductCardProps) => {
 
   const handleAddToCart = () => {
     addToCart(product.id, 1);
+    
+    // Show different toast messages based on product status
+    if (product.status !== 'active' || product.stock === 0) {
+      toast({
+        title: t('product.customOrderAdded'),
+        description: t('product.customOrderDescription'),
+        variant: 'default',
+      });
+    } else {
+      toast({
+        title: t('product.addedToCart'),
+        description: `${product.name} ${t('product.addedToCartDescription')}`,
+        variant: 'default',
+      });
+    }
   };
 
   const getOrderButtonText = () => {

@@ -1,66 +1,52 @@
 
 {
-  "header": {
+  "nav": {
     "home": "Accueil",
     "products": "Produits",
     "categories": "Catégories",
-    "about": "À Propos",
-    "contact": "Contact",
     "cart": "Panier",
     "favorites": "Favoris",
+    "about": "À propos",
+    "contact": "Contact",
     "account": "Compte",
-    "search": "Rechercher des produits..."
-  },
-  "home": {
-    "title": "Découvrez les meilleurs produits du Congo",
-    "subtitle": "Une sélection soigneusement choisie des produits les plus recherchés, livrés directement chez vous à Lubumbashi et dans tout le Congo.",
-    "exploreProducts": "Explorer les produits",
-    "customOrder": "Commande personnalisée",
-    "fastDelivery": "Livraison rapide",
-    "securePayment": "Paiement sécurisé",
-    "qualityGuaranteed": "Qualité garantie"
+    "customOrder": "Commande personnalisée"
   },
   "product": {
-    "addToCart": "Ajouter au panier",
-    "addedToCart": "Ajouté au panier",
-    "addToFavorites": "Ajouter aux favoris",
-    "removeFromFavorites": "Retirer des favoris",
-    "outOfStock": "Rupture de stock",
-    "inactive": "Article inactif",
-    "customOrder": "Commande personnalisée",
-    "inStock": "En stock",
     "featured": "Vedette",
-    "price": "Prix"
+    "inStock": "En stock",
+    "outOfStock": "Rupture de stock",
+    "inactive": "Inactif",
+    "addToCart": "Ajouter au panier",
+    "customOrder": "Commande personnalisée",
+    "addedToCart": "Ajouté au panier",
+    "addedToCartDescription": "a été ajouté à votre panier",
+    "customOrderAdded": "Commande personnalisée ajoutée",
+    "customOrderDescription": "Votre demande de commande personnalisée a été ajoutée. Nous vous contacterons pour finaliser."
   },
   "cart": {
-    "title": "Mon Panier",
+    "title": "Votre Panier",
     "empty": "Votre panier est vide",
-    "continueShopping": "Continuer mes achats",
-    "checkout": "Passer la commande",
-    "total": "Total",
-    "deliveryInfo": "Informations de livraison"
+    "deliveryInfo": "Informations de livraison",
+    "total": "Total"
   },
   "form": {
     "customerName": "Nom complet",
     "customerPhone": "Numéro de téléphone",
     "customerAddress": "Adresse de livraison",
+    "minLength": "Ce champ doit contenir au moins 2 caractères",
+    "invalidPhone": "Numéro de téléphone invalide",
     "submit": "Passer la commande",
-    "submitViaWhatsApp": "Commander via WhatsApp",
-    "or": "ou",
-    "required": "Ce champ est requis",
-    "minLength": "Minimum {count} caractères",
-    "invalidPhone": "Format de téléphone invalide"
+    "whatsappOrder": "Commander via WhatsApp"
   },
   "toast": {
     "orderCreated": "Commande créée",
-    "orderSuccess": "Votre commande a été enregistrée avec succès !",
-    "whatsappOrderCreated": "Commande WhatsApp créée",
-    "whatsappOrderSuccess": "Votre commande a été enregistrée et sera envoyée via WhatsApp !",
+    "orderSuccess": "Votre commande a été créée avec succès",
+    "whatsappOrderCreated": "Commande WhatsApp",
+    "whatsappOrderSuccess": "Votre commande WhatsApp a été créée",
     "error": "Erreur",
-    "formError": "Veuillez corriger les erreurs dans le formulaire avant de commander via WhatsApp."
+    "formError": "Veuillez remplir tous les champs correctement"
   },
   "language": {
-    "select": "Choisir la langue",
     "french": "Français",
     "english": "Anglais",
     "spanish": "Espagnol",

@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 
 // Define cart item structure
 export interface CartItem {
@@ -11,7 +11,7 @@ export interface CartItem {
 // Define cart context shape
 interface CartContextType {
   cart: CartItem[];
-  cartItems: CartItem[]; // Add this line to fix the error
+  cartItems: CartItem[];
   addToCart: (productId: string, quantity: number, selectedVariants?: Record<string, string>) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
@@ -28,13 +28,26 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   // Initialize cart state from localStorage if available
   const [cart, setCart] = useState<CartItem[]>(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
+    try {
+      const savedCart = localStorage.getItem('cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (error) {
+      console.error('Erreur lors du chargement du panier depuis localStorage:', error);
+      return [];
+    }
   });
   
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes with debouncing
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    const timeoutId = setTimeout(() => {
+      try {
+        localStorage.setItem('cart', JSON.stringify(cart));
+      } catch (error) {
+        console.error('Erreur lors de la sauvegarde du panier:', error);
+      }
+    }, 100); // Debounce pour éviter trop d'écritures
+
+    return () => clearTimeout(timeoutId);
   }, [cart]);
   
   // Add item to cart or update quantity if already exists
@@ -66,6 +79,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   
   // Update quantity of item in cart
   const updateQuantity = (productId: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    
     setCart(prevCart => 
       prevCart.map(item => 
         item.productId === productId 
@@ -100,19 +118,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const getTotalQuantity = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    cart,
+    cartItems: cart,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    updateVariant,
+    isInCart,
+    getTotalQuantity
+  }), [cart]);
   
   return (
-    <CartContext.Provider value={{ 
-      cart, 
-      cartItems: cart, // Add this line to fix the error
-      addToCart, 
-      removeFromCart, 
-      updateQuantity, 
-      clearCart,
-      updateVariant,
-      isInCart,
-      getTotalQuantity
-    }}>
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );

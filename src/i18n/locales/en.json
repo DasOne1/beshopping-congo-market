@@ -1,66 +1,52 @@
 
 {
-  "header": {
+  "nav": {
     "home": "Home",
     "products": "Products",
     "categories": "Categories",
-    "about": "About",
-    "contact": "Contact",
     "cart": "Cart",
     "favorites": "Favorites",
+    "about": "About",
+    "contact": "Contact",
     "account": "Account",
-    "search": "Search products..."
-  },
-  "home": {
-    "title": "Discover the best products from Congo",
-    "subtitle": "A carefully curated selection of the most sought-after products, delivered directly to you in Lubumbashi and throughout Congo.",
-    "exploreProducts": "Explore products",
-    "customOrder": "Custom order",
-    "fastDelivery": "Fast delivery",
-    "securePayment": "Secure payment",
-    "qualityGuaranteed": "Quality guaranteed"
+    "customOrder": "Custom Order"
   },
   "product": {
-    "addToCart": "Add to cart",
-    "addedToCart": "Added to cart",
-    "addToFavorites": "Add to favorites",
-    "removeFromFavorites": "Remove from favorites",
-    "outOfStock": "Out of stock",
-    "inactive": "Inactive item",
-    "customOrder": "Custom order",
-    "inStock": "In stock",
     "featured": "Featured",
-    "price": "Price"
+    "inStock": "In Stock",
+    "outOfStock": "Out of Stock",
+    "inactive": "Inactive",
+    "addToCart": "Add to Cart",
+    "customOrder": "Custom Order",
+    "addedToCart": "Added to Cart",
+    "addedToCartDescription": "has been added to your cart",
+    "customOrderAdded": "Custom Order Added",
+    "customOrderDescription": "Your custom order request has been added. We will contact you to finalize."
   },
   "cart": {
-    "title": "My Cart",
+    "title": "Your Cart",
     "empty": "Your cart is empty",
-    "continueShopping": "Continue shopping",
-    "checkout": "Checkout",
-    "total": "Total",
-    "deliveryInfo": "Delivery information"
+    "deliveryInfo": "Delivery Information",
+    "total": "Total"
   },
   "form": {
-    "customerName": "Full name",
-    "customerPhone": "Phone number",
-    "customerAddress": "Delivery address",
-    "submit": "Place order",
-    "submitViaWhatsApp": "Order via WhatsApp",
-    "or": "or",
-    "required": "This field is required",
-    "minLength": "Minimum {count} characters",
-    "invalidPhone": "Invalid phone format"
+    "customerName": "Full Name",
+    "customerPhone": "Phone Number",
+    "customerAddress": "Delivery Address",
+    "minLength": "This field must contain at least 2 characters",
+    "invalidPhone": "Invalid phone number",
+    "submit": "Place Order",
+    "whatsappOrder": "Order via WhatsApp"
   },
   "toast": {
-    "orderCreated": "Order created",
-    "orderSuccess": "Your order has been successfully registered!",
-    "whatsappOrderCreated": "WhatsApp order created",
-    "whatsappOrderSuccess": "Your order has been registered and will be sent via WhatsApp!",
+    "orderCreated": "Order Created",
+    "orderSuccess": "Your order has been created successfully",
+    "whatsappOrderCreated": "WhatsApp Order",
+    "whatsappOrderSuccess": "Your WhatsApp order has been created",
     "error": "Error",
-    "formError": "Please correct the errors in the form before ordering via WhatsApp."
+    "formError": "Please fill in all fields correctly"
   },
   "language": {
-    "select": "Select language",
     "french": "French",
     "english": "English",
     "spanish": "Spanish",

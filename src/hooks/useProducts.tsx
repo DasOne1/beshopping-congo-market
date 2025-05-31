@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -12,7 +13,7 @@ export interface Product {
   images: string[];
   stock: number;
   category_id?: string;
-  tags: string[]; // Rendu obligatoire pour correspondre au type global
+  tags: string[];
   featured?: boolean;
   popular?: number;
   sku?: string;
@@ -41,7 +42,6 @@ export const useProducts = () => {
       }
       
       console.log('Produits chargés:', data?.length);
-      // S'assurer que tags est toujours un tableau
       return data.map(product => ({
         ...product,
         tags: product.tags || []
@@ -50,14 +50,24 @@ export const useProducts = () => {
     retry: 1,
     retryDelay: 500,
     refetchOnWindowFocus: false,
-    staleTime: 30 * 1000, // 30 secondes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: false, // Désactiver l'actualisation automatique
+    staleTime: 5 * 60 * 1000, // 5 minutes - données considérées fraîches
+    gcTime: 30 * 60 * 1000, // 30 minutes - garde en cache
+    refetchInterval: false,
   });
 
   const { data: featuredProducts = [] } = useQuery({
     queryKey: ['products', 'featured'],
     queryFn: async () => {
+      // Essayer d'abord de récupérer depuis le cache des produits
+      const cachedProducts = queryClient.getQueryData(['products']) as Product[];
+      if (cachedProducts && cachedProducts.length > 0) {
+        const featured = cachedProducts.filter(p => p.featured && p.status === 'active').slice(0, 6);
+        if (featured.length > 0) {
+          console.log('Produits vedettes récupérés depuis le cache');
+          return featured;
+        }
+      }
+
       console.log('Chargement des produits vedettes...');
       const { data, error } = await supabase
         .from('products')
@@ -78,13 +88,27 @@ export const useProducts = () => {
     },
     retry: 1,
     refetchOnWindowFocus: false,
-    staleTime: 1 * 60 * 1000, // 1 minute
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 60 * 60 * 1000, // 1 heure
+    enabled: true, // Toujours activé pour éviter les dépendances
   });
 
   const { data: popularProducts = [] } = useQuery({
     queryKey: ['products', 'popular'],
     queryFn: async () => {
+      // Essayer d'abord de récupérer depuis le cache des produits
+      const cachedProducts = queryClient.getQueryData(['products']) as Product[];
+      if (cachedProducts && cachedProducts.length > 0) {
+        const popular = cachedProducts
+          .filter(p => p.status === 'active')
+          .sort((a, b) => (b.popular || 0) - (a.popular || 0))
+          .slice(0, 8);
+        if (popular.length > 0) {
+          console.log('Produits populaires récupérés depuis le cache');
+          return popular;
+        }
+      }
+
       console.log('Chargement des produits populaires...');
       const { data, error } = await supabase
         .from('products')
@@ -105,8 +129,9 @@ export const useProducts = () => {
     },
     retry: 1,
     refetchOnWindowFocus: false,
-    staleTime: 1 * 60 * 1000, // 1 minute
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 60 * 60 * 1000, // 1 heure
+    enabled: true, // Toujours activé pour éviter les dépendances
   });
 
   const createProduct = useMutation({
@@ -144,7 +169,9 @@ export const useProducts = () => {
         return [newProduct, ...oldData];
       });
 
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      // Invalider seulement les requêtes dérivées
+      queryClient.invalidateQueries({ queryKey: ['products', 'featured'] });
+      queryClient.invalidateQueries({ queryKey: ['products', 'popular'] });
       
       toast({
         title: "Produit créé",
@@ -184,7 +211,9 @@ export const useProducts = () => {
         );
       });
 
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      // Invalider seulement les requêtes dérivées
+      queryClient.invalidateQueries({ queryKey: ['products', 'featured'] });
+      queryClient.invalidateQueries({ queryKey: ['products', 'popular'] });
       
       toast({
         title: "Produit mis à jour",
@@ -219,7 +248,9 @@ export const useProducts = () => {
         return oldData.filter(product => product.id !== deletedId);
       });
 
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      // Invalider seulement les requêtes dérivées
+      queryClient.invalidateQueries({ queryKey: ['products', 'featured'] });
+      queryClient.invalidateQueries({ queryKey: ['products', 'popular'] });
       
       toast({
         title: "Produit supprimé",

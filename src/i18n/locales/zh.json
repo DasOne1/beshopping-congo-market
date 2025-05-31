@@ -1,66 +1,52 @@
 
 {
-  "header": {
+  "nav": {
     "home": "首页",
     "products": "产品",
-    "categories": "类别",
-    "about": "关于我们",
-    "contact": "联系我们",
+    "categories": "分类",
     "cart": "购物车",
     "favorites": "收藏",
+    "about": "关于我们",
+    "contact": "联系我们",
     "account": "账户",
-    "search": "搜索产品..."
-  },
-  "home": {
-    "title": "发现刚果最好的产品",
-    "subtitle": "精心挑选的最受欢迎的产品，直接送到您在卢本巴希和整个刚果的家中。",
-    "exploreProducts": "浏览产品",
-    "customOrder": "定制订单",
-    "fastDelivery": "快速配送",
-    "securePayment": "安全支付",
-    "qualityGuaranteed": "质量保证"
+    "customOrder": "定制订单"
   },
   "product": {
-    "addToCart": "加入购物车",
-    "addedToCart": "已加入购物车",
-    "addToFavorites": "加入收藏",
-    "removeFromFavorites": "从收藏中移除",
-    "outOfStock": "缺货",
-    "inactive": "商品已下架",
-    "customOrder": "定制订单",
-    "inStock": "有库存",
     "featured": "特色",
-    "price": "价格"
+    "inStock": "有库存",
+    "outOfStock": "缺货",
+    "inactive": "停用",
+    "addToCart": "加入购物车",
+    "customOrder": "定制订单",
+    "addedToCart": "已加入购物车",
+    "addedToCartDescription": "已添加到您的购物车",
+    "customOrderAdded": "定制订单已添加",
+    "customOrderDescription": "您的定制订单请求已添加。我们将联系您以完成订单。"
   },
   "cart": {
-    "title": "我的购物车",
+    "title": "您的购物车",
     "empty": "您的购物车是空的",
-    "continueShopping": "继续购物",
-    "checkout": "结账",
-    "total": "总计",
-    "deliveryInfo": "配送信息"
+    "deliveryInfo": "配送信息",
+    "total": "总计"
   },
   "form": {
     "customerName": "全名",
     "customerPhone": "电话号码",
     "customerAddress": "配送地址",
+    "minLength": "此字段必须包含至少2个字符",
+    "invalidPhone": "无效的电话号码",
     "submit": "下订单",
-    "submitViaWhatsApp": "通过WhatsApp订购",
-    "or": "或",
-    "required": "此字段为必填项",
-    "minLength": "最少{count}个字符",
-    "invalidPhone": "电话格式无效"
+    "whatsappOrder": "通过WhatsApp订购"
   },
   "toast": {
     "orderCreated": "订单已创建",
-    "orderSuccess": "您的订单已成功注册！",
-    "whatsappOrderCreated": "WhatsApp订单已创建",
-    "whatsappOrderSuccess": "您的订单已注册并将通过WhatsApp发送！",
+    "orderSuccess": "您的订单已成功创建",
+    "whatsappOrderCreated": "WhatsApp订单",
+    "whatsappOrderSuccess": "您的WhatsApp订单已创建",
     "error": "错误",
-    "formError": "请在通过WhatsApp订购前纠正表单中的错误。"
+    "formError": "请正确填写所有字段"
   },
   "language": {
-    "select": "选择语言",
     "french": "法语",
     "english": "英语",
     "spanish": "西班牙语",

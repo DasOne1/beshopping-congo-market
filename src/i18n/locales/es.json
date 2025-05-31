@@ -1,66 +1,52 @@
 
 {
-  "header": {
+  "nav": {
     "home": "Inicio",
     "products": "Productos",
     "categories": "Categorías",
-    "about": "Acerca de",
-    "contact": "Contacto",
     "cart": "Carrito",
     "favorites": "Favoritos",
+    "about": "Acerca de",
+    "contact": "Contacto",
     "account": "Cuenta",
-    "search": "Buscar productos..."
-  },
-  "home": {
-    "title": "Descubre los mejores productos del Congo",
-    "subtitle": "Una selección cuidadosamente curada de los productos más buscados, entregados directamente a ti en Lubumbashi y en todo el Congo.",
-    "exploreProducts": "Explorar productos",
-    "customOrder": "Pedido personalizado",
-    "fastDelivery": "Entrega rápida",
-    "securePayment": "Pago seguro",
-    "qualityGuaranteed": "Calidad garantizada"
+    "customOrder": "Pedido Personalizado"
   },
   "product": {
-    "addToCart": "Añadir al carrito",
-    "addedToCart": "Añadido al carrito",
-    "addToFavorites": "Añadir a favoritos",
-    "removeFromFavorites": "Quitar de favoritos",
-    "outOfStock": "Agotado",
-    "inactive": "Artículo inactivo",
-    "customOrder": "Pedido personalizado",
-    "inStock": "En stock",
     "featured": "Destacado",
-    "price": "Precio"
+    "inStock": "En Stock",
+    "outOfStock": "Agotado",
+    "inactive": "Inactivo",
+    "addToCart": "Agregar al Carrito",
+    "customOrder": "Pedido Personalizado",
+    "addedToCart": "Agregado al Carrito",
+    "addedToCartDescription": "ha sido agregado a tu carrito",
+    "customOrderAdded": "Pedido Personalizado Agregado",
+    "customOrderDescription": "Tu solicitud de pedido personalizado ha sido agregada. Te contactaremos para finalizar."
   },
   "cart": {
-    "title": "Mi Carrito",
+    "title": "Tu Carrito",
     "empty": "Tu carrito está vacío",
-    "continueShopping": "Continuar comprando",
-    "checkout": "Realizar pedido",
-    "total": "Total",
-    "deliveryInfo": "Información de entrega"
+    "deliveryInfo": "Información de Entrega",
+    "total": "Total"
   },
   "form": {
-    "customerName": "Nombre completo",
-    "customerPhone": "Número de teléfono",
-    "customerAddress": "Dirección de entrega",
-    "submit": "Realizar pedido",
-    "submitViaWhatsApp": "Pedir por WhatsApp",
-    "or": "o",
-    "required": "Este campo es obligatorio",
-    "minLength": "Mínimo {count} caracteres",
-    "invalidPhone": "Formato de teléfono inválido"
+    "customerName": "Nombre Completo",
+    "customerPhone": "Número de Teléfono",
+    "customerAddress": "Dirección de Entrega",
+    "minLength": "Este campo debe contener al menos 2 caracteres",
+    "invalidPhone": "Número de teléfono inválido",
+    "submit": "Realizar Pedido",
+    "whatsappOrder": "Pedir por WhatsApp"
   },
   "toast": {
-    "orderCreated": "Pedido creado",
-    "orderSuccess": "¡Tu pedido ha sido registrado exitosamente!",
-    "whatsappOrderCreated": "Pedido de WhatsApp creado",
-    "whatsappOrderSuccess": "¡Tu pedido ha sido registrado y será enviado por WhatsApp!",
+    "orderCreated": "Pedido Creado",
+    "orderSuccess": "Tu pedido ha sido creado exitosamente",
+    "whatsappOrderCreated": "Pedido WhatsApp",
+    "whatsappOrderSuccess": "Tu pedido por WhatsApp ha sido creado",
     "error": "Error",
-    "formError": "Por favor corrige los errores en el formulario antes de pedir por WhatsApp."
+    "formError": "Por favor completa todos los campos correctamente"
   },
   "language": {
-    "select": "Seleccionar idioma",
     "french": "Francés",
     "english": "Inglés",
     "spanish": "Español",
