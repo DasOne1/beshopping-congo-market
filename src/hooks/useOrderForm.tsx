@@ -82,7 +82,6 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
       product_id: item.productId || item.id,
       product_name: item.product?.name || item.name || 'Produit',
       product_image: item.product?.images?.[0] || item.images?.[0] || '',
-      product_status: item.product?.status || 'active', // Ajout du statut du produit
       quantity: item.quantity,
       unit_price: item.product?.discounted_price || item.product?.original_price || item.discounted_price || item.original_price || 0,
       total_price: (item.product?.discounted_price || item.product?.original_price || item.discounted_price || item.original_price || 0) * item.quantity,

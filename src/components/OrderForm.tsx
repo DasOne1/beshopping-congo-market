@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import OrderFormFields, { OrderFormData } from '@/components/OrderFormFields';
+import OrderFormFields from '@/components/OrderFormFields';
 import OrderFormButtons from '@/components/OrderFormButtons';
 import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
 import { useOrderForm } from '@/hooks/useOrderForm';
