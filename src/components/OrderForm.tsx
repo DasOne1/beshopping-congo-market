@@ -1,60 +1,58 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import OrderFormFields from '@/components/OrderFormFields';
-import OrderFormButtons from '@/components/OrderFormButtons';
-import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
 import { useOrderForm } from '@/hooks/useOrderForm';
-import { generateWhatsAppMessage } from '@/utils/whatsappMessageGenerator';
+import { OrderFormFields } from '@/components/OrderFormFields';
+import { OrderFormButtons } from '@/components/OrderFormButtons';
+import { useCart } from '@/contexts/CartContext';
+import { useTranslation } from 'react-i18next';
 
-interface OrderFormProps {
-  onOrderComplete?: () => void;
-  cartProducts?: any[];
-  subtotal?: number;
-  formatPrice?: (price: number) => string;
+interface FormData {
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
 }
 
-const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: OrderFormProps) => {
+const OrderForm = () => {
+  const { items } = useCart();
+  const { t } = useTranslation();
+  
   const {
-    form,
-    isSubmitting,
-    showConfirmation,
-    orderDetails,
-    setShowConfirmation,
+    register,
     handleSubmit,
-    handleWhatsAppOrder
-  } = useOrderForm({ onOrderComplete, cartProducts, subtotal, formatPrice });
+    errors,
+    isSubmitting,
+    onSubmit,
+    onWhatsAppSubmit
+  } = useOrderForm();
 
-  const whatsappMessage = generateWhatsAppMessage(
-    form.getValues(),
-    cartProducts,
-    subtotal,
-    formatPrice
-  );
+  const handleFormSubmit = (data: FormData) => {
+    onSubmit(data);
+  };
+
+  const handleWhatsAppSubmit = (data: FormData) => {
+    onWhatsAppSubmit(data);
+  };
+
+  if (items.length === 0) {
+    return null;
+  }
 
   return (
-    <>
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle>Informations de livraison</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <OrderFormFields form={form} onSubmit={handleSubmit}>
-            <OrderFormButtons
-              isSubmitting={isSubmitting}
-              whatsappMessage={whatsappMessage}
-              onWhatsAppOrder={handleWhatsAppOrder}
-            />
-          </OrderFormFields>
-        </CardContent>
-      </Card>
-
-      <OrderConfirmationDialog
-        isOpen={showConfirmation}
-        onClose={() => setShowConfirmation(false)}
-        orderDetails={orderDetails}
-      />
-    </>
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('cart.deliveryInfo')}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          <OrderFormFields register={register} errors={errors} />
+          <OrderFormButtons 
+            onWhatsAppSubmit={handleSubmit(handleWhatsAppSubmit)}
+            isSubmitting={isSubmitting}
+          />
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 

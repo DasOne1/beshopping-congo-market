@@ -1,37 +1,28 @@
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useCart } from '@/contexts/CartContext';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useOrders } from '@/hooks/useOrders';
-import { useCustomers } from '@/hooks/useCustomers';
+import { generateWhatsAppMessage } from '@/utils/whatsappMessageGenerator';
+import { useTranslation } from 'react-i18next';
 
-const orderFormSchema = z.object({
-  customerName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
-  customerPhone: z.string().min(8, 'Le numéro de téléphone doit contenir au moins 8 chiffres').regex(/^[+]?[\d\s-()]+$/, 'Format de téléphone invalide'),
-  customerAddress: z.string().min(10, 'L\'adresse doit contenir au moins 10 caractères'),
+const formSchema = z.object({
+  customerName: z.string().min(2, 'form.minLength'),
+  customerPhone: z.string().min(8, 'form.minLength').regex(/^[+]?[\d\s\-()]+$/, 'form.invalidPhone'),
+  customerAddress: z.string().min(10, 'form.minLength'),
 });
 
-export type OrderFormData = z.infer<typeof orderFormSchema>;
+export type FormData = z.infer<typeof formSchema>;
 
-interface UseOrderFormProps {
-  onOrderComplete?: () => void;
-  cartProducts?: any[];
-  subtotal?: number;
-  formatPrice?: (price: number) => string;
-}
-
-export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: UseOrderFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [orderDetails, setOrderDetails] = useState<any>(null);
+export const useOrderForm = () => {
+  const { items, clearCart } = useCart();
   const { toast } = useToast();
-  const { createOrder } = useOrders();
-  const { createCustomer } = useCustomers();
+  const { t } = useTranslation();
 
-  const form = useForm<OrderFormData>({
-    resolver: zodResolver(orderFormSchema),
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       customerName: '',
       customerPhone: '',
@@ -39,161 +30,77 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     },
   });
 
-  const createOrderData = async (data: OrderFormData) => {
-    // Créer le client d'abord
-    const customerData = {
-      name: data.customerName,
-      phone: data.customerPhone,
-      address: { street: data.customerAddress }
-    };
-
-    const newCustomer = await createCustomer.mutateAsync(customerData);
-
-    // Préparer les articles de la commande
-    const orderItems = cartProducts?.map(item => ({
-      product_id: item.product?.id,
-      product_name: item.product?.name || 'Produit inconnu',
-      product_image: item.product?.images?.[0],
-      quantity: item.quantity,
-      unit_price: item.product?.discounted_price || item.product?.original_price || 0,
-      total_price: (item.product?.discounted_price || item.product?.original_price || 0) * item.quantity
-    })) || [];
-
-    return { newCustomer, orderItems };
-  };
-
-  const handleSubmit = async (data: OrderFormData) => {
-    setIsSubmitting(true);
-
+  const onSubmit = async (data: FormData) => {
     try {
-      const { newCustomer, orderItems } = await createOrderData(data);
-
-      // Créer la commande
       const orderData = {
-        customer_id: newCustomer.id,
         customer_name: data.customerName,
         customer_phone: data.customerPhone,
-        shipping_address: { street: data.customerAddress },
-        subtotal: subtotal || 0,
-        total_amount: subtotal || 0,
-        status: 'pending' as const,
-        payment_status: 'pending'
+        customer_address: data.customerAddress,
+        items: items.map(item => ({
+          product_id: item.id,
+          product_name: item.name,
+          price: item.original_price,
+          quantity: item.quantity,
+          subtotal: item.original_price * item.quantity,
+        })),
+        total: items.reduce((sum, item) => sum + (item.original_price * item.quantity), 0),
+        status: 'pending',
       };
 
-      await createOrder.mutateAsync({
-        order: orderData,
-        items: orderItems
+      const { error } = await supabase
+        .from('orders')
+        .insert([orderData]);
+
+      if (error) throw error;
+
+      toast({
+        title: t('toast.orderCreated'),
+        description: t('toast.orderSuccess'),
       });
 
-      // Préparer les détails de la commande pour la confirmation
-      const details = {
-        customerName: data.customerName,
-        customerPhone: data.customerPhone,
-        customerAddress: data.customerAddress,
-        total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
-        orderType: 'form' as const
-      };
-
-      setOrderDetails(details);
-      setShowConfirmation(true);
-
-      // Réinitialiser le formulaire
+      clearCart();
       form.reset();
-
-      if (onOrderComplete) {
-        onOrderComplete();
-      }
-
+    } catch (error) {
+      console.error('Error creating order:', error);
       toast({
-        title: "Commande créée",
-        description: "Votre commande a été enregistrée avec succès !",
+        title: t('toast.error'),
+        description: 'Une erreur est survenue lors de la création de la commande.',
+        variant: 'destructive',
       });
-
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la création de la commande.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const handleWhatsAppOrder = async () => {
-    const isValid = await form.trigger();
-    if (!isValid) {
+  const onWhatsAppSubmit = (data: FormData) => {
+    if (!form.formState.isValid) {
       toast({
-        title: "Erreur",
-        description: "Veuillez corriger les erreurs dans le formulaire avant de commander via WhatsApp.",
-        variant: "destructive",
+        title: t('toast.error'),
+        description: t('toast.formError'),
+        variant: 'destructive',
       });
       return;
     }
 
-    const formData = form.getValues();
+    const message = generateWhatsAppMessage(data, items);
+    const phoneNumber = '+243970284772';
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    
+    window.open(whatsappUrl, '_blank');
+    
+    toast({
+      title: t('toast.whatsappOrderCreated'),
+      description: t('toast.whatsappOrderSuccess'),
+    });
 
-    try {
-      const { newCustomer, orderItems } = await createOrderData(formData);
-
-      // Créer la commande WhatsApp
-      const orderData = {
-        customer_id: newCustomer.id,
-        customer_name: formData.customerName,
-        customer_phone: formData.customerPhone,
-        whatsapp_number: formData.customerPhone,
-        shipping_address: { street: formData.customerAddress },
-        subtotal: subtotal || 0,
-        total_amount: subtotal || 0,
-        status: 'pending' as const,
-        payment_status: 'pending'
-      };
-
-      await createOrder.mutateAsync({
-        order: orderData,
-        items: orderItems
-      });
-
-      // Préparer les détails de la commande WhatsApp
-      const details = {
-        customerName: formData.customerName,
-        customerPhone: formData.customerPhone,
-        customerAddress: formData.customerAddress,
-        total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
-        orderType: 'whatsapp' as const
-      };
-
-      setOrderDetails(details);
-      setShowConfirmation(true);
-
-      // Réinitialiser le formulaire
-      form.reset();
-
-      if (onOrderComplete) {
-        onOrderComplete();
-      }
-
-      toast({
-        title: "Commande WhatsApp créée",
-        description: "Votre commande a été enregistrée et sera envoyée via WhatsApp !",
-      });
-
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la création de la commande WhatsApp.",
-        variant: "destructive",
-      });
-    }
+    clearCart();
+    form.reset();
   };
 
   return {
-    form,
-    isSubmitting,
-    showConfirmation,
-    orderDetails,
-    setShowConfirmation,
-    handleSubmit,
-    handleWhatsAppOrder
+    register: form.register,
+    handleSubmit: form.handleSubmit,
+    errors: form.formState.errors,
+    isSubmitting: form.formState.isSubmitting,
+    onSubmit,
+    onWhatsAppSubmit,
   };
 };
