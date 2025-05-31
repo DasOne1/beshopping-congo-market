@@ -42,22 +42,25 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const timeoutId = setTimeout(() => {
       try {
         localStorage.setItem('cart', JSON.stringify(cart));
+        console.log('Panier sauvegardé dans localStorage:', cart.length, 'articles');
       } catch (error) {
         console.error('Erreur lors de la sauvegarde du panier:', error);
       }
-    }, 100); // Debounce pour éviter trop d'écritures
+    }, 300); // Debounce pour éviter trop d'écritures
 
     return () => clearTimeout(timeoutId);
   }, [cart]);
   
   // Add item to cart or update quantity if already exists
   const addToCart = (productId: string, quantity: number, selectedVariants?: Record<string, string>) => {
+    console.log('Ajout au panier:', { productId, quantity, selectedVariants });
+    
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.productId === productId);
       
       if (existingItem) {
         // Update existing item
-        return prevCart.map(item => 
+        const updatedCart = prevCart.map(item => 
           item.productId === productId 
             ? { ...item, 
                 quantity: item.quantity + quantity,
@@ -65,20 +68,27 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
               } 
             : item
         );
+        console.log('Article mis à jour dans le panier');
+        return updatedCart;
       } else {
         // Add new item
-        return [...prevCart, { productId, quantity, selectedVariants }];
+        const newCart = [...prevCart, { productId, quantity, selectedVariants }];
+        console.log('Nouvel article ajouté au panier');
+        return newCart;
       }
     });
   };
   
   // Remove item from cart
   const removeFromCart = (productId: string) => {
+    console.log('Suppression du panier:', productId);
     setCart(prevCart => prevCart.filter(item => item.productId !== productId));
   };
   
   // Update quantity of item in cart
   const updateQuantity = (productId: string, quantity: number) => {
+    console.log('Mise à jour quantité:', { productId, quantity });
+    
     if (quantity <= 0) {
       removeFromCart(productId);
       return;
@@ -95,6 +105,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   
   // Update variant selections for an item
   const updateVariant = (productId: string, selectedVariants: Record<string, string>) => {
+    console.log('Mise à jour variantes:', { productId, selectedVariants });
+    
     setCart(prevCart =>
       prevCart.map(item =>
         item.productId === productId
@@ -106,6 +118,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   
   // Clear the entire cart
   const clearCart = () => {
+    console.log('Panier vidé');
     setCart([]);
   };
   
