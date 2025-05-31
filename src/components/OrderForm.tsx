@@ -25,8 +25,15 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
     handleWhatsAppOrder
   } = useOrderForm({ onOrderComplete, cartProducts, subtotal, formatPrice });
 
-  // Obtenir les valeurs du formulaire de manière sécurisée
+  // Observer les valeurs du formulaire pour la validation en temps réel
   const formValues = form.watch();
+  
+  // Vérifier si le formulaire est valide
+  const isFormValid = 
+    formValues.customerName && formValues.customerName.length >= 2 &&
+    formValues.customerPhone && formValues.customerPhone.length >= 8 &&
+    formValues.customerAddress && formValues.customerAddress.length >= 10;
+
   const whatsappMessage = generateWhatsAppMessage(
     {
       customerName: formValues.customerName || '',
@@ -48,6 +55,7 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
           <OrderFormFields form={form} onSubmit={handleSubmit}>
             <OrderFormButtons
               isSubmitting={isSubmitting}
+              isFormValid={isFormValid}
               whatsappMessage={whatsappMessage}
               onWhatsAppOrder={handleWhatsAppOrder}
             />

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useOrders } from '@/hooks/useOrders';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 const orderFormSchema = z.object({
   customerName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),

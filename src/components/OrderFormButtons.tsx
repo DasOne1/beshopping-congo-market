@@ -6,12 +6,14 @@ import WhatsAppContact from '@/components/WhatsAppContact';
 
 interface OrderFormButtonsProps {
   isSubmitting: boolean;
+  isFormValid: boolean;
   whatsappMessage: string;
   onWhatsAppOrder: () => void;
 }
 
 const OrderFormButtons: React.FC<OrderFormButtonsProps> = ({
   isSubmitting,
+  isFormValid,
   whatsappMessage,
   onWhatsAppOrder
 }) => {
@@ -19,9 +21,9 @@ const OrderFormButtons: React.FC<OrderFormButtonsProps> = ({
     <div className="flex flex-col space-y-4">
       <Button 
         type="submit" 
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed" 
         size="lg"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !isFormValid}
       >
         {isSubmitting ? (
           <>
@@ -38,14 +40,16 @@ const OrderFormButtons: React.FC<OrderFormButtonsProps> = ({
 
       <div className="text-center text-sm text-gray-500">ou</div>
 
-      <WhatsAppContact
-        phoneNumber="243978100940"
-        message={whatsappMessage}
-        className="w-full bg-whatsapp hover:bg-whatsapp-dark text-white"
+      <Button
+        type="button"
+        onClick={onWhatsAppOrder}
+        disabled={!isFormValid}
+        className="w-full bg-whatsapp hover:bg-whatsapp-dark text-white disabled:opacity-50 disabled:cursor-not-allowed"
         size="lg"
-        children="Commander via WhatsApp"
-        onCustomClick={onWhatsAppOrder}
-      />
+      >
+        <span className="mr-2">📱</span>
+        Commander via WhatsApp
+      </Button>
     </div>
   );
 };
