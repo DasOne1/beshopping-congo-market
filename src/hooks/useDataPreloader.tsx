@@ -12,17 +12,9 @@ export const useDataPreloader = () => {
         // Précharger uniquement les données les plus critiques avec des requêtes très limitées
         const promises = [
           // Seulement 3 catégories principales
-          supabase
-            .from('categories')
-            .select('id, name, slug')
-            .limit(3),
+          supabase.from('categories').select('id, name, slug').limit(3),
           // Seulement 2 produits vedettes pour l'aperçu
-          supabase
-            .from('products')
-            .select('id, name, images, original_price, featured, status')
-            .eq('featured', true)
-            .eq('status', 'active')
-            .limit(2),
+          supabase.from('products').select('id, name, images, original_price, featured, status').eq('featured', true).eq('status', 'active').limit(2),
         ];
 
         const results = await Promise.allSettled(promises);

@@ -28,7 +28,7 @@ const OrderForm = ({ cartProducts, subtotal, formatPrice }: {
   };
 
   const handleWhatsAppSubmit = () => {
-    const formData = form.getValues() as FormData;
+    const formData = form.getValues();
     onWhatsAppSubmit(formData);
   };
 
