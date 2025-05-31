@@ -1,124 +1,184 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
-// Define cart item structure
-export interface CartItem {
+interface CartItem {
   productId: string;
   quantity: number;
-  selectedVariants?: Record<string, string>;
 }
 
-// Define cart context shape
 interface CartContextType {
   cart: CartItem[];
-  cartItems: CartItem[]; // Add this line to fix the error
-  addToCart: (productId: string, quantity: number, selectedVariants?: Record<string, string>) => void;
+  addToCart: (productId: string, quantity: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  updateVariant: (productId: string, selectedVariants: Record<string, string>) => void;
   isInCart: (productId: string) => boolean;
-  getTotalQuantity: () => number;
+  getCartTotal: () => number;
 }
 
-// Create the context
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Provider component
-export const CartProvider = ({ children }: { children: ReactNode }) => {
-  // Initialize cart state from localStorage if available
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
-  
-  // Save cart to localStorage whenever it changes
+// Cache local pour le panier avec persistance optimisée
+const CART_STORAGE_KEY = 'beshopping-cart';
+const CART_CACHE_KEY = 'cart-cache';
+
+let cartCache: CartItem[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+const getCartFromCache = (): CartItem[] | null => {
+  if (cartCache && Date.now() - cacheTimestamp < CACHE_DURATION) {
+    return cartCache;
+  }
+  return null;
+};
+
+const setCartCache = (cart: CartItem[]) => {
+  cartCache = cart;
+  cacheTimestamp = Date.now();
+};
+
+const loadCartFromStorage = (): CartItem[] => {
+  try {
+    // Vérifier le cache en mémoire d'abord
+    const cached = getCartFromCache();
+    if (cached) {
+      return cached;
+    }
+
+    // Charger depuis localStorage seulement si nécessaire
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    if (stored) {
+      const cart = JSON.parse(stored);
+      setCartCache(cart);
+      return cart;
+    }
+    return [];
+  } catch (error) {
+    console.error('Erreur lors du chargement du panier:', error);
+    return [];
+  }
+};
+
+const saveCartToStorage = (cart: CartItem[]) => {
+  try {
+    // Mettre à jour le cache en mémoire
+    setCartCache(cart);
+    
+    // Sauvegarder en localStorage de manière asynchrone
+    setTimeout(() => {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    }, 0);
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde du panier:', error);
+  }
+};
+
+export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const { toast } = useToast();
+
+  // Chargement initial optimisé
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
-  
-  // Add item to cart or update quantity if already exists
-  const addToCart = (productId: string, quantity: number, selectedVariants?: Record<string, string>) => {
+    const initialCart = loadCartFromStorage();
+    setCart(initialCart);
+    setIsInitialized(true);
+  }, []);
+
+  // Sauvegarde optimisée avec debouncing
+  useEffect(() => {
+    if (isInitialized) {
+      saveCartToStorage(cart);
+    }
+  }, [cart, isInitialized]);
+
+  const addToCart = (productId: string, quantity: number) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.productId === productId);
       
       if (existingItem) {
-        // Update existing item
-        return prevCart.map(item => 
-          item.productId === productId 
-            ? { ...item, 
-                quantity: item.quantity + quantity,
-                selectedVariants: selectedVariants || item.selectedVariants 
-              } 
-            : item
-        );
-      } else {
-        // Add new item
-        return [...prevCart, { productId, quantity, selectedVariants }];
+        toast({
+          title: "Produit déjà dans le panier",
+          description: "Ce produit est déjà dans votre panier.",
+        });
+        return prevCart;
       }
+
+      const newCart = [...prevCart, { productId, quantity }];
+      
+      toast({
+        title: "Produit ajouté",
+        description: "Le produit a été ajouté à votre panier.",
+      });
+      
+      return newCart;
     });
   };
-  
-  // Remove item from cart
+
   const removeFromCart = (productId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.productId !== productId));
+    setCart(prevCart => {
+      const newCart = prevCart.filter(item => item.productId !== productId);
+      
+      toast({
+        title: "Produit retiré",
+        description: "Le produit a été retiré de votre panier.",
+      });
+      
+      return newCart;
+    });
   };
-  
-  // Update quantity of item in cart
+
   const updateQuantity = (productId: string, quantity: number) => {
-    setCart(prevCart => 
-      prevCart.map(item => 
-        item.productId === productId 
-          ? { ...item, quantity } 
-          : item
-      )
-    );
-  };
-  
-  // Update variant selections for an item
-  const updateVariant = (productId: string, selectedVariants: Record<string, string>) => {
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+
     setCart(prevCart =>
       prevCart.map(item =>
         item.productId === productId
-          ? { ...item, selectedVariants }
+          ? { ...item, quantity }
           : item
       )
     );
   };
-  
-  // Clear the entire cart
+
   const clearCart = () => {
     setCart([]);
+    
+    toast({
+      title: "Panier vidé",
+      description: "Votre panier a été vidé.",
+    });
   };
-  
-  // Check if product is in cart
-  const isInCart = (productId: string) => {
+
+  const isInCart = (productId: string): boolean => {
     return cart.some(item => item.productId === productId);
   };
-  
-  // Get total quantity of items in cart
-  const getTotalQuantity = () => {
+
+  const getCartTotal = (): number => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
-  
+
   return (
-    <CartContext.Provider value={{ 
-      cart, 
-      cartItems: cart, // Add this line to fix the error
-      addToCart, 
-      removeFromCart, 
-      updateQuantity, 
-      clearCart,
-      updateVariant,
-      isInCart,
-      getTotalQuantity
-    }}>
+    <CartContext.Provider
+      value={{
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        isInCart,
+        getCartTotal,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
 };
 
-// Custom hook to use the cart context
 export const useCart = () => {
   const context = useContext(CartContext);
   if (context === undefined) {

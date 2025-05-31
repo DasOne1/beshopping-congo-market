@@ -23,9 +23,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (product.status === 'active') {
-      addToCart(product.id, 1);
-    }
+    addToCart(product.id, 1);
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
@@ -141,12 +139,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
             
             <Button 
               onClick={handleAddToCart}
-              disabled={isInCart(product.id) || isOutOfStock}
+              disabled={isInCart(product.id)}
               className="w-full h-8 text-xs"
               variant={isOutOfStock ? "secondary" : "default"}
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
-              {isOutOfStock ? 'Indisponible' : isInCart(product.id) ? 'Dans le panier' : 'Ajouter'}
+              {isInCart(product.id) ? 'Dans le panier' : 'Ajouter'}
             </Button>
           </div>
         </CardContent>

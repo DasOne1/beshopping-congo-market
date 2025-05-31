@@ -2,6 +2,25 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+// Cache global en mémoire pour éviter les requêtes redondantes
+const memoryCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+
+const getCachedData = (key: string): any | null => {
+  const cached = memoryCache.get(key);
+  if (cached && Date.now() - cached.timestamp < cached.ttl) {
+    return cached.data;
+  }
+  return null;
+};
+
+const setCachedData = (key: string, data: any, ttl: number = 300000) => { // 5 minutes par défaut
+  memoryCache.set(key, {
+    data,
+    timestamp: Date.now(),
+    ttl
+  });
+};
+
 export const useDataPreloader = () => {
   const { data: isLoaded, isLoading, error } = useQuery({
     queryKey: ['preload-data'],
@@ -9,20 +28,52 @@ export const useDataPreloader = () => {
       try {
         console.log('Début du préchargement des données essentielles...');
         
-        // Précharger seulement les données essentielles
+        // Vérifier le cache mémoire d'abord
+        const cachedData = getCachedData('preload-data');
+        if (cachedData) {
+          console.log('Données préchargées trouvées en cache');
+          return cachedData;
+        }
+
+        // Précharger seulement les données essentielles avec optimisation
         const promises = [
-          supabase.from('categories').select('id, name, slug').limit(10),
-          supabase.from('products').select('id, name, images, original_price, featured').eq('featured', true).limit(6),
-          supabase.from('settings').select('*').limit(5)
+          // Catégories essentielles avec limitation stricte
+          supabase
+            .from('categories')
+            .select('id, name, slug')
+            .eq('status', 'active')
+            .limit(5),
+          
+          // Produits vedettes uniquement
+          supabase
+            .from('products')
+            .select('id, name, images, original_price, discounted_price, featured, status')
+            .eq('featured', true)
+            .eq('status', 'active')
+            .limit(4),
+          
+          // Paramètres de base uniquement
+          supabase
+            .from('settings')
+            .select('key, value')
+            .in('key', ['site_name', 'currency', 'contact_phone'])
         ];
 
         const results = await Promise.allSettled(promises);
         
         let successCount = 0;
+        const preloadedData = {
+          categories: [],
+          products: [],
+          settings: []
+        };
+
         results.forEach((result, index) => {
           if (result.status === 'fulfilled') {
             successCount++;
-            console.log(`Données ${['catégories', 'produits', 'paramètres'][index]} préchargées avec succès`);
+            const dataKeys = ['categories', 'products', 'settings'];
+            preloadedData[dataKeys[index] as keyof typeof preloadedData] = result.value.data || [];
+            console.log(`Données ${dataKeys[index]} préchargées avec succès`);
           } else {
             console.warn(`Erreur lors du préchargement ${['catégories', 'produits', 'paramètres'][index]}:`, result.reason);
           }
@@ -30,20 +81,23 @@ export const useDataPreloader = () => {
 
         console.log(`Préchargement terminé: ${successCount}/3 sources de données chargées`);
         
-        // Retourner true même si certaines données n'ont pas pu être chargées
-        // L'application peut fonctionner avec des données partielles
-        return true;
+        // Mettre en cache les données préchargées pour 10 minutes
+        setCachedData('preload-data', preloadedData, 600000);
+        
+        // Retourner les données préchargées même partielles
+        return preloadedData;
       } catch (error) {
         console.error('Erreur lors du préchargement:', error);
         // Ne pas bloquer l'application en cas d'erreur réseau
-        return true;
+        return { categories: [], products: [], settings: [] };
       }
     },
     retry: 1,
-    retryDelay: 1000,
+    retryDelay: 500, // Réduction du délai de retry
     staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes (augmenté pour garder en cache plus longtemps)
     refetchOnWindowFocus: false,
-    // Permettre à l'application de démarrer même si le préchargement échoue
+    refetchOnMount: false, // Ne pas refetch automatiquement au montage
     throwOnError: false,
   });
 
@@ -51,5 +105,6 @@ export const useDataPreloader = () => {
     isLoaded: !!isLoaded,
     isLoading,
     error,
+    preloadedData: isLoaded || { categories: [], products: [], settings: [] },
   };
 };

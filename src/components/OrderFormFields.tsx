@@ -78,3 +78,4 @@ const OrderFormFields: React.FC<OrderFormFieldsProps> = ({ form, onSubmit, child
 };
 
 export default OrderFormFields;
+export type { OrderFormData };

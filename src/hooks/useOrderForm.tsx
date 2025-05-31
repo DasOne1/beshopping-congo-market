@@ -6,14 +6,13 @@ import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { useOrders } from '@/hooks/useOrders';
 import { useCustomers } from '@/hooks/useCustomers';
+import { OrderFormData } from '@/components/OrderFormFields';
 
 const orderFormSchema = z.object({
   customerName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   customerPhone: z.string().min(8, 'Le numéro de téléphone doit contenir au moins 8 chiffres').regex(/^[+]?[\d\s-()]+$/, 'Format de téléphone invalide'),
   customerAddress: z.string().min(10, 'L\'adresse doit contenir au moins 10 caractères'),
 });
-
-type OrderFormData = z.infer<typeof orderFormSchema>;
 
 interface UseOrderFormProps {
   onOrderComplete?: () => void;
@@ -62,7 +61,23 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     return { newCustomer, orderItems };
   };
 
+  const validateFormBeforeAction = async (): Promise<boolean> => {
+    const isValid = await form.trigger();
+    if (!isValid) {
+      toast({
+        title: "Formulaire incomplet",
+        description: "Veuillez remplir tous les champs obligatoires avant de continuer.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (data: OrderFormData) => {
+    const isValid = await validateFormBeforeAction();
+    if (!isValid) return;
+
     setIsSubmitting(true);
 
     try {
@@ -121,15 +136,8 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
   };
 
   const handleWhatsAppOrder = async () => {
-    const isValid = await form.trigger();
-    if (!isValid) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez corriger les erreurs dans le formulaire avant de commander via WhatsApp.",
-        variant: "destructive",
-      });
-      return;
-    }
+    const isValid = await validateFormBeforeAction();
+    if (!isValid) return;
 
     const formData = form.getValues();
 
