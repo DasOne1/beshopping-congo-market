@@ -60,34 +60,38 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     return true;
   };
 
+  const createOrderInDB = async (customerData: OrderFormData) => {
+    const orderData = {
+      customer_name: customerData.customerName,
+      customer_phone: customerData.customerPhone,
+      shipping_address: { address: customerData.customerAddress },
+      total_amount: subtotal || 0,
+      subtotal: subtotal || 0,
+      status: 'pending' as const,
+    };
+
+    const orderItems = cartProducts?.map(item => ({
+      product_id: item.productId || item.id,
+      product_name: item.product?.name || item.name || 'Produit',
+      product_image: item.product?.images?.[0] || item.images?.[0] || '',
+      quantity: item.quantity,
+      unit_price: item.product?.discounted_price || item.product?.original_price || item.discounted_price || item.original_price || 0,
+      total_price: (item.product?.discounted_price || item.product?.original_price || item.discounted_price || item.original_price || 0) * item.quantity,
+    })) || [];
+
+    await createOrder.mutateAsync({ order: orderData, items: orderItems });
+    return { ...orderData, items: orderItems };
+  };
+
   const handleSubmit = async (data: OrderFormData) => {
+    // Validation stricte pour la commande classique
     if (!validateFormBeforeAction()) return;
     
     setIsSubmitting(true);
     
     try {
-      // Créer la commande
-      const orderData = {
-        customer_name: data.customerName,
-        customer_phone: data.customerPhone,
-        shipping_address: { address: data.customerAddress },
-        total_amount: subtotal || 0,
-        subtotal: subtotal || 0,
-        status: 'pending' as const,
-      };
-
-      const orderItems = cartProducts?.map(item => ({
-        product_id: item.id,
-        product_name: item.name,
-        product_image: item.images?.[0] || '',
-        quantity: item.quantity,
-        unit_price: item.discounted_price || item.original_price,
-        total_price: (item.discounted_price || item.original_price) * item.quantity,
-      })) || [];
-
-      await createOrder.mutateAsync({ order: orderData, items: orderItems });
-      
-      setOrderDetails({ ...orderData, items: orderItems });
+      const orderDetails = await createOrderInDB(data);
+      setOrderDetails(orderDetails);
       setShowConfirmation(true);
       
       if (onOrderComplete) {
@@ -105,22 +109,36 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     }
   };
 
-  const handleWhatsAppOrder = () => {
-    // Validation complète du formulaire AVANT toute action
-    if (!validateFormBeforeAction()) {
-      // Si le formulaire n'est pas valide, on s'arrête ici
-      // L'utilisateur reste sur la même page
-      return;
-    }
-    
-    // Le formulaire est valide, on peut procéder à la redirection
-    const data = form.getValues();
-    const message = generateWhatsAppMessage(data, cartProducts, subtotal, formatPrice);
-    const whatsappUrl = `https://wa.me/243978100940?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-    
-    if (onOrderComplete) {
-      onOrderComplete();
+  const handleWhatsAppOrder = async () => {
+    try {
+      // Créer la commande avec des données par défaut ou celles remplies
+      const formValues = form.getValues();
+      const defaultData: OrderFormData = {
+        customerName: formValues.customerName || 'Anonyme',
+        customerPhone: formValues.customerPhone || 'Non spécifié',
+        customerAddress: formValues.customerAddress || 'Non spécifiée',
+      };
+
+      // Créer la commande en base avec les données par défaut
+      await createOrderInDB(defaultData);
+
+      // Générer le message WhatsApp
+      const message = generateWhatsAppMessage(defaultData, cartProducts, subtotal, formatPrice);
+      const whatsappUrl = `https://wa.me/243978100940?text=${encodeURIComponent(message)}`;
+      
+      // Rediriger vers WhatsApp
+      window.open(whatsappUrl, '_blank');
+      
+      if (onOrderComplete) {
+        onOrderComplete();
+      }
+    } catch (error) {
+      console.error('Erreur lors de la création de la commande WhatsApp:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création de la commande.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -151,9 +169,10 @@ const generateWhatsAppMessage = (
   message += `🛍️ *Produits commandés:*\n`;
   
   cartProducts.forEach((item, index) => {
-    const price = item.discounted_price || item.original_price;
+    const product = item.product || item;
+    const price = product.discounted_price || product.original_price;
     const total = price * item.quantity;
-    message += `${index + 1}. ${item.name}\n`;
+    message += `${index + 1}. ${product.name}\n`;
     message += `   • Quantité: ${item.quantity}\n`;
     message += `   • Prix unitaire: ${formatPriceLocal(price)}\n`;
     message += `   • Total: ${formatPriceLocal(total)}\n\n`;

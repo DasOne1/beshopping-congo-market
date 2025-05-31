@@ -4,7 +4,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 
-interface OrderFormData {
+export interface OrderFormData {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
@@ -78,4 +78,3 @@ const OrderFormFields: React.FC<OrderFormFieldsProps> = ({ form, onSubmit, child
 };
 
 export default OrderFormFields;
-export type { OrderFormData };

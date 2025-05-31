@@ -2,7 +2,7 @@
 import React from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import WhatsAppContact from '@/components/WhatsAppContact';
+import { WhatsAppIcon } from '@/components/WhatsAppIcon';
 
 interface OrderFormButtonsProps {
   isSubmitting: boolean;
@@ -43,11 +43,10 @@ const OrderFormButtons: React.FC<OrderFormButtonsProps> = ({
       <Button
         type="button"
         onClick={onWhatsAppOrder}
-        disabled={!isFormValid}
-        className="w-full bg-whatsapp hover:bg-whatsapp-dark text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-green-600 hover:bg-green-700 text-white"
         size="lg"
       >
-        <span className="mr-2">📱</span>
+        <WhatsAppIcon className="mr-2 h-4 w-4" />
         Commander via WhatsApp
       </Button>
     </div>

@@ -28,7 +28,7 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
   // Observer les valeurs du formulaire pour la validation en temps réel
   const formValues = form.watch();
   
-  // Vérifier si le formulaire est valide
+  // Vérifier si le formulaire est valide pour la commande classique
   const isFormValid = 
     formValues.customerName && formValues.customerName.length >= 2 &&
     formValues.customerPhone && formValues.customerPhone.length >= 8 &&
@@ -36,9 +36,9 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
 
   const whatsappMessage = generateWhatsAppMessage(
     {
-      customerName: formValues.customerName || '',
-      customerPhone: formValues.customerPhone || '',
-      customerAddress: formValues.customerAddress || ''
+      customerName: formValues.customerName || 'Anonyme',
+      customerPhone: formValues.customerPhone || 'Non spécifié',
+      customerAddress: formValues.customerAddress || 'Non spécifiée'
     },
     cartProducts,
     subtotal,
