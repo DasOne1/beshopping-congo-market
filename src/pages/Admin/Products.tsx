@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Plus, Edit, Trash2, Search, Package, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -89,7 +90,7 @@ const Products = () => {
             </p>
           </div>
           <Button 
-            onClick={() => navigate('/admin/products/new')}
+            onClick={() => navigate('/dasgabriel@adminaccess/products/new')}
             className="shrink-0"
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -267,7 +268,7 @@ const Products = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                            onClick={() => navigate(`/dasgabriel@adminaccess/products/edit/${product.id}`)}
                             className="h-8 w-8 p-0"
                           >
                             <Edit className="h-4 w-4" />
@@ -298,7 +299,7 @@ const Products = () => {
                       : "Essayez de modifier vos filtres de recherche"
                     }
                   </p>
-                  <Button onClick={() => navigate('/admin/products/new')} variant="outline">
+                  <Button onClick={() => navigate('/dasgabriel@adminaccess/products/new')} variant="outline">
                     Créer un produit
                   </Button>
                 </div>
