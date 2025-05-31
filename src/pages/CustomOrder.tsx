@@ -57,7 +57,7 @@ const CustomOrder = () => {
 
     // Set order details for confirmation popup
     setOrderDetails({
-      customerName: user?.full_name || formData.contactInfo || 'Anonyme',
+      customerName: user?.user_metadata?.full_name || formData.contactInfo || 'Anonyme',
       productName: formData.name,
       description: formData.description,
       budget: formData.budget,
@@ -94,7 +94,7 @@ const CustomOrder = () => {
 
     // Set order details for confirmation popup
     setOrderDetails({
-      customerName: user?.full_name || formData.contactInfo || 'Client WhatsApp',
+      customerName: user?.user_metadata?.full_name || formData.contactInfo || 'Client WhatsApp',
       productName: formData.name,
       description: formData.description,
       budget: formData.budget,
@@ -107,7 +107,7 @@ const CustomOrder = () => {
   const generateWhatsAppMessage = () => {
     const message = `🛍️ *Commande Personnalisée - BeShopping Congo*
 
-👤 *Client:* ${user?.full_name || formData.contactInfo || 'Anonyme'}
+👤 *Client:* ${user?.user_metadata?.full_name || formData.contactInfo || 'Anonyme'}
 📱 *Contact:* ${formData.contactInfo || 'Non spécifié'}
 
 🎯 *Produit souhaité:* ${formData.name}
