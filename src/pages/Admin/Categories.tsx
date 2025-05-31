@@ -52,7 +52,7 @@ const Categories = () => {
             </p>
           </div>
           <Button 
-            onClick={() => navigate('/admin/categories/new')}
+            onClick={() => navigate('/dasgabriel@adminaccess/categories/new')}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -105,7 +105,7 @@ const Categories = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/admin/categories/edit/${category.id}`)}
+                            onClick={() => navigate(`/dasgabriel@adminaccess/categories/edit/${category.id}`)}
                           >
                             <Edit className="mr-2 h-4 w-4" />
                             Modifier
@@ -132,7 +132,7 @@ const Categories = () => {
                   <p className="text-lg font-medium mb-2">Aucune catégorie trouvée</p>
                   <p className="text-sm mb-4">Commencez par créer votre première catégorie</p>
                   <Button 
-                    onClick={() => navigate('/admin/categories/new')} 
+                    onClick={() => navigate('/dasgabriel@adminaccess/categories/new')} 
                     variant="outline"
                   >
                     Créer une catégorie
