@@ -4,15 +4,9 @@ import { UseFormReturn } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 
-export interface OrderFormData {
-  customerName: string;
-  customerPhone: string;
-  customerAddress: string;
-}
-
 interface OrderFormFieldsProps {
-  form: UseFormReturn<OrderFormData>;
-  onSubmit: (data: OrderFormData) => void;
+  form: UseFormReturn<any>;
+  onSubmit: (data: any) => void;
   children: React.ReactNode;
 }
 

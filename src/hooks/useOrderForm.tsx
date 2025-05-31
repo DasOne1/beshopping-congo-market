@@ -35,7 +35,7 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const { createOrder } = useOrders();
 
-  const form = useForm<OrderFormData>({
+  const form = useForm({
     resolver: zodResolver(orderFormSchema),
     defaultValues: {
       customerName: '',
@@ -99,7 +99,13 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     
     try {
       const orderDetails = await createOrderInDB(data);
-      setOrderDetails(orderDetails);
+      setOrderDetails({
+        customerName: data.customerName,
+        customerPhone: data.customerPhone,
+        customerAddress: data.customerAddress,
+        total: formatPrice ? formatPrice(subtotal || 0) : `${subtotal || 0}`,
+        orderType: 'form'
+      });
       setShowConfirmation(true);
       
       if (onOrderComplete) {
@@ -133,6 +139,16 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
       // Générer le message WhatsApp
       const message = generateWhatsAppMessage(defaultData, cartProducts, subtotal, formatPrice);
       const whatsappUrl = `https://wa.me/243978100940?text=${encodeURIComponent(message)}`;
+      
+      // Afficher le popup de confirmation
+      setOrderDetails({
+        customerName: defaultData.customerName,
+        customerPhone: defaultData.customerPhone,
+        customerAddress: defaultData.customerAddress,
+        total: formatPrice ? formatPrice(subtotal || 0) : `${subtotal || 0}`,
+        orderType: 'whatsapp'
+      });
+      setShowConfirmation(true);
       
       // Rediriger vers WhatsApp
       window.open(whatsappUrl, '_blank');
