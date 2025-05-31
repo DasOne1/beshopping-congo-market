@@ -17,7 +17,7 @@ export interface ProductCardProps {
 }
 
 const ProductCard = ({ product, viewMode = 'grid' }: ProductCardProps) => {
-  const { addItem } = useCart();
+  const { addToCart } = useCart();
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites();
   const { t } = useTranslation();
 
@@ -33,31 +33,31 @@ const ProductCard = ({ product, viewMode = 'grid' }: ProductCardProps) => {
   };
 
   const handleAddToCart = () => {
-    addItem(product);
+    addToCart(product.id, 1);
   };
 
   const getOrderButtonText = () => {
-    if (!product.is_active) {
+    if (product.status !== 'active') {
       return t('product.customOrder');
     }
-    if (product.stock_quantity === 0) {
+    if (product.stock === 0) {
       return t('product.customOrder');
     }
     return t('product.addToCart');
   };
 
   const getStockStatus = () => {
-    if (!product.is_active) {
+    if (product.status !== 'active') {
       return t('product.inactive');
     }
-    if (product.stock_quantity === 0) {
+    if (product.stock === 0) {
       return t('product.outOfStock');
     }
     return t('product.inStock');
   };
 
   const getStockBadgeVariant = () => {
-    if (!product.is_active || product.stock_quantity === 0) {
+    if (product.status !== 'active' || product.stock === 0) {
       return 'destructive';
     }
     return 'secondary';

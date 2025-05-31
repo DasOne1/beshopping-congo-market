@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { generateWhatsAppMessage } from '@/utils/whatsappMessageGenerator';
 import { useTranslation } from 'react-i18next';
 
 const formSchema = z.object({
@@ -17,7 +16,7 @@ const formSchema = z.object({
 export type FormData = z.infer<typeof formSchema>;
 
 export const useOrderForm = () => {
-  const { items, clearCart } = useCart();
+  const { cartItems, clearCart } = useCart();
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -32,18 +31,15 @@ export const useOrderForm = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
+      // Calculate total from cart items
+      const total = cartItems.reduce((sum, item) => sum + (item.quantity * 100), 0); // Placeholder calculation
+
       const orderData = {
         customer_name: data.customerName,
         customer_phone: data.customerPhone,
-        customer_address: data.customerAddress,
-        items: items.map(item => ({
-          product_id: item.id,
-          product_name: item.name,
-          price: item.original_price,
-          quantity: item.quantity,
-          subtotal: item.original_price * item.quantity,
-        })),
-        total: items.reduce((sum, item) => sum + (item.original_price * item.quantity), 0),
+        shipping_address: { address: data.customerAddress },
+        subtotal: total,
+        total_amount: total,
         status: 'pending',
       };
 
@@ -80,7 +76,7 @@ export const useOrderForm = () => {
       return;
     }
 
-    const message = generateWhatsAppMessage(data, items);
+    const message = `Bonjour, je souhaite passer une commande.\n\nNom: ${data.customerName}\nTéléphone: ${data.customerPhone}\nAdresse: ${data.customerAddress}`;
     const phoneNumber = '+243970284772';
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     
@@ -96,9 +92,7 @@ export const useOrderForm = () => {
   };
 
   return {
-    register: form.register,
-    handleSubmit: form.handleSubmit,
-    errors: form.formState.errors,
+    form,
     isSubmitting: form.formState.isSubmitting,
     onSubmit,
     onWhatsAppSubmit,

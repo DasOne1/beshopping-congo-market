@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, ShoppingBag, ShoppingCart, Plus, Minus } from 'lucide-react';
@@ -243,11 +242,7 @@ const Cart = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <OrderForm 
-                  cartProducts={cartProducts}
-                  subtotal={subtotal}
-                  formatPrice={formatPrice}
-                />
+                <OrderForm />
                 
                 <div className="mt-4">
                   <WhatsAppContact

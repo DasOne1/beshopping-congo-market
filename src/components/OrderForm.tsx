@@ -2,8 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useOrderForm } from '@/hooks/useOrderForm';
-import { OrderFormFields } from '@/components/OrderFormFields';
-import { OrderFormButtons } from '@/components/OrderFormButtons';
+import OrderFormFields from '@/components/OrderFormFields';
+import OrderFormButtons from '@/components/OrderFormButtons';
 import { useCart } from '@/contexts/CartContext';
 import { useTranslation } from 'react-i18next';
 
@@ -13,14 +13,16 @@ interface FormData {
   customerAddress: string;
 }
 
-const OrderForm = () => {
-  const { items } = useCart();
+const OrderForm = ({ cartProducts, subtotal, formatPrice }: { 
+  cartProducts?: any[], 
+  subtotal?: number, 
+  formatPrice?: (price: number) => string 
+}) => {
+  const { cartItems } = useCart();
   const { t } = useTranslation();
   
   const {
-    register,
-    handleSubmit,
-    errors,
+    form,
     isSubmitting,
     onSubmit,
     onWhatsAppSubmit
@@ -34,9 +36,19 @@ const OrderForm = () => {
     onWhatsAppSubmit(data);
   };
 
+  // Use props if provided, otherwise fall back to cart context
+  const items = cartProducts || cartItems || [];
+
   if (items.length === 0) {
     return null;
   }
+
+  // Generate WhatsApp message
+  const whatsappMessage = cartProducts && subtotal && formatPrice 
+    ? `Bonjour, je souhaite passer une commande.\n\nProduits:\n${cartProducts.map(item => 
+        item.product ? `- ${item.product.name} x${item.quantity}` : ''
+      ).join('\n')}\n\nTotal: ${formatPrice(subtotal)} FC`
+    : 'Bonjour, je souhaite passer une commande.';
 
   return (
     <Card>
@@ -44,13 +56,16 @@ const OrderForm = () => {
         <CardTitle>{t('cart.deliveryInfo')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          <OrderFormFields register={register} errors={errors} />
+        <OrderFormFields 
+          form={form}
+          onSubmit={handleFormSubmit}
+        >
           <OrderFormButtons 
-            onWhatsAppSubmit={handleSubmit(handleWhatsAppSubmit)}
             isSubmitting={isSubmitting}
+            whatsappMessage={whatsappMessage}
+            onWhatsAppOrder={handleWhatsAppSubmit}
           />
-        </form>
+        </OrderFormFields>
       </CardContent>
     </Card>
   );

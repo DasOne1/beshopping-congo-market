@@ -3,15 +3,23 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { OrderFormData } from '@/hooks/useOrderForm';
+import { useTranslation } from 'react-i18next';
+
+interface FormData {
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+}
 
 interface OrderFormFieldsProps {
-  form: UseFormReturn<OrderFormData>;
-  onSubmit: (data: OrderFormData) => void;
+  form: UseFormReturn<FormData>;
+  onSubmit: (data: FormData) => void;
   children: React.ReactNode;
 }
 
 const OrderFormFields: React.FC<OrderFormFieldsProps> = ({ form, onSubmit, children }) => {
+  const { t } = useTranslation();
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -20,10 +28,10 @@ const OrderFormFields: React.FC<OrderFormFieldsProps> = ({ form, onSubmit, child
           name="customerName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nom complet</FormLabel>
+              <FormLabel>{t('form.customerName')}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Votre nom complet"
+                  placeholder={t('form.customerName')}
                   {...field}
                 />
               </FormControl>
@@ -37,10 +45,10 @@ const OrderFormFields: React.FC<OrderFormFieldsProps> = ({ form, onSubmit, child
           name="customerPhone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Numéro de téléphone</FormLabel>
+              <FormLabel>{t('form.customerPhone')}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Votre numéro de téléphone"
+                  placeholder={t('form.customerPhone')}
                   {...field}
                 />
               </FormControl>
@@ -54,10 +62,10 @@ const OrderFormFields: React.FC<OrderFormFieldsProps> = ({ form, onSubmit, child
           name="customerAddress"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Adresse de livraison</FormLabel>
+              <FormLabel>{t('form.customerAddress')}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Votre adresse de livraison"
+                  placeholder={t('form.customerAddress')}
                   {...field}
                 />
               </FormControl>
