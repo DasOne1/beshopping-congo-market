@@ -91,7 +91,7 @@ const ProductForm = () => {
       } else {
         await createProduct.mutateAsync(submitData as Omit<Product, 'id' | 'created_at' | 'updated_at'>);
       }
-      navigate('/admin/catalog');
+      navigate('/dasgabriel@adminaccess/catalog');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
     }
@@ -104,7 +104,7 @@ const ProductForm = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/admin/catalog')}
+            onClick={() => navigate('/dasgabriel@adminaccess/catalog')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour
@@ -313,7 +313,7 @@ const ProductForm = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate('/admin/catalog')}
+              onClick={() => navigate('/dasgabriel@adminaccess/catalog')}
             >
               Annuler
             </Button>
