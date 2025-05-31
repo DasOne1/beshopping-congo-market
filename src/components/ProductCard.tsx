@@ -37,7 +37,7 @@ const ProductCard = ({ product, viewMode = 'grid' }: ProductCardProps) => {
     addToCart(product.id, 1);
     
     // Show different toast messages based on product status
-    if (product.status !== 'active' || product.stock === 0) {
+    if (product.status !== 'active' || (product.stock !== undefined && product.stock === 0)) {
       toast({
         title: t('product.customOrderAdded'),
         description: t('product.customOrderDescription'),
@@ -56,7 +56,7 @@ const ProductCard = ({ product, viewMode = 'grid' }: ProductCardProps) => {
     if (product.status !== 'active') {
       return t('product.customOrder');
     }
-    if (product.stock === 0) {
+    if (product.stock !== undefined && product.stock === 0) {
       return t('product.customOrder');
     }
     return t('product.addToCart');
@@ -66,14 +66,14 @@ const ProductCard = ({ product, viewMode = 'grid' }: ProductCardProps) => {
     if (product.status !== 'active') {
       return t('product.inactive');
     }
-    if (product.stock === 0) {
+    if (product.stock !== undefined && product.stock === 0) {
       return t('product.outOfStock');
     }
     return t('product.inStock');
   };
 
   const getStockBadgeVariant = () => {
-    if (product.status !== 'active' || product.stock === 0) {
+    if (product.status !== 'active' || (product.stock !== undefined && product.stock === 0)) {
       return 'destructive';
     }
     return 'secondary';
