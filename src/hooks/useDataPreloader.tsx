@@ -9,11 +9,11 @@ export const useDataPreloader = () => {
       try {
         console.log('Début du préchargement des données essentielles...');
         
-        // Précharger seulement les données les plus critiques avec des limites très réduites
+        // Précharger seulement les données essentielles
         const promises = [
-          supabase.from('categories').select('id, name, slug').limit(5),
-          supabase.from('products').select('id, name, images, original_price, featured').eq('featured', true).limit(3),
-          supabase.from('settings').select('*').limit(3)
+          supabase.from('categories').select('id, name, slug').limit(10),
+          supabase.from('products').select('id, name, images, original_price, featured').eq('featured', true).limit(6),
+          supabase.from('settings').select('*').limit(5)
         ];
 
         const results = await Promise.allSettled(promises);
@@ -40,7 +40,7 @@ export const useDataPreloader = () => {
       }
     },
     retry: 1,
-    retryDelay: 500, // Retry plus rapide
+    retryDelay: 1000,
     staleTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     // Permettre à l'application de démarrer même si le préchargement échoue

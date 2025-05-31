@@ -3,7 +3,12 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { OrderFormData } from '@/hooks/useOrderForm';
+
+interface OrderFormData {
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+}
 
 interface OrderFormFieldsProps {
   form: UseFormReturn<OrderFormData>;

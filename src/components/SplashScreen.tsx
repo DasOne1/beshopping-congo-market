@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '@/components/Logo';
@@ -29,22 +28,22 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     let progressInterval: NodeJS.Timeout;
 
     if (isLoading) {
-      // Animation de progression beaucoup plus rapide
+      // Animation de progression plus rapide
       progressInterval = setInterval(() => {
         setLoadingProgress(prev => {
-          const newProgress = prev + 40; // Augmentation très rapide
-          return newProgress <= 80 ? newProgress : 80; // Ne pas aller à 100% tant que les données ne sont pas chargées
+          const newProgress = prev + 25; // Augmentation plus rapide
+          return newProgress <= 75 ? newProgress : 75; // Ne pas aller à 100% tant que les données ne sont pas chargées
         });
-      }, 80); // Intervalle très court
+      }, 150); // Intervalle plus court
     } else if (isLoaded || error) {
       // Compléter immédiatement la progression
       setLoadingProgress(100);
       
-      // Temps d'attente très court avant de masquer le splash screen
+      // Réduire le temps d'attente avant de masquer le splash screen
       const timer = setTimeout(() => {
         setIsVisible(false);
-        setTimeout(onComplete, 200); // Animation de sortie plus rapide
-      }, 200); // Temps d'affichage très réduit
+        setTimeout(onComplete, 300); // Animation de sortie plus rapide
+      }, 400); // Temps d'affichage réduit
 
       return () => clearTimeout(timer);
     }
@@ -65,13 +64,13 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           }`}
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.3 }}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 1.05, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.3 }}
             className="flex flex-col items-center"
           >
             <motion.div
@@ -79,7 +78,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                 rotate: 360,
                 transition: { 
                   repeat: Infinity, 
-                  duration: 1, // Rotation plus rapide
+                  duration: 1.5, // Rotation plus rapide
                   ease: "linear"
                 }
               }}
@@ -98,7 +97,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
+              transition={{ delay: 0.2 }}
             >
               BeShopping Congo
             </motion.h1>
@@ -117,7 +116,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                 }`}
                 initial={{ width: 0 }}
                 animate={{ width: `${loadingProgress}%` }}
-                transition={{ duration: 0.1 }}
+                transition={{ duration: 0.2 }}
               />
             </div>
             
@@ -129,7 +128,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               }`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.1 }}
+              transition={{ duration: 0.2 }}
             >
               {isLoading ? 'Chargement...' : 
                error ? 'Prêt malgré l\'erreur' : 

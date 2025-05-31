@@ -1,211 +1,157 @@
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingCart, Star, AlertTriangle } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Heart, ShoppingCart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useFavorites } from '@/contexts/FavoritesContext';
 import { useCart } from '@/contexts/CartContext';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-
-interface Product {
-  id: string;
-  name: string;
-  original_price: number;
-  discounted_price?: number;
-  discount?: number;
-  images: string[];
-  stock: number;
-  status?: string;
-  tags?: string[];
-  featured?: boolean;
-}
+import { useFavorites } from '@/contexts/FavoritesContext';
+import { Product } from '@/types';
+import ProductImageCarousel from './ProductImageCarousel';
 
 interface ProductCardProps {
   product: Product;
-  className?: string;
+  viewMode?: 'grid' | 'list';
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
-  const { favorites, addToFavorites, removeFromFavorites } = useFavorites();
-  const { addToCart } = useCart();
-  const { toast } = useToast();
+const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' }) => {
+  const { addToCart, isInCart } = useCart();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
 
-  const isFavorite = favorites.some(fav => fav.id === product.id);
-  const isOutOfStock = product.stock <= 0;
-  const isInactive = product.status === 'inactive';
-  const isUnavailable = isOutOfStock || isInactive;
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-FR').format(price);
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (product.status === 'active') {
+      addToCart(product.id, 1);
+    }
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (isFavorite) {
+    if (isFavorite(product.id)) {
       removeFromFavorites(product.id);
-      toast({
-        title: "Retiré des favoris",
-        description: `${product.name} a été retiré de vos favoris`,
-      });
     } else {
-      addToFavorites(product);
-      toast({
-        title: "Ajouté aux favoris",
-        description: `${product.name} a été ajouté à vos favoris`,
-      });
+      addToFavorites(product.id);
     }
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (isUnavailable) {
-      // Pour les articles indisponibles, rediriger vers la commande personnalisée
-      toast({
-        title: isInactive ? "Article inactif" : "Article en rupture de stock",
-        description: isInactive 
-          ? "Cet article n'est plus disponible, mais vous pouvez faire une commande personnalisée."
-          : "Article en rupture de stock. Vous pouvez faire une commande personnalisée.",
-        action: (
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => window.location.href = '/custom-order'}
-          >
-            Commande personnalisée
-          </Button>
-        ),
-      });
-      return;
-    }
-
-    addToCart(product, 1);
-    toast({
-      title: "Ajouté au panier",
-      description: `${product.name} a été ajouté à votre panier`,
-    });
+  const formatPrice = (price: number): string => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
 
-  const currentPrice = product.discounted_price || product.original_price;
+  const discountPercentage = product.discounted_price 
+    ? Math.round(((product.original_price - product.discounted_price) / product.original_price) * 100)
+    : 0;
+
+  const cardClasses = viewMode === 'list' ? "w-full" : "w-full";
+  const isOutOfStock = product.status === 'inactive';
 
   return (
-    <Card className={cn("group overflow-hidden hover:shadow-lg transition-all duration-300", className)}>
-      <Link to={`/product/${product.id}`} className="block">
-        <div className="relative aspect-square overflow-hidden">
-          {/* Image du produit */}
-          <img
-            src={product.images?.[0] || '/placeholder.svg'}
-            alt={product.name}
-            className={cn(
-              "w-full h-full object-cover group-hover:scale-105 transition-transform duration-300",
-              isUnavailable && "opacity-60"
-            )}
-            loading="lazy"
-          />
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
+      className={cardClasses}
+    >
+      <Card className={`group relative overflow-hidden border border-border/40 hover:border-border/80 hover:shadow-lg transition-all duration-300 bg-card ${isOutOfStock ? 'opacity-75' : ''}`}>
+        <div className="relative">
+          <Link to={`/product/${product.id}`}>
+            <ProductImageCarousel
+              images={product.images || []}
+              productName={product.name}
+              className="w-full"
+            />
+          </Link>
           
-          {/* Badges */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {product.featured && (
-              <Badge className="bg-yellow-500 text-white">
-                <Star className="h-3 w-3 mr-1" />
-                Vedette
+          {/* Discount badge */}
+          {discountPercentage > 0 && !isOutOfStock && (
+            <Badge className="absolute top-2 left-2 bg-red-500 text-white z-10">
+              -{discountPercentage}%
+            </Badge>
+          )}
+          
+          {/* Out of stock overlay */}
+          {isOutOfStock && (
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
+              <Badge variant="secondary" className="bg-gray-600 text-white">
+                Hors stock
               </Badge>
-            )}
-            {product.discount && product.discount > 0 && (
-              <Badge variant="destructive">
-                -{product.discount}%
-              </Badge>
-            )}
-            {isInactive && (
-              <Badge variant="secondary" className="bg-gray-500 text-white">
-                <AlertTriangle className="h-3 w-3 mr-1" />
-                Inactif
-              </Badge>
-            )}
-            {isOutOfStock && !isInactive && (
-              <Badge variant="destructive">
-                <AlertTriangle className="h-3 w-3 mr-1" />
-                Rupture
-              </Badge>
-            )}
-          </div>
-
-          {/* Bouton favoris */}
+            </div>
+          )}
+          
+          {/* Favorite button */}
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 bg-white/80 hover:bg-white"
+            className="absolute top-2 right-2 bg-background/80 hover:bg-background z-10"
             onClick={handleToggleFavorite}
           >
             <Heart 
-              className={cn(
-                "h-4 w-4",
-                isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"
-              )} 
+              className={`h-4 w-4 ${isFavorite(product.id) ? 'fill-red-500 text-red-500' : ''}`} 
             />
           </Button>
         </div>
-
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-            {product.name}
-          </h3>
+        
+        <CardContent className="p-3">
+          <Link to={`/product/${product.id}`}>
+            <h3 className="font-medium text-sm line-clamp-2 mb-2 text-foreground hover:text-primary transition-colors">
+              {product.name}
+            </h3>
+          </Link>
           
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex flex-col">
-              <span className="text-lg font-bold text-primary">
-                {formatPrice(currentPrice)} FC
-              </span>
-              {product.discounted_price && (
-                <span className="text-sm text-muted-foreground line-through">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <Star 
+                  key={i} 
+                  className={`h-3 w-3 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                />
+              ))}
+              <span className="text-xs text-muted-foreground ml-1">(4.0)</span>
+            </div>
+            
+            {/* Status badge on the same line as rating */}
+            <Badge 
+              variant={isOutOfStock ? "secondary" : "default"}
+              className="text-xs"
+            >
+              {isOutOfStock ? 'Hors stock' : 'En stock'}
+            </Badge>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              {product.discounted_price && !isOutOfStock ? (
+                <>
+                  <span className="font-bold text-primary text-sm">
+                    {formatPrice(product.discounted_price)} FC
+                  </span>
+                  <span className="text-xs text-muted-foreground line-through">
+                    {formatPrice(product.original_price)} FC
+                  </span>
+                </>
+              ) : (
+                <span className="font-bold text-primary text-sm">
                   {formatPrice(product.original_price)} FC
                 </span>
               )}
             </div>
             
-            {!isUnavailable && (
-              <span className="text-xs text-green-600 font-medium">
-                En stock: {product.stock}
-              </span>
-            )}
+            <Button 
+              onClick={handleAddToCart}
+              disabled={isInCart(product.id) || isOutOfStock}
+              className="w-full h-8 text-xs"
+              variant={isOutOfStock ? "secondary" : "default"}
+            >
+              <ShoppingCart className="h-3 w-3 mr-1" />
+              {isOutOfStock ? 'Indisponible' : isInCart(product.id) ? 'Dans le panier' : 'Ajouter'}
+            </Button>
           </div>
-
-          <Button 
-            className={cn(
-              "w-full",
-              isUnavailable 
-                ? "bg-orange-500 hover:bg-orange-600 text-white" 
-                : "bg-primary hover:bg-primary/90"
-            )}
-            onClick={handleAddToCart}
-            size="sm"
-          >
-            {isInactive ? (
-              <>
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                Commande personnalisée
-              </>
-            ) : isOutOfStock ? (
-              <>
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                Commande personnalisée
-              </>
-            ) : (
-              <>
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                Ajouter au panier
-              </>
-            )}
-          </Button>
         </CardContent>
-      </Link>
-    </Card>
+      </Card>
+    </motion.div>
   );
 };
 
