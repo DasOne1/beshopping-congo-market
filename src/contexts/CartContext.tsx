@@ -15,6 +15,7 @@ interface CartContextType {
   clearCart: () => void;
   isInCart: (productId: string) => boolean;
   getCartTotal: () => number;
+  getTotalQuantity: () => number; // Ajout de cette fonction pour compatibilité
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -161,6 +162,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
+  // Fonction alias pour compatibilité
+  const getTotalQuantity = (): number => {
+    return getCartTotal();
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -171,6 +177,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         clearCart,
         isInCart,
         getCartTotal,
+        getTotalQuantity,
       }}
     >
       {children}

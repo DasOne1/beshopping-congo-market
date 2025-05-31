@@ -1,159 +1,91 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Product } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 
-// Cache local optimisé pour les produits
-const productsCache = new Map<string, { data: Product[]; timestamp: number; etag?: string }>();
+// Export du type Product
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  images: string[];
+  tags: string[];
+  original_price: number;
+  discounted_price?: number;
+  featured: boolean;
+  status: 'active' | 'inactive' | 'draft';
+  category_id?: string;
+  stock: number;
+  created_at: string;
+  updated_at: string;
+}
 
-const getCachedProducts = (key: string): Product[] | null => {
-  const cached = productsCache.get(key);
-  if (cached && Date.now() - cached.timestamp < 300000) { // 5 minutes
+// Cache en mémoire pour éviter les requêtes redondantes
+const memoryCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+
+const getCachedData = (key: string): any | null => {
+  const cached = memoryCache.get(key);
+  if (cached && Date.now() - cached.timestamp < cached.ttl) {
     return cached.data;
   }
   return null;
 };
 
-const setCachedProducts = (key: string, data: Product[], etag?: string) => {
-  productsCache.set(key, {
+const setCachedData = (key: string, data: any, ttl: number = 300000) => {
+  memoryCache.set(key, {
     data,
     timestamp: Date.now(),
-    etag
+    ttl
   });
 };
 
-export const useProducts = (filters?: {
-  category?: string;
-  featured?: boolean;
-  status?: string;
-  search?: string;
-}) => {
+export const useProducts = () => {
   const queryClient = useQueryClient();
-  const cacheKey = `products-${JSON.stringify(filters || {})}`;
 
   const { data: products = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['products', filters],
-    queryFn: async () => {
-      // Vérifier le cache local d'abord
-      const cachedProducts = getCachedProducts(cacheKey);
+    queryKey: ['products'],
+    queryFn: async (): Promise<Product[]> => {
+      // Vérifier le cache mémoire d'abord
+      const cachedProducts = getCachedData('products');
       if (cachedProducts) {
-        console.log('Produits trouvés en cache local');
+        console.log('Produits trouvés en cache');
         return cachedProducts;
       }
 
-      console.log('Chargement des produits depuis Supabase...');
+      console.log('Chargement des produits depuis la base de données...');
       
-      let query = supabase
+      const { data, error } = await supabase
         .from('products')
-        .select(`
-          id,
-          name,
-          description,
-          images,
-          tags,
-          original_price,
-          discounted_price,
-          category_id,
-          stock,
-          featured,
-          status,
-          created_at,
-          updated_at,
-          categories!inner(
-            id,
-            name,
-            slug
-          )
-        `);
-
-      // Application des filtres de manière optimisée
-      if (filters?.category) {
-        query = query.eq('categories.slug', filters.category);
-      }
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      if (filters?.featured) {
-        query = query.eq('featured', true);
-      }
-      
-      if (filters?.status) {
-        query = query.eq('status', filters.status);
-      } else {
-        // Par défaut, charger seulement les produits actifs pour améliorer les performances
-        query = query.eq('status', 'active');
-      }
-
-      if (filters?.search) {
-        query = query.ilike('name', `%${filters.search}%`);
-      }
-
-      // Limitation et tri optimisés
-      query = query
-        .order('featured', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(50); // Limiter le nombre de produits pour améliorer les performances
-
-      const { data, error } = await query;
-
       if (error) {
         console.error('Erreur lors du chargement des produits:', error);
         throw error;
       }
 
-      const formattedProducts: Product[] = (data || []).map(product => ({
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        images: product.images || [],
+      const formattedProducts = (data || []).map(product => ({
+        ...product,
         tags: product.tags || [],
-        original_price: product.original_price,
-        discounted_price: product.discounted_price,
-        category_id: product.category_id,
+        images: product.images || [],
+        description: product.description || '',
+        category_id: product.category_id || '',
         stock: product.stock || 0,
-        featured: product.featured || false,
-        status: product.status as 'active' | 'inactive',
-        created_at: product.created_at,
-        updated_at: product.updated_at,
-        category: product.categories ? {
-          id: product.categories.id,
-          name: product.categories.name,
-          slug: product.categories.slug
-        } : undefined
+        created_at: product.created_at || new Date().toISOString(),
+        updated_at: product.updated_at || new Date().toISOString()
       }));
 
-      // Mettre en cache les produits
-      setCachedProducts(cacheKey, formattedProducts);
+      // Mettre en cache pour 5 minutes
+      setCachedData('products', formattedProducts, 300000);
       
-      console.log(`${formattedProducts.length} produits chargés et mis en cache`);
       return formattedProducts;
     },
-    retry: 2,
-    retryDelay: 1000,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
-    refetchOnMount: false, // Éviter le refetch automatique
     throwOnError: false,
   });
 
-  // Produits vedettes
-  const featuredProducts = products.filter(p => p.featured && p.status === 'active');
-  
-  // Produits populaires (basé sur le stock disponible pour simuler la popularité)
-  const popularProducts = products
-    .filter(p => p.status === 'active' && p.stock > 0)
-    .sort((a, b) => b.stock - a.stock)
-    .slice(0, 8);
-
-  // Fonction pour forcer le rafraîchissement uniquement si nécessaire
-  const refreshProducts = async () => {
-    console.log('Rafraîchissement forcé des produits...');
-    // Vider le cache avant de refetch
-    productsCache.delete(cacheKey);
-    return refetch();
-  };
-
-  // Mutation pour créer un produit
   const createProduct = useMutation({
     mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
@@ -161,32 +93,33 @@ export const useProducts = (filters?: {
         .insert([product])
         .select()
         .single();
-
+      
       if (error) throw error;
       return data;
     },
     onSuccess: (newProduct) => {
       // Mise à jour optimiste du cache
       queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
-        return [newProduct, ...oldData];
+        const updatedProducts = [newProduct, ...oldData];
+        setCachedData('products', updatedProducts, 300000);
+        return updatedProducts;
       });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
       
       toast({
         title: "Produit créé",
-        description: "Le produit a été créé avec succès",
+        description: "Le produit a été créé avec succès.",
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      console.error('Erreur lors de la création du produit:', error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: "Impossible de créer le produit.",
         variant: "destructive",
       });
     },
   });
 
-  // Mutation pour mettre à jour un produit
   const updateProduct = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
       const { data, error } = await supabase
@@ -195,103 +128,118 @@ export const useProducts = (filters?: {
         .eq('id', id)
         .select()
         .single();
-
+      
       if (error) throw error;
       return data;
     },
     onSuccess: (updatedProduct) => {
       // Mise à jour optimiste du cache
       queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
-        return oldData.map(product => 
+        const updatedProducts = oldData.map(product => 
           product.id === updatedProduct.id ? updatedProduct : product
         );
+        setCachedData('products', updatedProducts, 300000);
+        return updatedProducts;
       });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
       
       toast({
         title: "Produit mis à jour",
-        description: "Le produit a été mis à jour avec succès",
+        description: "Le produit a été mis à jour avec succès.",
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      console.error('Erreur lors de la mise à jour du produit:', error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: "Impossible de mettre à jour le produit.",
         variant: "destructive",
       });
     },
   });
 
-  // Mutation pour supprimer un produit
   const deleteProduct = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
-
+      
       if (error) throw error;
       return id;
     },
     onSuccess: (deletedId) => {
       // Mise à jour optimiste du cache
       queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
-        return oldData.filter(product => product.id !== deletedId);
+        const updatedProducts = oldData.filter(product => product.id !== deletedId);
+        setCachedData('products', updatedProducts, 300000);
+        return updatedProducts;
       });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
       
       toast({
         title: "Produit supprimé",
-        description: "Le produit a été supprimé avec succès",
+        description: "Le produit a été supprimé avec succès.",
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      console.error('Erreur lors de la suppression du produit:', error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: "Impossible de supprimer le produit.",
         variant: "destructive",
       });
     },
   });
 
+  // Fonction pour forcer le rechargement
+  const forceRefresh = () => {
+    memoryCache.delete('products');
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+    refetch();
+  };
+
   return {
     products,
-    featuredProducts,
-    popularProducts,
     isLoading,
     error,
-    refreshProducts,
     createProduct,
     updateProduct,
     deleteProduct,
+    refetch: forceRefresh,
   };
 };
 
-// Hook spécialisé pour un seul produit avec cache optimisé
 export const useProduct = (id: string) => {
   return useQuery({
     queryKey: ['product', id],
-    queryFn: async () => {
+    queryFn: async (): Promise<Product | null> => {
+      if (!id) return null;
+      
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          categories(
-            id,
-            name,
-            slug
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .single();
-
-      if (error) throw error;
-      return data as Product;
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        throw error;
+      }
+      
+      return {
+        ...data,
+        tags: data.tags || [],
+        images: data.images || [],
+        description: data.description || '',
+        category_id: data.category_id || '',
+        stock: data.stock || 0,
+        created_at: data.created_at || new Date().toISOString(),
+        updated_at: data.updated_at || new Date().toISOString()
+      };
     },
     enabled: !!id,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
-    retry: 2,
-    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
