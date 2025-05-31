@@ -9,11 +9,13 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full overflow-x-hidden">
       <AdminHeader />
-      <main className="container mx-auto px-4 py-6 pb-24 md:pb-6 max-w-7xl">
-        <div className="animate-fade-in">
-          {children}
+      <main className="w-full px-4 py-6 pb-24 md:pb-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-fade-in">
+            {children}
+          </div>
         </div>
       </main>
       <MobileAdminNavBar />
