@@ -30,7 +30,7 @@ export const useRealtimeSync = () => {
           } else if (payload.eventType === 'UPDATE' && payload.new) {
             queryClient.setQueryData(['products'], (oldData: any[] = []) => {
               return oldData.map(product => 
-                product.id === payload.new.id ? payload.new : product
+                product.id === payload.new.id ? { ...product, ...payload.new } : product
               );
             });
           } else if (payload.eventType === 'DELETE' && payload.old) {
@@ -41,8 +41,7 @@ export const useRealtimeSync = () => {
           
           // Invalider toutes les requêtes liées aux produits pour synchronisation complète
           queryClient.invalidateQueries({ queryKey: ['products'] });
-          queryClient.invalidateQueries({ queryKey: ['products', 'featured'] });
-          queryClient.invalidateQueries({ queryKey: ['products', 'popular'] });
+          queryClient.invalidateQueries({ queryKey: ['preload-data'] });
         }
       )
       .subscribe();
@@ -68,7 +67,7 @@ export const useRealtimeSync = () => {
           } else if (payload.eventType === 'UPDATE' && payload.new) {
             queryClient.setQueryData(['categories'], (oldData: any[] = []) => {
               return oldData.map(category => 
-                category.id === payload.new.id ? payload.new : category
+                category.id === payload.new.id ? { ...category, ...payload.new } : category
               );
             });
           } else if (payload.eventType === 'DELETE' && payload.old) {
@@ -78,6 +77,7 @@ export const useRealtimeSync = () => {
           }
           
           queryClient.invalidateQueries({ queryKey: ['categories'] });
+          queryClient.invalidateQueries({ queryKey: ['preload-data'] });
         }
       )
       .subscribe();
@@ -103,7 +103,7 @@ export const useRealtimeSync = () => {
           } else if (payload.eventType === 'UPDATE' && payload.new) {
             queryClient.setQueryData(['orders'], (oldData: any[] = []) => {
               return oldData.map(order => 
-                order.id === payload.new.id ? payload.new : order
+                order.id === payload.new.id ? { ...order, ...payload.new } : order
               );
             });
           } else if (payload.eventType === 'DELETE' && payload.old) {

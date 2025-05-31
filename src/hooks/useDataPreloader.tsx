@@ -1,6 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Product } from '@/types';
 
 // Cache global en mémoire pour éviter les requêtes redondantes
 const memoryCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
@@ -21,10 +22,16 @@ const setCachedData = (key: string, data: any, ttl: number = 300000) => { // 5 m
   });
 };
 
+interface PreloadedData {
+  categories: any[];
+  products: Product[];
+  settings: any[];
+}
+
 export const useDataPreloader = () => {
   const { data: isLoaded, isLoading, error } = useQuery({
     queryKey: ['preload-data'],
-    queryFn: async () => {
+    queryFn: async (): Promise<PreloadedData> => {
       try {
         console.log('Début du préchargement des données essentielles...');
         
@@ -41,13 +48,12 @@ export const useDataPreloader = () => {
           supabase
             .from('categories')
             .select('id, name, slug')
-            .eq('status', 'active')
             .limit(5),
           
           // Produits vedettes uniquement
           supabase
             .from('products')
-            .select('id, name, images, original_price, discounted_price, featured, status')
+            .select('id, name, images, tags, original_price, discounted_price, featured, status')
             .eq('featured', true)
             .eq('status', 'active')
             .limit(4),
@@ -62,7 +68,7 @@ export const useDataPreloader = () => {
         const results = await Promise.allSettled(promises);
         
         let successCount = 0;
-        const preloadedData = {
+        const preloadedData: PreloadedData = {
           categories: [],
           products: [],
           settings: []
@@ -71,8 +77,24 @@ export const useDataPreloader = () => {
         results.forEach((result, index) => {
           if (result.status === 'fulfilled') {
             successCount++;
-            const dataKeys = ['categories', 'products', 'settings'];
-            preloadedData[dataKeys[index] as keyof typeof preloadedData] = result.value.data || [];
+            const dataKeys = ['categories', 'products', 'settings'] as const;
+            const key = dataKeys[index];
+            
+            if (key === 'products') {
+              // S'assurer que les produits ont tous les champs requis
+              const products = result.value.data?.map((product: any) => ({
+                ...product,
+                tags: product.tags || [],
+                description: product.description || '',
+                category_id: product.category_id || '',
+                stock: product.stock || 0,
+                created_at: product.created_at || new Date().toISOString(),
+                updated_at: product.updated_at || new Date().toISOString()
+              })) || [];
+              preloadedData[key] = products;
+            } else {
+              preloadedData[key] = result.value.data || [];
+            }
             console.log(`Données ${dataKeys[index]} préchargées avec succès`);
           } else {
             console.warn(`Erreur lors du préchargement ${['catégories', 'produits', 'paramètres'][index]}:`, result.reason);

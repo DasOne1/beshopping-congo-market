@@ -1,7 +1,8 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
+import { toast } from '@/components/ui/use-toast';
 
 // Cache local optimisé pour les produits
 const productsCache = new Map<string, { data: Product[]; timestamp: number; etag?: string }>();
@@ -28,6 +29,7 @@ export const useProducts = (filters?: {
   status?: string;
   search?: string;
 }) => {
+  const queryClient = useQueryClient();
   const cacheKey = `products-${JSON.stringify(filters || {})}`;
 
   const { data: products = [], isLoading, error, refetch } = useQuery({
@@ -49,6 +51,7 @@ export const useProducts = (filters?: {
           name,
           description,
           images,
+          tags,
           original_price,
           discounted_price,
           category_id,
@@ -102,6 +105,7 @@ export const useProducts = (filters?: {
         name: product.name,
         description: product.description,
         images: product.images || [],
+        tags: product.tags || [],
         original_price: product.original_price,
         discounted_price: product.discounted_price,
         category_id: product.category_id,
@@ -132,6 +136,15 @@ export const useProducts = (filters?: {
     throwOnError: false,
   });
 
+  // Produits vedettes
+  const featuredProducts = products.filter(p => p.featured && p.status === 'active');
+  
+  // Produits populaires (basé sur le stock disponible pour simuler la popularité)
+  const popularProducts = products
+    .filter(p => p.status === 'active' && p.stock > 0)
+    .sort((a, b) => b.stock - a.stock)
+    .slice(0, 8);
+
   // Fonction pour forcer le rafraîchissement uniquement si nécessaire
   const refreshProducts = async () => {
     console.log('Rafraîchissement forcé des produits...');
@@ -140,11 +153,117 @@ export const useProducts = (filters?: {
     return refetch();
   };
 
+  // Mutation pour créer un produit
+  const createProduct = useMutation({
+    mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('products')
+        .insert([product])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (newProduct) => {
+      // Mise à jour optimiste du cache
+      queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
+        return [newProduct, ...oldData];
+      });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      
+      toast({
+        title: "Produit créé",
+        description: "Le produit a été créé avec succès",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation pour mettre à jour un produit
+  const updateProduct = useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('products')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (updatedProduct) => {
+      // Mise à jour optimiste du cache
+      queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
+        return oldData.map(product => 
+          product.id === updatedProduct.id ? updatedProduct : product
+        );
+      });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      
+      toast({
+        title: "Produit mis à jour",
+        description: "Le produit a été mis à jour avec succès",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation pour supprimer un produit
+  const deleteProduct = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (deletedId) => {
+      // Mise à jour optimiste du cache
+      queryClient.setQueryData(['products'], (oldData: Product[] = []) => {
+        return oldData.filter(product => product.id !== deletedId);
+      });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      
+      toast({
+        title: "Produit supprimé",
+        description: "Le produit a été supprimé avec succès",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     products,
+    featuredProducts,
+    popularProducts,
     isLoading,
     error,
     refreshProducts,
+    createProduct,
+    updateProduct,
+    deleteProduct,
   };
 };
 

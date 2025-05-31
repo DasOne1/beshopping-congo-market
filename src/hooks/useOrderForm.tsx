@@ -3,16 +3,16 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useToast } from '@/hooks/use-toast';
 import { useOrders } from '@/hooks/useOrders';
-import { useCustomers } from '@/hooks/useCustomers';
-import { OrderFormData } from '@/components/OrderFormFields';
+import { toast } from '@/components/ui/use-toast';
 
 const orderFormSchema = z.object({
   customerName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
-  customerPhone: z.string().min(8, 'Le numéro de téléphone doit contenir au moins 8 chiffres').regex(/^[+]?[\d\s-()]+$/, 'Format de téléphone invalide'),
+  customerPhone: z.string().min(8, 'Le numéro de téléphone doit contenir au moins 8 chiffres'),
   customerAddress: z.string().min(10, 'L\'adresse doit contenir au moins 10 caractères'),
 });
+
+export type OrderFormData = z.infer<typeof orderFormSchema>;
 
 interface UseOrderFormProps {
   onOrderComplete?: () => void;
@@ -25,9 +25,7 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
-  const { toast } = useToast();
   const { createOrder } = useOrders();
-  const { createCustomer } = useCustomers();
 
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderFormSchema),
@@ -38,96 +36,68 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     },
   });
 
-  const createOrderData = async (data: OrderFormData) => {
-    // Créer le client d'abord
-    const customerData = {
-      name: data.customerName,
-      phone: data.customerPhone,
-      address: { street: data.customerAddress }
-    };
-
-    const newCustomer = await createCustomer.mutateAsync(customerData);
-
-    // Préparer les articles de la commande
-    const orderItems = cartProducts?.map(item => ({
-      product_id: item.product?.id,
-      product_name: item.product?.name || 'Produit inconnu',
-      product_image: item.product?.images?.[0],
-      quantity: item.quantity,
-      unit_price: item.product?.discounted_price || item.product?.original_price || 0,
-      total_price: (item.product?.discounted_price || item.product?.original_price || 0) * item.quantity
-    })) || [];
-
-    return { newCustomer, orderItems };
-  };
-
-  const validateFormBeforeAction = async (): Promise<boolean> => {
-    const isValid = await form.trigger();
-    if (!isValid) {
+  const validateFormBeforeAction = (): boolean => {
+    const values = form.getValues();
+    const validation = orderFormSchema.safeParse(values);
+    
+    if (!validation.success) {
+      // Afficher les erreurs de validation
+      validation.error.errors.forEach((error) => {
+        form.setError(error.path[0] as keyof OrderFormData, {
+          message: error.message
+        });
+      });
+      
       toast({
         title: "Formulaire incomplet",
-        description: "Veuillez remplir tous les champs obligatoires avant de continuer.",
+        description: "Veuillez remplir tous les champs requis du formulaire.",
         variant: "destructive",
       });
+      
       return false;
     }
+    
     return true;
   };
 
   const handleSubmit = async (data: OrderFormData) => {
-    const isValid = await validateFormBeforeAction();
-    if (!isValid) return;
-
+    if (!validateFormBeforeAction()) return;
+    
     setIsSubmitting(true);
-
+    
     try {
-      const { newCustomer, orderItems } = await createOrderData(data);
-
       // Créer la commande
       const orderData = {
-        customer_id: newCustomer.id,
         customer_name: data.customerName,
         customer_phone: data.customerPhone,
-        shipping_address: { street: data.customerAddress },
-        subtotal: subtotal || 0,
+        shipping_address: { address: data.customerAddress },
         total_amount: subtotal || 0,
+        subtotal: subtotal || 0,
         status: 'pending' as const,
-        payment_status: 'pending'
       };
 
-      await createOrder.mutateAsync({
-        order: orderData,
-        items: orderItems
-      });
+      const orderItems = cartProducts?.map(item => ({
+        product_id: item.id,
+        product_name: item.name,
+        product_image: item.images?.[0] || '',
+        quantity: item.quantity,
+        unit_price: item.discounted_price || item.original_price,
+        total_price: (item.discounted_price || item.original_price) * item.quantity,
+      })) || [];
 
-      // Préparer les détails de la commande pour la confirmation
-      const details = {
-        customerName: data.customerName,
-        customerPhone: data.customerPhone,
-        customerAddress: data.customerAddress,
-        total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
-        orderType: 'form' as const
-      };
-
-      setOrderDetails(details);
+      await createOrder.mutateAsync({ order: orderData, items: orderItems });
+      
+      setOrderDetails({ ...orderData, items: orderItems });
       setShowConfirmation(true);
-
-      // Réinitialiser le formulaire
-      form.reset();
-
+      
       if (onOrderComplete) {
         onOrderComplete();
       }
-
-      toast({
-        title: "Commande créée",
-        description: "Votre commande a été enregistrée avec succès !",
-      });
-
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Erreur lors de la création de la commande:', error);
       toast({
         title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la création de la commande.",
+        description: "Une erreur est survenue lors de la création de la commande.",
         variant: "destructive",
       });
     } finally {
@@ -135,63 +105,16 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     }
   };
 
-  const handleWhatsAppOrder = async () => {
-    const isValid = await validateFormBeforeAction();
-    if (!isValid) return;
-
-    const formData = form.getValues();
-
-    try {
-      const { newCustomer, orderItems } = await createOrderData(formData);
-
-      // Créer la commande WhatsApp
-      const orderData = {
-        customer_id: newCustomer.id,
-        customer_name: formData.customerName,
-        customer_phone: formData.customerPhone,
-        whatsapp_number: formData.customerPhone,
-        shipping_address: { street: formData.customerAddress },
-        subtotal: subtotal || 0,
-        total_amount: subtotal || 0,
-        status: 'pending' as const,
-        payment_status: 'pending'
-      };
-
-      await createOrder.mutateAsync({
-        order: orderData,
-        items: orderItems
-      });
-
-      // Préparer les détails de la commande WhatsApp
-      const details = {
-        customerName: formData.customerName,
-        customerPhone: formData.customerPhone,
-        customerAddress: formData.customerAddress,
-        total: subtotal && formatPrice ? formatPrice(subtotal) : undefined,
-        orderType: 'whatsapp' as const
-      };
-
-      setOrderDetails(details);
-      setShowConfirmation(true);
-
-      // Réinitialiser le formulaire
-      form.reset();
-
-      if (onOrderComplete) {
-        onOrderComplete();
-      }
-
-      toast({
-        title: "Commande WhatsApp créée",
-        description: "Votre commande a été enregistrée et sera envoyée via WhatsApp !",
-      });
-
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la création de la commande WhatsApp.",
-        variant: "destructive",
-      });
+  const handleWhatsAppOrder = () => {
+    if (!validateFormBeforeAction()) return;
+    
+    const data = form.getValues();
+    const message = generateWhatsAppMessage(data, cartProducts, subtotal, formatPrice);
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    
+    if (onOrderComplete) {
+      onOrderComplete();
     }
   };
 
@@ -202,8 +125,36 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     orderDetails,
     setShowConfirmation,
     handleSubmit,
-    handleWhatsAppOrder
+    handleWhatsAppOrder,
+    validateFormBeforeAction,
   };
 };
 
-export type { OrderFormData };
+const generateWhatsAppMessage = (
+  data: OrderFormData,
+  cartProducts: any[] = [],
+  subtotal: number = 0,
+  formatPrice?: (price: number) => string
+): string => {
+  const formatPriceLocal = formatPrice || ((price: number) => `${price} FC`);
+  
+  let message = `🛒 *Nouvelle Commande - BeShopping Congo*\n\n`;
+  message += `👤 *Client:* ${data.customerName}\n`;
+  message += `📱 *Téléphone:* ${data.customerPhone}\n`;
+  message += `📍 *Adresse:* ${data.customerAddress}\n\n`;
+  message += `🛍️ *Produits commandés:*\n`;
+  
+  cartProducts.forEach((item, index) => {
+    const price = item.discounted_price || item.original_price;
+    const total = price * item.quantity;
+    message += `${index + 1}. ${item.name}\n`;
+    message += `   • Quantité: ${item.quantity}\n`;
+    message += `   • Prix unitaire: ${formatPriceLocal(price)}\n`;
+    message += `   • Total: ${formatPriceLocal(total)}\n\n`;
+  });
+  
+  message += `💰 *Total général: ${formatPriceLocal(subtotal)}*\n\n`;
+  message += `📅 *Date: ${new Date().toLocaleDateString('fr-FR')}*`;
+  
+  return message;
+};

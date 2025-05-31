@@ -21,7 +21,6 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 // Cache local pour le panier avec persistance optimisée
 const CART_STORAGE_KEY = 'beshopping-cart';
-const CART_CACHE_KEY = 'cart-cache';
 
 let cartCache: CartItem[] | null = null;
 let cacheTimestamp = 0;
