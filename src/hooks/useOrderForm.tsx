@@ -41,7 +41,7 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     const validation = orderFormSchema.safeParse(values);
     
     if (!validation.success) {
-      // Afficher les erreurs de validation
+      // Afficher les erreurs de validation dans le formulaire
       validation.error.errors.forEach((error) => {
         form.setError(error.path[0] as keyof OrderFormData, {
           message: error.message
@@ -106,11 +106,17 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
   };
 
   const handleWhatsAppOrder = () => {
-    if (!validateFormBeforeAction()) return;
+    // Validation complète du formulaire AVANT toute action
+    if (!validateFormBeforeAction()) {
+      // Si le formulaire n'est pas valide, on s'arrête ici
+      // L'utilisateur reste sur la même page
+      return;
+    }
     
+    // Le formulaire est valide, on peut procéder à la redirection
     const data = form.getValues();
     const message = generateWhatsAppMessage(data, cartProducts, subtotal, formatPrice);
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/243978100940?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
     
     if (onOrderComplete) {

@@ -25,8 +25,14 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
     handleWhatsAppOrder
   } = useOrderForm({ onOrderComplete, cartProducts, subtotal, formatPrice });
 
+  // Obtenir les valeurs du formulaire de manière sécurisée
+  const formValues = form.watch();
   const whatsappMessage = generateWhatsAppMessage(
-    form.getValues(),
+    {
+      customerName: formValues.customerName || '',
+      customerPhone: formValues.customerPhone || '',
+      customerAddress: formValues.customerAddress || ''
+    },
     cartProducts,
     subtotal,
     formatPrice
