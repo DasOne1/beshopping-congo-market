@@ -1,7 +1,7 @@
 
 {
-  "name": "BeShop Congo Market",
-  "short_name": "BeShop",
+  "name": "BeShopping Congo Market",
+  "short_name": "BeShopping",
   "icons": [
     {
       "src": "/icon-192x192.png",
@@ -20,5 +20,5 @@
   "display": "standalone",
   "theme_color": "#25D366",
   "background_color": "#ffffff",
-  "description": "BeShop - The trusted online shopping destination in Congo."
+  "description": "BeShopping - The trusted online shopping destination in Congo."
 }

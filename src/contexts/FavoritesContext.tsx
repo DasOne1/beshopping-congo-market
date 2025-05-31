@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface FavoritesContextType {
   favorites: string[];
@@ -25,8 +25,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!favorites.includes(productId)) {
       setFavorites([...favorites, productId]);
       toast({
-        title: "Added to favorites",
-        description: "Product has been added to your favorites",
+        title: "Ajouté aux favoris",
+        description: "Le produit a été ajouté à vos favoris",
       });
     }
   };
@@ -34,8 +34,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const removeFromFavorites = (productId: string) => {
     setFavorites(favorites.filter(id => id !== productId));
     toast({
-      title: "Removed from favorites",
-      description: "Product has been removed from your favorites",
+      title: "Retiré des favoris",
+      description: "Le produit a été retiré de vos favoris",
     });
   };
 
