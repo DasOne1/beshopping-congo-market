@@ -1,0 +1,69 @@
+
+{
+  "header": {
+    "home": "Inicio",
+    "products": "Productos",
+    "categories": "Categorías",
+    "about": "Acerca de",
+    "contact": "Contacto",
+    "cart": "Carrito",
+    "favorites": "Favoritos",
+    "account": "Cuenta",
+    "search": "Buscar productos..."
+  },
+  "home": {
+    "title": "Descubre los mejores productos del Congo",
+    "subtitle": "Una selección cuidadosamente curada de los productos más buscados, entregados directamente a ti en Lubumbashi y en todo el Congo.",
+    "exploreProducts": "Explorar productos",
+    "customOrder": "Pedido personalizado",
+    "fastDelivery": "Entrega rápida",
+    "securePayment": "Pago seguro",
+    "qualityGuaranteed": "Calidad garantizada"
+  },
+  "product": {
+    "addToCart": "Añadir al carrito",
+    "addedToCart": "Añadido al carrito",
+    "addToFavorites": "Añadir a favoritos",
+    "removeFromFavorites": "Quitar de favoritos",
+    "outOfStock": "Agotado",
+    "inactive": "Artículo inactivo",
+    "customOrder": "Pedido personalizado",
+    "inStock": "En stock",
+    "featured": "Destacado",
+    "price": "Precio"
+  },
+  "cart": {
+    "title": "Mi Carrito",
+    "empty": "Tu carrito está vacío",
+    "continueShopping": "Continuar comprando",
+    "checkout": "Realizar pedido",
+    "total": "Total",
+    "deliveryInfo": "Información de entrega"
+  },
+  "form": {
+    "customerName": "Nombre completo",
+    "customerPhone": "Número de teléfono",
+    "customerAddress": "Dirección de entrega",
+    "submit": "Realizar pedido",
+    "submitViaWhatsApp": "Pedir por WhatsApp",
+    "or": "o",
+    "required": "Este campo es obligatorio",
+    "minLength": "Mínimo {count} caracteres",
+    "invalidPhone": "Formato de teléfono inválido"
+  },
+  "toast": {
+    "orderCreated": "Pedido creado",
+    "orderSuccess": "¡Tu pedido ha sido registrado exitosamente!",
+    "whatsappOrderCreated": "Pedido de WhatsApp creado",
+    "whatsappOrderSuccess": "¡Tu pedido ha sido registrado y será enviado por WhatsApp!",
+    "error": "Error",
+    "formError": "Por favor corrige los errores en el formulario antes de pedir por WhatsApp."
+  },
+  "language": {
+    "select": "Seleccionar idioma",
+    "french": "Francés",
+    "english": "Inglés",
+    "spanish": "Español",
+    "chinese": "中文"
+  }
+}

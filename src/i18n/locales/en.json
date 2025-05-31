@@ -1,0 +1,69 @@
+
+{
+  "header": {
+    "home": "Home",
+    "products": "Products",
+    "categories": "Categories",
+    "about": "About",
+    "contact": "Contact",
+    "cart": "Cart",
+    "favorites": "Favorites",
+    "account": "Account",
+    "search": "Search products..."
+  },
+  "home": {
+    "title": "Discover the best products from Congo",
+    "subtitle": "A carefully curated selection of the most sought-after products, delivered directly to you in Lubumbashi and throughout Congo.",
+    "exploreProducts": "Explore products",
+    "customOrder": "Custom order",
+    "fastDelivery": "Fast delivery",
+    "securePayment": "Secure payment",
+    "qualityGuaranteed": "Quality guaranteed"
+  },
+  "product": {
+    "addToCart": "Add to cart",
+    "addedToCart": "Added to cart",
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites",
+    "outOfStock": "Out of stock",
+    "inactive": "Inactive item",
+    "customOrder": "Custom order",
+    "inStock": "In stock",
+    "featured": "Featured",
+    "price": "Price"
+  },
+  "cart": {
+    "title": "My Cart",
+    "empty": "Your cart is empty",
+    "continueShopping": "Continue shopping",
+    "checkout": "Checkout",
+    "total": "Total",
+    "deliveryInfo": "Delivery information"
+  },
+  "form": {
+    "customerName": "Full name",
+    "customerPhone": "Phone number",
+    "customerAddress": "Delivery address",
+    "submit": "Place order",
+    "submitViaWhatsApp": "Order via WhatsApp",
+    "or": "or",
+    "required": "This field is required",
+    "minLength": "Minimum {count} characters",
+    "invalidPhone": "Invalid phone format"
+  },
+  "toast": {
+    "orderCreated": "Order created",
+    "orderSuccess": "Your order has been successfully registered!",
+    "whatsappOrderCreated": "WhatsApp order created",
+    "whatsappOrderSuccess": "Your order has been registered and will be sent via WhatsApp!",
+    "error": "Error",
+    "formError": "Please correct the errors in the form before ordering via WhatsApp."
+  },
+  "language": {
+    "select": "Select language",
+    "french": "French",
+    "english": "English",
+    "spanish": "Spanish",
+    "chinese": "中文"
+  }
+}

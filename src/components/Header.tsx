@@ -18,7 +18,9 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/Logo';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTranslation } from 'react-i18next';
 import Sidebar from './Sidebar';
+import LanguageSelector from './LanguageSelector';
 
 const Header = () => {
   const { getTotalQuantity } = useCart();
@@ -27,6 +29,7 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
@@ -72,19 +75,19 @@ const Header = () => {
         {/* Desktop Navigation - centré */}
         <nav className="hidden md:flex items-center space-x-6 flex-1 ml-8">
           <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
-            Accueil
+            {t('header.home')}
           </Link>
           <Link to="/products" className="text-sm font-medium transition-colors hover:text-primary">
-            Produits
+            {t('header.products')}
           </Link>
           <Link to="/categories" className="text-sm font-medium transition-colors hover:text-primary">
-            Catégories
+            {t('header.categories')}
           </Link>
           <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
-            À Propos
+            {t('header.about')}
           </Link>
           <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary">
-            Contact
+            {t('header.contact')}
           </Link>
         </nav>
 
@@ -92,8 +95,11 @@ const Header = () => {
         <div className="flex items-center space-x-1 md:space-x-2 ml-auto">
           <Button variant="ghost" size="icon" onClick={toggleSearch} className="hidden sm:flex">
             <Search className="h-5 w-5" />
-            <span className="sr-only">Recherche</span>
+            <span className="sr-only">{t('header.search')}</span>
           </Button>
+          
+          {/* Language Selector */}
+          <LanguageSelector />
           
           {/* Theme Toggle */}
           <ThemeToggle />
@@ -107,7 +113,7 @@ const Header = () => {
                   {favoriteQuantity}
                 </span>
               )}
-              <span className="sr-only">Favoris</span>
+              <span className="sr-only">{t('header.favorites')}</span>
             </Button>
           </Link>
           
@@ -120,14 +126,14 @@ const Header = () => {
                   {cartQuantity}
                 </span>
               )}
-              <span className="sr-only">Panier</span>
+              <span className="sr-only">{t('header.cart')}</span>
             </Button>
           </Link>
 
           <Link to="/account" className="hidden sm:block">
             <Button variant="ghost" size="icon">
               <User className="h-5 w-5" />
-              <span className="sr-only">Compte</span>
+              <span className="sr-only">{t('header.account')}</span>
             </Button>
           </Link>
         </div>
@@ -145,7 +151,7 @@ const Header = () => {
           >
             <div className="container py-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Rechercher des produits</h2>
+                <h2 className="text-lg font-medium">{t('header.search')}</h2>
                 <Button variant="ghost" size="icon" onClick={toggleSearch}>
                   <X className="h-5 w-5" />
                   <span className="sr-only">Fermer</span>
@@ -154,7 +160,7 @@ const Header = () => {
               <form onSubmit={handleSearchSubmit}>
                 <div className="flex space-x-2">
                   <Input
-                    placeholder="Rechercher des produits..."
+                    placeholder={t('header.search')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1"

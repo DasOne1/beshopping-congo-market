@@ -13,7 +13,7 @@ const orderFormSchema = z.object({
   customerAddress: z.string().min(10, 'L\'adresse doit contenir au moins 10 caractères'),
 });
 
-type OrderFormData = z.infer<typeof orderFormSchema>;
+export type OrderFormData = z.infer<typeof orderFormSchema>;
 
 interface UseOrderFormProps {
   onOrderComplete?: () => void;
@@ -197,5 +197,3 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     handleWhatsAppOrder
   };
 };
-
-export type { OrderFormData };
