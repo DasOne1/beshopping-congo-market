@@ -11,7 +11,9 @@ export interface Product {
   tags: string[];
   original_price: number;
   discounted_price?: number;
+  discount?: number;
   featured: boolean;
+  popular?: number;
   status: 'active' | 'inactive' | 'draft';
   category_id: string;
   stock: number;
@@ -70,6 +72,8 @@ export const useProducts = () => {
         description: product.description || '',
         category_id: product.category_id || '',
         stock: product.stock || 0,
+        discount: product.discount || 0,
+        popular: product.popular || 0,
         status: (product.status as 'active' | 'inactive' | 'draft') || 'active',
         created_at: product.created_at || new Date().toISOString(),
         updated_at: product.updated_at || new Date().toISOString()
@@ -111,6 +115,8 @@ export const useProducts = () => {
           description: newProduct.description || '',
           category_id: newProduct.category_id || '',
           stock: newProduct.stock || 0,
+          discount: newProduct.discount || 0,
+          popular: newProduct.popular || 0,
           status: (newProduct.status as 'active' | 'inactive' | 'draft') || 'active',
           created_at: newProduct.created_at || new Date().toISOString(),
           updated_at: newProduct.updated_at || new Date().toISOString()
@@ -158,6 +164,8 @@ export const useProducts = () => {
           description: updatedProduct.description || '',
           category_id: updatedProduct.category_id || '',
           stock: updatedProduct.stock || 0,
+          discount: updatedProduct.discount || 0,
+          popular: updatedProduct.popular || 0,
           status: (updatedProduct.status as 'active' | 'inactive' | 'draft') || 'active',
           created_at: updatedProduct.created_at || new Date().toISOString(),
           updated_at: updatedProduct.updated_at || new Date().toISOString()
@@ -264,6 +272,8 @@ export const useProduct = (id: string) => {
         description: data.description || '',
         category_id: data.category_id || '',
         stock: data.stock || 0,
+        discount: data.discount || 0,
+        popular: data.popular || 0,
         status: (data.status as 'active' | 'inactive' | 'draft') || 'active',
         created_at: data.created_at || new Date().toISOString(),
         updated_at: data.updated_at || new Date().toISOString()

@@ -6,13 +6,21 @@ import { z } from 'zod';
 import { useOrders } from '@/hooks/useOrders';
 import { toast } from '@/hooks/use-toast';
 
+// Schema sans validation stricte pour permettre les champs optionnels
 const orderFormSchema = z.object({
+  customerName: z.string().optional(),
+  customerPhone: z.string().optional(),
+  customerAddress: z.string().optional(),
+});
+
+// Schema strict pour la validation de la commande classique
+const strictOrderFormSchema = z.object({
   customerName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   customerPhone: z.string().min(8, 'Le numéro de téléphone doit contenir au moins 8 chiffres'),
   customerAddress: z.string().min(10, 'L\'adresse doit contenir au moins 10 caractères'),
 });
 
-export type OrderFormData = z.infer<typeof orderFormSchema>;
+export type OrderFormData = z.infer<typeof strictOrderFormSchema>;
 
 interface UseOrderFormProps {
   onOrderComplete?: () => void;
@@ -38,7 +46,7 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
 
   const validateFormBeforeAction = (): boolean => {
     const values = form.getValues();
-    const validation = orderFormSchema.safeParse(values);
+    const validation = strictOrderFormSchema.safeParse(values);
     
     if (!validation.success) {
       // Afficher les erreurs de validation dans le formulaire
@@ -74,6 +82,7 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
       product_id: item.productId || item.id,
       product_name: item.product?.name || item.name || 'Produit',
       product_image: item.product?.images?.[0] || item.images?.[0] || '',
+      product_status: item.product?.status || 'active', // Ajout du statut du produit
       quantity: item.quantity,
       unit_price: item.product?.discounted_price || item.product?.original_price || item.discounted_price || item.original_price || 0,
       total_price: (item.product?.discounted_price || item.product?.original_price || item.discounted_price || item.original_price || 0) * item.quantity,
@@ -172,9 +181,11 @@ const generateWhatsAppMessage = (
     const product = item.product || item;
     const price = product.discounted_price || product.original_price;
     const total = price * item.quantity;
+    const status = product.status || 'active';
     message += `${index + 1}. ${product.name}\n`;
     message += `   • Quantité: ${item.quantity}\n`;
     message += `   • Prix unitaire: ${formatPriceLocal(price)}\n`;
+    message += `   • Statut: ${status}\n`;
     message += `   • Total: ${formatPriceLocal(total)}\n\n`;
   });
   
