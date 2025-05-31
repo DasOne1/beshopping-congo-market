@@ -7,22 +7,13 @@ export const useDataPreloader = () => {
     queryKey: ['preload-data'],
     queryFn: async () => {
       try {
-        console.log('Début du préchargement optimisé...');
+        console.log('Début du préchargement des données essentielles...');
         
-        // Précharger uniquement les données les plus critiques avec des requêtes très limitées
+        // Précharger seulement les données les plus critiques avec des limites très réduites
         const promises = [
-          // Seulement 3 catégories principales
-          supabase
-            .from('categories')
-            .select('id, name, slug')
-            .limit(3),
-          // Seulement 2 produits vedettes pour l'aperçu
-          supabase
-            .from('products')
-            .select('id, name, images, original_price, featured, status')
-            .eq('featured', true)
-            .eq('status', 'active')
-            .limit(2),
+          supabase.from('categories').select('id, name, slug').limit(5),
+          supabase.from('products').select('id, name, images, original_price, featured').eq('featured', true).limit(3),
+          supabase.from('settings').select('*').limit(3)
         ];
 
         const results = await Promise.allSettled(promises);
@@ -31,25 +22,28 @@ export const useDataPreloader = () => {
         results.forEach((result, index) => {
           if (result.status === 'fulfilled') {
             successCount++;
-            console.log(`Données ${['catégories', 'produits'][index]} préchargées rapidement`);
+            console.log(`Données ${['catégories', 'produits', 'paramètres'][index]} préchargées avec succès`);
           } else {
-            console.warn(`Erreur rapide ${['catégories', 'produits'][index]}:`, result.reason);
+            console.warn(`Erreur lors du préchargement ${['catégories', 'produits', 'paramètres'][index]}:`, result.reason);
           }
         });
 
-        console.log(`Préchargement optimisé terminé: ${successCount}/2 sources chargées`);
+        console.log(`Préchargement terminé: ${successCount}/3 sources de données chargées`);
         
-        // Retourner true même si une source échoue
+        // Retourner true même si certaines données n'ont pas pu être chargées
+        // L'application peut fonctionner avec des données partielles
         return true;
       } catch (error) {
-        console.error('Erreur lors du préchargement optimisé:', error);
-        // Ne jamais bloquer l'application
+        console.error('Erreur lors du préchargement:', error);
+        // Ne pas bloquer l'application en cas d'erreur réseau
         return true;
       }
     },
-    retry: 0, // Pas de retry pour accélérer
-    staleTime: 15 * 60 * 1000, // 15 minutes
+    retry: 1,
+    retryDelay: 500, // Retry plus rapide
+    staleTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
+    // Permettre à l'application de démarrer même si le préchargement échoue
     throwOnError: false,
   });
 

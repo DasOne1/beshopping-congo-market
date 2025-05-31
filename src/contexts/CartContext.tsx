@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 // Define cart item structure
 export interface CartItem {
@@ -11,7 +11,7 @@ export interface CartItem {
 // Define cart context shape
 interface CartContextType {
   cart: CartItem[];
-  cartItems: CartItem[];
+  cartItems: CartItem[]; // Add this line to fix the error
   addToCart: (productId: string, quantity: number, selectedVariants?: Record<string, string>) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
@@ -28,39 +28,23 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   // Initialize cart state from localStorage if available
   const [cart, setCart] = useState<CartItem[]>(() => {
-    try {
-      const savedCart = localStorage.getItem('cart');
-      return savedCart ? JSON.parse(savedCart) : [];
-    } catch (error) {
-      console.error('Erreur lors du chargement du panier depuis localStorage:', error);
-      return [];
-    }
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : [];
   });
   
-  // Save cart to localStorage whenever it changes with debouncing
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      try {
-        localStorage.setItem('cart', JSON.stringify(cart));
-        console.log('Panier sauvegardé dans localStorage:', cart.length, 'articles');
-      } catch (error) {
-        console.error('Erreur lors de la sauvegarde du panier:', error);
-      }
-    }, 300); // Debounce pour éviter trop d'écritures
-
-    return () => clearTimeout(timeoutId);
+    localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
   
   // Add item to cart or update quantity if already exists
   const addToCart = (productId: string, quantity: number, selectedVariants?: Record<string, string>) => {
-    console.log('Ajout au panier:', { productId, quantity, selectedVariants });
-    
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.productId === productId);
       
       if (existingItem) {
         // Update existing item
-        const updatedCart = prevCart.map(item => 
+        return prevCart.map(item => 
           item.productId === productId 
             ? { ...item, 
                 quantity: item.quantity + quantity,
@@ -68,32 +52,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
               } 
             : item
         );
-        console.log('Article mis à jour dans le panier');
-        return updatedCart;
       } else {
         // Add new item
-        const newCart = [...prevCart, { productId, quantity, selectedVariants }];
-        console.log('Nouvel article ajouté au panier');
-        return newCart;
+        return [...prevCart, { productId, quantity, selectedVariants }];
       }
     });
   };
   
   // Remove item from cart
   const removeFromCart = (productId: string) => {
-    console.log('Suppression du panier:', productId);
     setCart(prevCart => prevCart.filter(item => item.productId !== productId));
   };
   
   // Update quantity of item in cart
   const updateQuantity = (productId: string, quantity: number) => {
-    console.log('Mise à jour quantité:', { productId, quantity });
-    
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-    
     setCart(prevCart => 
       prevCart.map(item => 
         item.productId === productId 
@@ -105,8 +77,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   
   // Update variant selections for an item
   const updateVariant = (productId: string, selectedVariants: Record<string, string>) => {
-    console.log('Mise à jour variantes:', { productId, selectedVariants });
-    
     setCart(prevCart =>
       prevCart.map(item =>
         item.productId === productId
@@ -118,7 +88,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   
   // Clear the entire cart
   const clearCart = () => {
-    console.log('Panier vidé');
     setCart([]);
   };
   
@@ -131,22 +100,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const getTotalQuantity = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
-
-  // Memoize context value to prevent unnecessary re-renders
-  const contextValue = useMemo(() => ({
-    cart,
-    cartItems: cart,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    updateVariant,
-    isInCart,
-    getTotalQuantity
-  }), [cart]);
   
   return (
-    <CartContext.Provider value={contextValue}>
+    <CartContext.Provider value={{ 
+      cart, 
+      cartItems: cart, // Add this line to fix the error
+      addToCart, 
+      removeFromCart, 
+      updateQuantity, 
+      clearCart,
+      updateVariant,
+      isInCart,
+      getTotalQuantity
+    }}>
       {children}
     </CartContext.Provider>
   );

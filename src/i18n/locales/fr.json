@@ -1,52 +1,66 @@
 
 {
-  "nav": {
+  "header": {
     "home": "Accueil",
     "products": "Produits",
     "categories": "Catégories",
+    "about": "À Propos",
+    "contact": "Contact",
     "cart": "Panier",
     "favorites": "Favoris",
-    "about": "À propos",
-    "contact": "Contact",
     "account": "Compte",
-    "customOrder": "Commande personnalisée"
+    "search": "Rechercher des produits..."
+  },
+  "home": {
+    "title": "Découvrez les meilleurs produits du Congo",
+    "subtitle": "Une sélection soigneusement choisie des produits les plus recherchés, livrés directement chez vous à Lubumbashi et dans tout le Congo.",
+    "exploreProducts": "Explorer les produits",
+    "customOrder": "Commande personnalisée",
+    "fastDelivery": "Livraison rapide",
+    "securePayment": "Paiement sécurisé",
+    "qualityGuaranteed": "Qualité garantie"
   },
   "product": {
-    "featured": "Vedette",
-    "inStock": "En stock",
-    "outOfStock": "Rupture de stock",
-    "inactive": "Inactif",
     "addToCart": "Ajouter au panier",
-    "customOrder": "Commande personnalisée",
     "addedToCart": "Ajouté au panier",
-    "addedToCartDescription": "a été ajouté à votre panier",
-    "customOrderAdded": "Commande personnalisée ajoutée",
-    "customOrderDescription": "Votre demande de commande personnalisée a été ajoutée. Nous vous contacterons pour finaliser."
+    "addToFavorites": "Ajouter aux favoris",
+    "removeFromFavorites": "Retirer des favoris",
+    "outOfStock": "Rupture de stock",
+    "inactive": "Article inactif",
+    "customOrder": "Commande personnalisée",
+    "inStock": "En stock",
+    "featured": "Vedette",
+    "price": "Prix"
   },
   "cart": {
-    "title": "Votre Panier",
+    "title": "Mon Panier",
     "empty": "Votre panier est vide",
-    "deliveryInfo": "Informations de livraison",
-    "total": "Total"
+    "continueShopping": "Continuer mes achats",
+    "checkout": "Passer la commande",
+    "total": "Total",
+    "deliveryInfo": "Informations de livraison"
   },
   "form": {
     "customerName": "Nom complet",
     "customerPhone": "Numéro de téléphone",
     "customerAddress": "Adresse de livraison",
-    "minLength": "Ce champ doit contenir au moins 2 caractères",
-    "invalidPhone": "Numéro de téléphone invalide",
     "submit": "Passer la commande",
-    "whatsappOrder": "Commander via WhatsApp"
+    "submitViaWhatsApp": "Commander via WhatsApp",
+    "or": "ou",
+    "required": "Ce champ est requis",
+    "minLength": "Minimum {count} caractères",
+    "invalidPhone": "Format de téléphone invalide"
   },
   "toast": {
     "orderCreated": "Commande créée",
-    "orderSuccess": "Votre commande a été créée avec succès",
-    "whatsappOrderCreated": "Commande WhatsApp",
-    "whatsappOrderSuccess": "Votre commande WhatsApp a été créée",
+    "orderSuccess": "Votre commande a été enregistrée avec succès !",
+    "whatsappOrderCreated": "Commande WhatsApp créée",
+    "whatsappOrderSuccess": "Votre commande a été enregistrée et sera envoyée via WhatsApp !",
     "error": "Erreur",
-    "formError": "Veuillez remplir tous les champs correctement"
+    "formError": "Veuillez corriger les erreurs dans le formulaire avant de commander via WhatsApp."
   },
   "language": {
+    "select": "Choisir la langue",
     "french": "Français",
     "english": "Anglais",
     "spanish": "Espagnol",
