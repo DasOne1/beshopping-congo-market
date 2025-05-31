@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Settings, Bell, LogOut, User } from 'lucide-react';
+import { Bell, LogOut, User, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -50,82 +50,54 @@ export function AdminHeader() {
         </div>
         
         <div className="flex items-center space-x-2 flex-shrink-0">
-          {/* Desktop Actions */}
-          {!isMobile && (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="hidden sm:flex"
-              >
-                <Bell className="h-4 w-4" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/dasgabriel@adminaccess/settings')}
-                className="hidden sm:flex"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSignOut}
-                className="hidden sm:flex text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-
-          {/* Mobile Profile Menu */}
-          {isMobile && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                  <User className="h-4 w-4" />
-                  <span className="hidden xs:inline text-sm">Profil</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-2">
-                  <p className="text-sm font-medium">{adminProfile?.full_name || 'Administrateur'}</p>
-                  <p className="text-xs text-gray-500 truncate">{adminProfile?.email}</p>
-                </div>
-                <DropdownMenuSeparator />
-                
-                <DropdownMenuItem onClick={() => navigate('/dasgabriel@adminaccess/accounts')}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Comptes</span>
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem>
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>Notifications</span>
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem onClick={() => navigate('/dasgabriel@adminaccess/settings')}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Paramètres</span>
-                </DropdownMenuItem>
-                
-                <DropdownMenuSeparator />
-                
-                <DropdownMenuItem 
-                  onClick={handleSignOut}
-                  className="text-red-600 focus:text-red-600"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Déconnexion</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          {/* Notifications - toujours visible */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center"
+          >
+            <Bell className="h-4 w-4" />
+          </Button>
           
+          {/* Theme Toggle */}
           <ThemeToggle />
+
+          {/* Menu Profil - dernière position */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                <User className="h-4 w-4" />
+                {!isMobile && <span className="text-sm">Profil</span>}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-2 py-2">
+                <p className="text-sm font-medium">{adminProfile?.full_name || 'Administrateur'}</p>
+                <p className="text-xs text-gray-500 truncate">{adminProfile?.email}</p>
+              </div>
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuItem onClick={() => navigate('/dasgabriel@adminaccess/accounts')}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Comptes</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem onClick={() => navigate('/dasgabriel@adminaccess/settings')}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Paramètres</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuItem 
+                onClick={handleSignOut}
+                className="text-red-600 focus:text-red-600"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Déconnexion</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

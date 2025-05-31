@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -6,8 +7,7 @@ import {
   ShoppingBag,
   Package,
   Users,
-  BarChart3,
-  UserCog
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -21,7 +21,7 @@ export function MobileAdminNavBar() {
     { icon: ShoppingBag, path: '/dasgabriel@adminaccess/orders', label: 'Orders' },
     { icon: Package, path: '/dasgabriel@adminaccess/catalog', label: 'Catalog' },
     { icon: Users, path: '/dasgabriel@adminaccess/customers', label: 'Customers' },
-    { icon: UserCog, path: '/dasgabriel@adminaccess/accounts', label: 'Comptes' },
+    { icon: BarChart3, path: '/dasgabriel@adminaccess/analytics', label: 'Analytics' },
   ];
 
   const isActive = (path: string) => {

@@ -7,8 +7,7 @@ import {
   ShoppingBag,
   Package,
   Users,
-  BarChart3,
-  UserCog
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,7 +20,6 @@ export function AdminDesktopNavigation() {
     { icon: Package, path: '/dasgabriel@adminaccess/catalog', label: 'Catalog' },
     { icon: Users, path: '/dasgabriel@adminaccess/customers', label: 'Customers' },
     { icon: BarChart3, path: '/dasgabriel@adminaccess/analytics', label: 'Analytics' },
-    { icon: UserCog, path: '/dasgabriel@adminaccess/accounts', label: 'Comptes' },
   ];
 
   const isActive = (path: string) => {
