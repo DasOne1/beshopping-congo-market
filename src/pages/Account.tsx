@@ -1,9 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Calendar } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Calendar, Edit, LogOut, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -12,11 +15,23 @@ import { useCart } from '@/contexts/CartContext';
 import { useProducts } from '@/hooks/useProducts';
 import ProductSkeleton from '@/components/ProductSkeleton';
 import { motion } from 'framer-motion';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 
 const Account = () => {
   const { favorites } = useFavorites();
   const { cart } = useCart();
   const { products, isLoading } = useProducts();
+  const { currentCustomer, isAuthenticated, loading, signUp, signIn, signOut, updateProfile } = useCustomerAuth();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [authForm, setAuthForm] = useState({ phone: '', password: '' });
+  const [profileForm, setProfileForm] = useState({
+    name: currentCustomer?.name || '',
+    email: currentCustomer?.email || '',
+    phone: currentCustomer?.phone || '',
+    address: currentCustomer?.address || ''
+  });
 
   // Get favorite products
   const favoriteProducts = products.filter(product => 
@@ -32,13 +47,141 @@ const Account = () => {
     };
   }).filter(item => item.product);
 
-  // Mock user data - in a real app, this would come from authentication
-  const user = {
-    name: "Utilisateur",
-    email: "utilisateur@example.com",
-    phone: "+243 XXX XXX XXX",
-    address: "Lubumbashi, Congo"
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (isSignUp) {
+        await signUp({
+          name: profileForm.name,
+          email: profileForm.email,
+          phone: authForm.phone,
+          address: profileForm.address
+        }, authForm.password);
+      } else {
+        await signIn(authForm);
+      }
+    } catch (error) {
+      // Error is handled in the hook
+    }
   };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateProfile(profileForm);
+      setIsEditing(false);
+    } catch (error) {
+      // Error is handled in the hook
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        
+        <main className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-20 md:pb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-md mx-auto"
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <LogIn className="mr-2 h-5 w-5" />
+                  {isSignUp ? 'Créer un compte' : 'Se connecter'}
+                </CardTitle>
+                <CardDescription>
+                  {isSignUp 
+                    ? 'Créez votre compte pour commencer vos achats'
+                    : 'Connectez-vous à votre compte'
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAuthSubmit} className="space-y-4">
+                  {isSignUp && (
+                    <>
+                      <div>
+                        <Label htmlFor="name">Nom complet</Label>
+                        <Input
+                          id="name"
+                          type="text"
+                          value={profileForm.name}
+                          onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email (optionnel)</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={profileForm.email}
+                          onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="address">Adresse (optionnel)</Label>
+                        <Textarea
+                          id="address"
+                          value={profileForm.address}
+                          onChange={(e) => setProfileForm({...profileForm, address: e.target.value})}
+                        />
+                      </div>
+                    </>
+                  )}
+                  
+                  <div>
+                    <Label htmlFor="phone">Numéro de téléphone</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={authForm.phone}
+                      onChange={(e) => setAuthForm({...authForm, phone: e.target.value})}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="password">Mot de passe</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={authForm.password}
+                      onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
+                      required
+                    />
+                  </div>
+                  
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Chargement...' : (isSignUp ? 'Créer le compte' : 'Se connecter')}
+                  </Button>
+                </form>
+                
+                <div className="mt-4 text-center">
+                  <Button
+                    variant="link"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="text-sm"
+                  >
+                    {isSignUp 
+                      ? 'Déjà un compte ? Se connecter'
+                      : 'Pas de compte ? Créer un compte'
+                    }
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,40 +193,106 @@ const Account = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-2xl md:text-3xl font-bold mb-6 flex items-center">
-            <User className="mr-2 h-6 w-6" />
-            Mon Compte
-          </h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center">
+              <User className="mr-2 h-6 w-6" />
+              Mon Compte
+            </h1>
+            <Button variant="outline" onClick={signOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Déconnexion
+            </Button>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* User Profile */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="mr-2 h-5 w-5" />
-                  Profil Utilisateur
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center">
+                    <User className="mr-2 h-5 w-5" />
+                    Profil Utilisateur
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditing(!isEditing)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span>{user.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{user.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{user.phone}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>{user.address}</span>
-                </div>
-                <Button variant="outline" className="w-full mt-4">
-                  Modifier le profil
-                </Button>
+              <CardContent>
+                {isEditing ? (
+                  <form onSubmit={handleProfileSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="edit-name">Nom complet</Label>
+                      <Input
+                        id="edit-name"
+                        value={profileForm.name}
+                        onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-email">Email</Label>
+                      <Input
+                        id="edit-email"
+                        type="email"
+                        value={profileForm.email}
+                        onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-phone">Téléphone</Label>
+                      <Input
+                        id="edit-phone"
+                        value={profileForm.phone}
+                        onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-address">Adresse</Label>
+                      <Textarea
+                        id="edit-address"
+                        value={profileForm.address}
+                        onChange={(e) => setProfileForm({...profileForm, address: e.target.value})}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="submit" disabled={loading}>
+                        Sauvegarder
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+                        Annuler
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>{currentCustomer?.name}</span>
+                    </div>
+                    {currentCustomer?.email && (
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>{currentCustomer.email}</span>
+                      </div>
+                    )}
+                    {currentCustomer?.phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{currentCustomer.phone}</span>
+                      </div>
+                    )}
+                    {currentCustomer?.address && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span>{currentCustomer.address}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -254,7 +463,7 @@ const Account = () => {
                     <span className="text-xs">Favoris</span>
                   </Button>
                 </Link>
-                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => setIsEditing(true)}>
                   <User className="h-5 w-5" />
                   <span className="text-xs">Profil</span>
                 </Button>

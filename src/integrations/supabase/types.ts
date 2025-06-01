@@ -152,6 +152,41 @@ export type Database = {
           },
         ]
       }
+      customer_auth: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          id: string
+          password_hash: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          password_hash: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          password_hash?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_auth_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: Json | null
