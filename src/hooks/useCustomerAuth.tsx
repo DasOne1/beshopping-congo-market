@@ -2,52 +2,125 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { useCustomers } from './useCustomers';
+import bcrypt from 'bcryptjs';
 
 interface CustomerData {
   name: string;
-  phone?: string;
+  phone: string;
+  email?: string;
   address?: string;
+  password: string;
+}
+
+interface LoginData {
+  phone: string;
+  password: string;
 }
 
 export const useCustomerAuth = () => {
   const [currentCustomer, setCurrentCustomer] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { createCustomer, updateCustomer } = useCustomers();
 
-  const signInWithGoogle = async (customerData?: CustomerData) => {
+  const signUp = async (customerData: CustomerData) => {
     setLoading(true);
     try {
-      console.log('Connexion avec Google...');
+      console.log('Création du compte client...');
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/account`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
-        }
-      });
+      // Vérifier si le numéro de téléphone existe déjà
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('phone')
+        .eq('phone', customerData.phone)
+        .maybeSingle();
+
+      if (existingCustomer) {
+        throw new Error('Ce numéro de téléphone est déjà utilisé');
+      }
+
+      // Hasher le mot de passe
+      const hashedPassword = await bcrypt.hash(customerData.password, 10);
+
+      // Créer le customer avec le mot de passe hashé
+      const { data: newCustomer, error } = await supabase
+        .from('customers')
+        .insert({
+          name: customerData.name,
+          phone: customerData.phone,
+          email: customerData.email || null,
+          address: customerData.address || null,
+          password_hash: hashedPassword,
+          status: 'active'
+        })
+        .select()
+        .single();
 
       if (error) {
-        console.error('Erreur lors de la connexion Google:', error);
-        throw new Error('Erreur lors de la connexion avec Google');
+        console.error('Erreur lors de la création du compte:', error);
+        throw new Error('Erreur lors de la création du compte');
       }
 
-      // Si des données client sont fournies, les stocker temporairement
-      if (customerData) {
-        localStorage.setItem('pendingCustomerData', JSON.stringify(customerData));
-      }
-
+      console.log('Compte créé avec succès:', newCustomer);
+      
+      // Connecter automatiquement l'utilisateur après création
+      setCurrentCustomer(newCustomer);
+      setIsAuthenticated(true);
+      
       toast({
-        title: "Redirection vers Google",
-        description: "Vous allez être redirigé vers Google pour vous connecter",
+        title: "Compte créé avec succès",
+        description: "Bienvenue !",
       });
+
+      return newCustomer;
     } catch (error: any) {
-      console.error('Erreur de connexion Google:', error);
+      console.error('Erreur de création de compte:', error);
+      toast({
+        title: "Erreur de création de compte",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signIn = async (loginData: LoginData) => {
+    setLoading(true);
+    try {
+      console.log('Connexion du client...');
+      
+      // Chercher le customer par numéro de téléphone
+      const { data: customer, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('phone', loginData.phone)
+        .maybeSingle();
+
+      if (error || !customer) {
+        throw new Error('Numéro de téléphone ou mot de passe incorrect');
+      }
+
+      // Vérifier le mot de passe
+      const passwordMatch = await bcrypt.compare(loginData.password, customer.password_hash);
+      
+      if (!passwordMatch) {
+        throw new Error('Numéro de téléphone ou mot de passe incorrect');
+      }
+
+      console.log('Connexion réussie:', customer);
+      
+      setCurrentCustomer(customer);
+      setIsAuthenticated(true);
+      
+      toast({
+        title: "Connexion réussie",
+        description: "Bienvenue !",
+      });
+
+      return customer;
+    } catch (error: any) {
+      console.error('Erreur de connexion:', error);
       toast({
         title: "Erreur de connexion",
         description: error.message,
@@ -59,92 +132,14 @@ export const useCustomerAuth = () => {
     }
   };
 
-  const handleGoogleAuthCallback = async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Erreur lors de la récupération de la session:', error);
-        return;
-      }
-
-      if (session?.user) {
-        console.log('Utilisateur connecté:', session.user);
-        
-        // Récupérer les données client en attente
-        const pendingData = localStorage.getItem('pendingCustomerData');
-        let customerData: CustomerData = {
-          name: session.user.user_metadata.full_name || session.user.email || 'Utilisateur',
-          phone: '',
-          address: ''
-        };
-
-        if (pendingData) {
-          const parsedData = JSON.parse(pendingData);
-          customerData = { ...customerData, ...parsedData };
-          localStorage.removeItem('pendingCustomerData');
-        }
-
-        // Créer ou récupérer le customer
-        let customer;
-        try {
-          // Chercher un customer existant avec cet email
-          const existingCustomer = await supabase
-            .from('customers')
-            .select('*')
-            .eq('email', session.user.email)
-            .maybeSingle();
-
-          if (existingCustomer.data) {
-            customer = existingCustomer.data;
-            console.log('Customer existant trouvé:', customer);
-          } else {
-            // Créer un nouveau customer
-            customer = await createCustomer.mutateAsync({
-              ...customerData,
-              email: session.user.email,
-            });
-            console.log('Nouveau customer créé:', customer);
-          }
-        } catch (createError) {
-          console.error('Erreur lors de la création du customer:', createError);
-          // Utiliser les données de session comme fallback
-          customer = {
-            id: session.user.id,
-            name: customerData.name,
-            email: session.user.email,
-            phone: customerData.phone,
-            address: customerData.address
-          };
-        }
-
-        setCurrentCustomer(customer);
-        setIsAuthenticated(true);
-        
-        toast({
-          title: "Connexion réussie",
-          description: "Bienvenue !",
-        });
-      }
-    } catch (error) {
-      console.error('Erreur lors du callback Google:', error);
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      setCurrentCustomer(null);
-      setIsAuthenticated(false);
-      localStorage.removeItem('pendingCustomerData');
-      
-      toast({
-        title: "Déconnexion réussie",
-        description: "À bientôt !",
-      });
-    } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
-    }
+  const signOut = () => {
+    setCurrentCustomer(null);
+    setIsAuthenticated(false);
+    
+    toast({
+      title: "Déconnexion réussie",
+      description: "À bientôt !",
+    });
   };
 
   const updateProfile = async (customerData: Partial<CustomerData>) => {
@@ -152,10 +147,24 @@ export const useCustomerAuth = () => {
     
     setLoading(true);
     try {
-      const updatedCustomer = await updateCustomer.mutateAsync({
-        id: currentCustomer.id,
-        ...customerData
-      });
+      let updateData: any = { ...customerData };
+      
+      // Si un nouveau mot de passe est fourni, le hasher
+      if (customerData.password) {
+        updateData.password_hash = await bcrypt.hash(customerData.password, 10);
+        delete updateData.password;
+      }
+
+      const { data: updatedCustomer, error } = await supabase
+        .from('customers')
+        .update(updateData)
+        .eq('id', currentCustomer.id)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error('Erreur lors de la mise à jour du profil');
+      }
       
       setCurrentCustomer(updatedCustomer);
       
@@ -163,6 +172,8 @@ export const useCustomerAuth = () => {
         title: "Profil mis à jour",
         description: "Vos informations ont été sauvegardées",
       });
+
+      return updatedCustomer;
     } catch (error: any) {
       toast({
         title: "Erreur lors de la mise à jour",
@@ -179,9 +190,9 @@ export const useCustomerAuth = () => {
     currentCustomer,
     isAuthenticated,
     loading,
-    signInWithGoogle,
+    signUp,
+    signIn,
     signOut,
     updateProfile,
-    handleGoogleAuthCallback,
   };
 };
