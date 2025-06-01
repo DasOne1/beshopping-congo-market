@@ -79,15 +79,24 @@ export const useCustomerAuth = () => {
     try {
       const passwordHash = await hashPassword(password);
       
-      // Récupérer les données d'authentification
+      console.log('Tentative de connexion avec:', { phone, passwordHash });
+      
+      // Récupérer les données d'authentification - utiliser .maybeSingle() au lieu de .single()
       const { data: authData, error: authError } = await supabase
         .from('customer_auth')
         .select('customer_id')
         .eq('phone', phone)
         .eq('password_hash', passwordHash)
-        .single();
+        .maybeSingle();
 
-      if (authError || !authData) {
+      console.log('Résultat auth:', { authData, authError });
+
+      if (authError) {
+        console.error('Erreur auth:', authError);
+        throw new Error('Erreur lors de la vérification des identifiants');
+      }
+
+      if (!authData) {
         throw new Error('Téléphone ou mot de passe incorrect');
       }
 
@@ -96,10 +105,17 @@ export const useCustomerAuth = () => {
         .from('customers')
         .select('*')
         .eq('id', authData.customer_id)
-        .single();
+        .maybeSingle();
 
-      if (customerError || !customerData) {
+      console.log('Résultat customer:', { customerData, customerError });
+
+      if (customerError) {
+        console.error('Erreur customer:', customerError);
         throw new Error('Erreur lors de la récupération des données utilisateur');
+      }
+
+      if (!customerData) {
+        throw new Error('Utilisateur introuvable');
       }
 
       setCurrentCustomer(customerData);
@@ -110,6 +126,7 @@ export const useCustomerAuth = () => {
         description: "Bienvenue !",
       });
     } catch (error: any) {
+      console.error('Erreur de connexion complète:', error);
       toast({
         title: "Erreur de connexion",
         description: error.message,
