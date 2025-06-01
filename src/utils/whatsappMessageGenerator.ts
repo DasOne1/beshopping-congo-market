@@ -1,38 +1,41 @@
 
+interface CartProduct {
+  product?: {
+    name: string;
+    discounted_price?: number;
+    original_price: number;
+  };
+  quantity: number;
+}
+
+interface FormData {
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+}
+
 export const generateWhatsAppMessage = (
-  customerData: {
-    customerName: string;
-    customerPhone: string;
-    customerAddress: string;
-  },
-  cartProducts?: any[],
+  formData: FormData,
+  cartProducts?: CartProduct[],
   subtotal?: number,
   formatPrice?: (price: number) => string
 ): string => {
-  const formatPriceLocal = formatPrice || ((price: number) => `${price} FC`);
-  
-  let message = `🛒 *Nouvelle Commande - BeShopping Congo*\n\n`;
-  message += `👤 *Client:* ${customerData.customerName}\n`;
-  message += `📱 *Téléphone:* ${customerData.customerPhone}\n`;
-  message += `📍 *Adresse:* ${customerData.customerAddress}\n\n`;
-  message += `🛍️ *Produits commandés:*\n`;
+  let message = `Bonjour, je souhaite passer une commande avec les informations suivantes:\n\nNom: ${formData.customerName}\nTéléphone: ${formData.customerPhone}\nAdresse: ${formData.customerAddress}`;
   
   if (cartProducts && cartProducts.length > 0) {
-    cartProducts.forEach((item, index) => {
-      const product = item.product || item;
-      const price = product.discounted_price || product.original_price;
-      const total = price * item.quantity;
-      const status = product.status || 'active';
-      message += `${index + 1}. ${product.name}\n`;
-      message += `   • Quantité: ${item.quantity}\n`;
-      message += `   • Prix unitaire: ${formatPriceLocal(price)}\n`;
-      message += `   • Statut: ${status}\n`;
-      message += `   • Total: ${formatPriceLocal(total)}\n\n`;
+    message += '\n\nProduits commandés:';
+    cartProducts.forEach(item => {
+      if (item.product) {
+        const price = item.product.discounted_price || item.product.original_price;
+        const itemTotal = formatPrice ? formatPrice(price * item.quantity) : (price * item.quantity);
+        message += `\n- ${item.product.name} x${item.quantity} = ${itemTotal} FC`;
+      }
     });
+    
+    if (subtotal && formatPrice) {
+      message += `\n\nTotal: ${formatPrice(subtotal)} FC`;
+    }
   }
-  
-  message += `💰 *Total général: ${formatPriceLocal(subtotal || 0)}*\n\n`;
-  message += `📅 *Date: ${new Date().toLocaleDateString('fr-FR')}*`;
   
   return message;
 };

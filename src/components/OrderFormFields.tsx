@@ -1,10 +1,8 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { useAuth } from '@/hooks/useAuth';
-import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface OrderFormFieldsProps {
   form: UseFormReturn<any>;
@@ -13,18 +11,6 @@ interface OrderFormFieldsProps {
 }
 
 const OrderFormFields: React.FC<OrderFormFieldsProps> = ({ form, onSubmit, children }) => {
-  const { isAuthenticated } = useAuth();
-  const { userProfile } = useUserProfile();
-
-  // Pré-remplir le formulaire avec les données utilisateur
-  useEffect(() => {
-    if (isAuthenticated && userProfile) {
-      form.setValue('customerName', userProfile.name);
-      form.setValue('customerPhone', userProfile.phone);
-      form.setValue('customerAddress', userProfile.address);
-    }
-  }, [isAuthenticated, userProfile, form]);
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
