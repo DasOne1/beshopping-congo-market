@@ -1,123 +1,128 @@
 
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import useEmblaCarousel from 'embla-carousel-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useCategories } from '@/hooks/useCategories';
-import { useRealtimeSync } from '@/hooks/useRealtimeSync';
-import { useNavigate } from 'react-router-dom';
-import Autoplay from "embla-carousel-autoplay";
+import CategorySkeleton from './CategorySkeleton';
 
 const CategoryCarousel = () => {
   const { categories, isLoading } = useCategories();
-  const navigate = useNavigate();
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: 'start',
+    slidesToScroll: 1,
+    breakpoints: {
+      '(min-width: 640px)': { slidesToScroll: 2 },
+      '(min-width: 1024px)': { slidesToScroll: 3 },
+    }
+  });
 
-  // Activer la synchronisation en temps réel pour les catégories
-  useRealtimeSync();
+  const scrollPrev = () => {
+    if (emblaApi) emblaApi.scrollPrev();
+  };
 
-  // Gérer le scroll pour ajuster la taille du carousel
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      // Commencer à réduire la taille après 200px de scroll
-      setIsScrolled(scrollY > 200);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const handleCategoryClick = (categoryId: string) => {
-    navigate(`/products?category=${categoryId}`);
+  const scrollNext = () => {
+    if (emblaApi) emblaApi.scrollNext();
   };
 
   if (isLoading) {
-    return (
-      <section className={`py-6 transition-all duration-300 ${isScrolled ? 'py-3' : 'py-6'}`}>
-        <div className="container mx-auto px-4">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold mb-4 text-center">Categories</h2>
+    return <CategorySkeleton />;
+  }
+
+  if (!categories || categories.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="py-12 bg-gradient-to-br from-background via-muted/20 to-background">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+              Nos Catégories
+            </h2>
+            <p className="text-muted-foreground">
+              Découvrez nos différentes catégories de produits
+            </p>
           </div>
-          <div className="flex justify-center gap-4 overflow-hidden">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex flex-col items-center animate-pulse">
-                <div className={`bg-gray-200 rounded-full mb-2 transition-all duration-300 ${isScrolled ? 'w-12 h-12' : 'w-16 h-16'}`}></div>
-                <div className="bg-gray-200 h-3 w-12 rounded"></div>
+          
+          <div className="hidden md:flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={scrollPrev}
+              className="rounded-full shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={scrollNext}
+              className="rounded-full shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="overflow-hidden" ref={emblaRef}>
+          <div className="flex gap-6">
+            {categories.map((category) => (
+              <div key={category.id} className="flex-none w-32 sm:w-36">
+                <Link
+                  to={`/products?category=${category.id}`}
+                  className="group block text-center p-4 hover:bg-muted/50 rounded-xl transition-all duration-300 hover:shadow-lg"
+                >
+                  <div className="relative mb-4 mx-auto">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 group-hover:border-primary/40 transition-all duration-300 group-hover:scale-105">
+                      {category.image ? (
+                        <img
+                          src={category.image}
+                          alt={category.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                            <span className="text-primary font-semibold text-lg">
+                              {category.name.charAt(0)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <h3 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2">
+                    {category.name}
+                  </h3>
+                </Link>
               </div>
             ))}
           </div>
         </div>
-      </section>
-    );
-  }
 
-  // Dupliquer les catégories pour l'effet infini
-  const duplicatedCategories = categories ? [...categories, ...categories] : [];
-
-  return (
-    <section className={`py-6 transition-all duration-300 ${isScrolled ? 'py-3' : 'py-6'}`}>
-      <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className={`mb-6 transition-all duration-300 ${isScrolled ? 'mb-3' : 'mb-6'}`}
-        >
-          <div className="flex justify-center items-center mb-4">
-            <h2 className={`font-bold transition-all duration-300 ${isScrolled ? 'text-lg' : 'text-xl'}`}>Categories</h2>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          className="relative flex justify-center"
-        >
-          <Carousel 
-            className="w-full max-w-6xl"
-            opts={{
-              align: "center",
-              loop: true,
-            }}
-            plugins={[
-              Autoplay({
-                delay: 2000,
-                stopOnInteraction: false,
-                stopOnMouseEnter: false,
-              }),
-            ]}
+        {/* Mobile navigation dots */}
+        <div className="flex md:hidden justify-center gap-2 mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={scrollPrev}
+            className="rounded-full"
           >
-            <CarouselContent className="-ml-2 flex">
-              {duplicatedCategories?.map((category, index) => (
-                <CarouselItem key={`${category.id}-${index}`} className="pl-2 basis-auto">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.05 * (index % categories!.length) }}
-                    className="flex flex-col items-center cursor-pointer mx-2"
-                    onClick={() => handleCategoryClick(category.id)}
-                  >
-                    <div className={`rounded-full overflow-hidden bg-gray-100 mb-2 border-2 border-gray-200 hover:border-primary transition-all duration-300 ${isScrolled ? 'w-12 h-12' : 'w-16 h-16'}`}>
-                      <img 
-                        src={category.image || `/shopping_logo.png`} 
-                        alt={category.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <span className={`font-medium text-center max-w-[60px] truncate transition-all duration-300 ${isScrolled ? 'text-xs' : 'text-xs'}`}>
-                      {category.name}
-                    </span>
-                  </motion.div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-          </Carousel>
-        </motion.div>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={scrollNext}
+            className="rounded-full"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </section>
   );
