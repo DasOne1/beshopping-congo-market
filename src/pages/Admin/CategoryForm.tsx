@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -64,7 +65,7 @@ const CategoryForm = () => {
       } else {
         await createCategory.mutateAsync(formData as Omit<Category, 'id' | 'created_at' | 'updated_at'>);
       }
-      navigate('/admin/categories');
+      navigate('/dasgabriel@adminaccess/categories');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
     }
@@ -77,7 +78,7 @@ const CategoryForm = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/admin/categories')}
+            onClick={() => navigate('/dasgabriel@adminaccess/categories')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour
@@ -154,7 +155,7 @@ const CategoryForm = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/admin/categories')}
+                  onClick={() => navigate('/dasgabriel@adminaccess/categories')}
                 >
                   Annuler
                 </Button>

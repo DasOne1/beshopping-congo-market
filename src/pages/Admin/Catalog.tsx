@@ -220,7 +220,7 @@ export default function Catalog() {
                       <CardTitle className="text-lg">Liste des Catégories</CardTitle>
                       <CardDescription>Gérez et organisez vos catégories</CardDescription>
                     </div>
-                    <Button onClick={() => navigate('/admin/categories/new')}>
+                    <Button onClick={() => navigate('/dasgabriel@adminaccess/categories/new')}>
                       <Plus className="mr-2 h-4 w-4" />
                       Nouvelle catégorie
                     </Button>
@@ -232,7 +232,7 @@ export default function Catalog() {
                       <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                       <p className="text-lg font-medium mb-2">Aucune catégorie trouvée</p>
                       <p className="text-sm mb-4">Créez votre première catégorie pour organiser vos produits</p>
-                      <Button onClick={() => navigate('/admin/categories/new')} variant="outline">
+                      <Button onClick={() => navigate('/dasgabriel@adminaccess/categories/new')} variant="outline">
                         Créer une catégorie
                       </Button>
                     </div>
@@ -276,7 +276,7 @@ export default function Catalog() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => navigate(`/admin/categories/edit/${category.id}`)}>
+                                    <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/categories/edit/${category.id}`)}>
                                       <Edit className="mr-2 h-4 w-4" />
                                       Modifier
                                     </DropdownMenuItem>
@@ -316,7 +316,7 @@ export default function Catalog() {
                       <CardTitle className="text-lg">Liste des Produits</CardTitle>
                       <CardDescription>Gérez votre inventaire complet</CardDescription>
                     </div>
-                    <Button onClick={() => navigate('/admin/products/new')}>
+                    <Button onClick={() => navigate('/dasgabriel@adminaccess/products/new')}>
                       <Plus className="mr-2 h-4 w-4" />
                       Nouveau produit
                     </Button>
@@ -328,7 +328,7 @@ export default function Catalog() {
                       <Package className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                       <p className="text-lg font-medium mb-2">Aucun produit trouvé</p>
                       <p className="text-sm mb-4">Ajoutez votre premier produit à votre catalogue</p>
-                      <Button onClick={() => navigate('/admin/products/new')} variant="outline">
+                      <Button onClick={() => navigate('/dasgabriel@adminaccess/products/new')} variant="outline">
                         Créer un produit
                       </Button>
                     </div>
@@ -396,7 +396,7 @@ export default function Catalog() {
                                             </Button>
                                           </DropdownMenuTrigger>
                                           <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => navigate(`/admin/products/edit/${product.id}`)}>
+                                            <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/products/edit/${product.id}`)}>
                                               <Edit className="mr-2 h-4 w-4" />
                                               Modifier
                                             </DropdownMenuItem>
@@ -479,7 +479,7 @@ export default function Catalog() {
                                           </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                          <DropdownMenuItem onClick={() => navigate(`/admin/products/edit/${product.id}`)}>
+                                          <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/products/edit/${product.id}`)}>
                                             <Edit className="mr-2 h-4 w-4" />
                                             Modifier
                                           </DropdownMenuItem>
@@ -522,7 +522,7 @@ export default function Catalog() {
                       <CardTitle className="text-lg">Produits de la catégorie</CardTitle>
                       <CardDescription>{getSelectedCategoryName()}</CardDescription>
                     </div>
-                    <Button onClick={() => navigate('/admin/products/new')}>
+                    <Button onClick={() => navigate('/dasgabriel@adminaccess/products/new')}>
                       <Plus className="mr-2 h-4 w-4" />
                       Nouveau produit
                     </Button>
@@ -534,7 +534,7 @@ export default function Catalog() {
                       <Package className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                       <p className="text-lg font-medium mb-2">Aucun produit dans cette catégorie</p>
                       <p className="text-sm mb-4">Ajoutez des produits à cette catégorie</p>
-                      <Button onClick={() => navigate('/admin/products/new')} variant="outline">
+                      <Button onClick={() => navigate('/dasgabriel@adminaccess/products/new')} variant="outline">
                         Ajouter un produit
                       </Button>
                     </div>
@@ -591,7 +591,7 @@ export default function Catalog() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => navigate(`/admin/products/edit/${product.id}`)}>
+                                    <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/products/edit/${product.id}`)}>
                                       <Edit className="mr-2 h-4 w-4" />
                                       Modifier
                                     </DropdownMenuItem>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -128,6 +129,7 @@ const AdminAccounts = () => {
     await deleteAccount(account.id, account.user_id);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleToggleStatus = async (account: any) => {
     await toggleAccountStatus(account.id, account.is_active);
   };
