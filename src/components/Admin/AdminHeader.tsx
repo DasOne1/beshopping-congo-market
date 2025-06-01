@@ -33,7 +33,7 @@ export function AdminHeader() {
           {/* Logo et titre */}
           <div className="flex items-center space-x-3 flex-shrink-0">
             <Link to="/dasgabriel@adminaccess/dashboard">
-              <img src="/favicon.svg" alt="BeShopping Logo" className="h-10 w-10" />
+              <img src="/shopping_logo.png" alt="BeShopping Logo" className="h-10 w-10" />
             </Link>
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">Administration</h1>

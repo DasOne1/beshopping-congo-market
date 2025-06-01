@@ -158,7 +158,7 @@ const Account = () => {
                     {favoriteProducts.slice(0, 3).map(product => (
                       <div key={product.id} className="flex items-center gap-3 p-3 border rounded-lg">
                         <img 
-                          src={product.images[0] || '/favicon.svg'} 
+                          src={product.images[0] || '/shopping_logo.png'} 
                           alt={product.name}
                           className="w-12 h-12 object-cover rounded-md"
                         />
@@ -203,7 +203,7 @@ const Account = () => {
                     {cartProducts.slice(0, 3).map(item => (
                       <div key={item.productId} className="flex items-center gap-3 p-3 border rounded-lg">
                         <img 
-                          src={item.product?.images[0] || '/favicon.svg'} 
+                          src={item.product?.images[0] || '/shopping_logo.png'} 
                           alt={item.product?.name}
                           className="w-12 h-12 object-cover rounded-md"
                         />

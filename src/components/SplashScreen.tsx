@@ -85,7 +85,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               className="mb-6"
             >
               <img
-                src="/favicon.svg"
+                src="/shopping_logo.png"
                 alt="BeShopping Logo"
                 className="w-24 h-24 object-contain"
               />

@@ -162,7 +162,7 @@ const Cart = () => {
                         <div className="flex-shrink-0 w-20 h-20 bg-muted rounded-md overflow-hidden">
                           <Link to={`/product/${item.product.id}`}>
                             <img 
-                              src={item.product.images[0] || '/favicon.svg'} 
+                              src={item.product.images[0] || '/shopping_logo.png'} 
                               alt={item.product.name} 
                               className="w-full h-full object-cover transition-transform hover:scale-105"
                             />

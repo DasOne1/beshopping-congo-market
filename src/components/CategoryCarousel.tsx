@@ -104,7 +104,7 @@ const CategoryCarousel = () => {
                   >
                     <div className={`rounded-full overflow-hidden bg-gray-100 mb-2 border-2 border-gray-200 hover:border-primary transition-all duration-300 ${isScrolled ? 'w-12 h-12' : 'w-16 h-16'}`}>
                       <img 
-                        src={category.image || `/favicon.svg`} 
+                        src={category.image || `/shopping_logo.png`} 
                         alt={category.name}
                         className="w-full h-full object-cover"
                       />
