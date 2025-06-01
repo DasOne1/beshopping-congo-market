@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -18,10 +17,10 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { items } = useCart();
+  const { cart } = useCart();
   const { favorites } = useFavorites();
 
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = cart?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
   const toggleSearch = () => {
     setIsSearchOpen(!isSearchOpen);
