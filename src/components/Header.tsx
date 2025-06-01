@@ -136,71 +136,45 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Search Overlay - Style amélioré */}
+      {/* Search Overlay Compact - juste en dessous du header */}
       <AnimatePresence>
         {isSearchOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center pt-20"
-            onClick={() => setIsSearchOpen(false)}
+            className="bg-background/98 backdrop-blur-md border-b border-border/50 shadow-lg"
           >
-            <motion.div
-              initial={{ opacity: 0, y: -20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="bg-background/95 backdrop-blur-md border border-border/50 rounded-2xl shadow-2xl p-6 mx-4 w-full max-w-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                  Rechercher des produits
-                </h2>
-                <Button variant="ghost" size="icon" onClick={toggleSearch} className="rounded-full">
-                  <X className="h-5 w-5" />
-                  <span className="sr-only">Fermer</span>
-                </Button>
-              </div>
-              
-              <form onSubmit={handleSearchSubmit} className="space-y-4">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <div className="container py-4">
+              <form onSubmit={handleSearchSubmit} className="flex items-center gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Rechercher des produits par nom, description ou tags..."
+                    placeholder="Rechercher des produits..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 pr-4 py-3 text-lg rounded-xl border-2 focus:border-primary/50 transition-all duration-200"
+                    className="pl-10 pr-4 h-10 border-2 focus:border-primary/50 transition-all duration-200"
                     autoFocus
                   />
                 </div>
-                
-                <div className="flex gap-3">
-                  <Button 
-                    type="submit" 
-                    className="flex-1 py-3 rounded-xl font-medium"
-                    disabled={!searchQuery.trim()}
-                  >
-                    <Search className="mr-2 h-5 w-5" />
-                    Rechercher
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={toggleSearch}
-                    className="px-6 py-3 rounded-xl"
-                  >
-                    Annuler
-                  </Button>
-                </div>
+                <Button 
+                  type="submit" 
+                  size="sm"
+                  disabled={!searchQuery.trim()}
+                >
+                  Rechercher
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={toggleSearch}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </form>
-              
-              <div className="mt-4 text-sm text-muted-foreground">
-                <p>💡 Astuce: Utilisez des mots-clés pour affiner votre recherche</p>
-              </div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
