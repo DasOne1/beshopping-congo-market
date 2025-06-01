@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   ShoppingBag, 
   Heart, 
@@ -26,140 +26,161 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Search for:', searchQuery);
-    setIsSearchOpen(false);
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    
+    // Recherche en temps réel - naviguer vers la page products avec le terme de recherche
+    if (value.trim()) {
+      navigate(`/products?search=${encodeURIComponent(value.trim())}`);
+    } else {
+      navigate('/products');
+    }
   };
 
   const cartQuantity = getTotalQuantity();
   const favoriteQuantity = favorites.length;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
-      <div className="container flex h-14 md:h-16 items-center">
-        {/* Menu Button et Logo - à gauche */}
-        <div className="flex items-center space-x-3">
-          {/* Mobile Menu Button */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="md:hidden"
-            onClick={toggleMenu}
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Menu</span>
-          </Button>
-
-          {/* Logo */}
+    <>
+      <header className="fixed top-0 left-0 right-0 z-50 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
+        <div className="container flex h-14 md:h-16 items-center">
+          {/* Menu Button et Logo - à gauche */}
           <div className="flex items-center space-x-3">
-            <Link to="/">
-              <img src="/shopping_logo.png" alt="BeShopping Logo" className="h-10 w-10" />
+            {/* Mobile Menu Button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden"
+              onClick={toggleMenu}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Menu</span>
+            </Button>
+
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
+              <Link to="/">
+                <img src="/shopping_logo.png" alt="BeShopping Logo" className="h-10 w-10" />
+              </Link>
+              <Link to="/" className="hidden sm:block">
+                <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                  BeShopping
+                </span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Desktop Navigation - centré */}
+          <nav className="hidden md:flex items-center space-x-6 flex-1 ml-8">
+            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
+              Accueil
             </Link>
-            <Link to="/" className="hidden sm:block">
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                BeShopping
-              </span>
+            <Link to="/products" className="text-sm font-medium transition-colors hover:text-primary">
+              Produits
+            </Link>
+            <Link to="/categories" className="text-sm font-medium transition-colors hover:text-primary">
+              Catégories
+            </Link>
+            <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
+              À Propos
+            </Link>
+            <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary">
+              Contact
+            </Link>
+          </nav>
+
+          {/* Right Icons - dans l'ordre spécifié */}
+          <div className="flex items-center space-x-1 md:space-x-2 ml-auto">
+            <Button variant="ghost" size="icon" onClick={toggleSearch}>
+              <Search className="h-5 w-5" />
+              <span className="sr-only">Recherche</span>
+            </Button>
+            
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
+            {/* Favorites */}
+            <Link to="/favorites" className="relative">
+              <Button variant="ghost" size="icon">
+                <Heart className="h-5 w-5" />
+                {favoriteQuantity > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {favoriteQuantity}
+                  </span>
+                )}
+                <span className="sr-only">Favoris</span>
+              </Button>
+            </Link>
+            
+            {/* Cart */}
+            <Link to="/cart" className="relative">
+              <Button variant="ghost" size="icon">
+                <ShoppingBag className="h-5 w-5" />
+                {cartQuantity > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartQuantity}
+                  </span>
+                )}
+                <span className="sr-only">Panier</span>
+              </Button>
+            </Link>
+
+            <Link to="/account" className="hidden sm:block">
+              <Button variant="ghost" size="icon">
+                <User className="h-5 w-5" />
+                <span className="sr-only">Compte</span>
+              </Button>
             </Link>
           </div>
         </div>
+      </header>
 
-        {/* Desktop Navigation - centré */}
-        <nav className="hidden md:flex items-center space-x-6 flex-1 ml-8">
-          <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
-            Accueil
-          </Link>
-          <Link to="/products" className="text-sm font-medium transition-colors hover:text-primary">
-            Produits
-          </Link>
-          <Link to="/categories" className="text-sm font-medium transition-colors hover:text-primary">
-            Catégories
-          </Link>
-          <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
-            À Propos
-          </Link>
-          <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary">
-            Contact
-          </Link>
-        </nav>
-
-        {/* Right Icons - dans l'ordre spécifié */}
-        <div className="flex items-center space-x-1 md:space-x-2 ml-auto">
-          <Button variant="ghost" size="icon" onClick={toggleSearch} className="hidden sm:flex">
-            <Search className="h-5 w-5" />
-            <span className="sr-only">Recherche</span>
-          </Button>
-          
-          {/* Theme Toggle */}
-          <ThemeToggle />
-          
-          {/* Favorites */}
-          <Link to="/favorites" className="relative">
-            <Button variant="ghost" size="icon">
-              <Heart className="h-5 w-5" />
-              {favoriteQuantity > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {favoriteQuantity}
-                </span>
-              )}
-              <span className="sr-only">Favoris</span>
-            </Button>
-          </Link>
-          
-          {/* Cart */}
-          <Link to="/cart" className="relative">
-            <Button variant="ghost" size="icon">
-              <ShoppingBag className="h-5 w-5" />
-              {cartQuantity > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartQuantity}
-                </span>
-              )}
-              <span className="sr-only">Panier</span>
-            </Button>
-          </Link>
-
-          <Link to="/account" className="hidden sm:block">
-            <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
-              <span className="sr-only">Compte</span>
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Search Overlay */}
+      {/* Search Bar - positioned just below header */}
       <AnimatePresence>
         {isSearchOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-background/90 backdrop-blur-md z-50"
+            className="fixed top-14 md:top-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border/40 shadow-sm"
           >
-            <div className="container py-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Rechercher des produits</h2>
-                <Button variant="ghost" size="icon" onClick={toggleSearch}>
-                  <X className="h-5 w-5" />
-                  <span className="sr-only">Fermer</span>
-                </Button>
-              </div>
-              <form onSubmit={handleSearchSubmit}>
-                <div className="flex space-x-2">
-                  <Input
-                    placeholder="Rechercher des produits..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1"
-                    autoFocus
-                  />
-                  <Button type="submit">Rechercher</Button>
+            <div className="container py-3">
+              <form onSubmit={handleSearchSubmit} className="relative max-w-md mx-auto">
+                <div className="flex items-center space-x-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Rechercher des produits..."
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      className="pl-10 pr-4"
+                      autoFocus
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleSearch}
+                    className="shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Fermer</span>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -169,7 +190,7 @@ const Header = () => {
 
       {/* Sidebar for mobile navigation */}
       <Sidebar isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-    </header>
+    </>
   );
 };
 

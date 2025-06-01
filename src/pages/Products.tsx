@@ -1,14 +1,14 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, X, Grid3X3, List, Filter } from 'lucide-react';
+import { X, Grid3X3, List, Filter } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import ProductSkeleton from '@/components/ProductSkeleton';
 import ProductFilters from '@/components/ProductFilters';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
@@ -33,11 +33,7 @@ const Products = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const itemsPerPage = 12;
-
-  // Ref pour la recherche
-  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selectedCategoryId) {
@@ -48,26 +44,8 @@ const Products = () => {
   useEffect(() => {
     if (searchQuery) {
       setSearchTerm(searchQuery);
-      setIsSearchExpanded(true);
     }
   }, [searchQuery]);
-
-  // Gérer les clics en dehors de la recherche
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setIsSearchExpanded(false);
-      }
-    };
-
-    if (isSearchExpanded) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isSearchExpanded]);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -110,7 +88,6 @@ const Products = () => {
     setPriceRange([0, 1000000]);
     setSortBy('newest');
     setCurrentPage(1);
-    setIsSearchExpanded(false);
     navigate('/products');
   };
 
@@ -120,10 +97,6 @@ const Products = () => {
       product_id: productId,
       session_id: sessionStorage.getItem('session_id') || 'anonymous'
     });
-  };
-
-  const handleSearchIconClick = () => {
-    setIsSearchExpanded(!isSearchExpanded);
   };
 
   const isLoading = productsLoading || categoriesLoading;
@@ -154,49 +127,6 @@ const Products = () => {
                 <Filter className="w-4 h-4" />
                 Filtres
               </Button>
-              
-              {/* Barre de recherche avec overlay centré */}
-              <div className="relative" ref={searchRef}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSearchIconClick}
-                  className="p-2"
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-                
-                {/* Overlay de recherche centré */}
-                {isSearchExpanded && (
-                  <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
-                    {/* Backdrop */}
-                    <div className="absolute inset-0 bg-black/20" onClick={() => setIsSearchExpanded(false)} />
-                    
-                    {/* Search overlay */}
-                    <div className="relative bg-background border rounded-lg shadow-xl p-4 mx-4 w-full max-w-md">
-                      <div className="flex items-center gap-2">
-                        <Search className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Rechercher des produits..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="border-0 focus-visible:ring-0 px-0"
-                          autoFocus
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setIsSearchExpanded(false)}
-                          className="p-1 h-6 w-6"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              
-              </div>
               
               <span className="text-sm text-muted-foreground whitespace-nowrap">
                 {isLoading ? 'Chargement...' : `${sortedProducts.length} produit(s)`}
