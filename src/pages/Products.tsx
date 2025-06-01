@@ -1,14 +1,14 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Grid3X3, List, Filter, Search } from 'lucide-react';
+import { Search, X, Grid3X3, List, Filter } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import ProductSkeleton from '@/components/ProductSkeleton';
 import ProductFilters from '@/components/ProductFilters';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
@@ -33,7 +33,11 @@ const Products = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const itemsPerPage = 12;
+
+  // Ref pour la recherche
+  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selectedCategoryId) {
@@ -44,8 +48,26 @@ const Products = () => {
   useEffect(() => {
     if (searchQuery) {
       setSearchTerm(searchQuery);
+      setIsSearchExpanded(true);
     }
   }, [searchQuery]);
+
+  // Gérer les clics en dehors de la recherche
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchExpanded(false);
+      }
+    };
+
+    if (isSearchExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSearchExpanded]);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -57,6 +79,7 @@ const Products = () => {
     const price = product.discounted_price || product.original_price;
     const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
     
+    // Include both active and inactive products in the list
     return matchesSearch && matchesCategory && matchesPrice;
   });
 
@@ -87,6 +110,7 @@ const Products = () => {
     setPriceRange([0, 1000000]);
     setSortBy('newest');
     setCurrentPage(1);
+    setIsSearchExpanded(false);
     navigate('/products');
   };
 
@@ -96,6 +120,10 @@ const Products = () => {
       product_id: productId,
       session_id: sessionStorage.getItem('session_id') || 'anonymous'
     });
+  };
+
+  const handleSearchIconClick = () => {
+    setIsSearchExpanded(!isSearchExpanded);
   };
 
   const isLoading = productsLoading || categoriesLoading;
@@ -111,31 +139,12 @@ const Products = () => {
           <p className="text-muted-foreground">
             Découvrez notre sélection de produits de qualité
           </p>
-          {searchQuery && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg"
-            >
-              <p className="text-sm font-medium text-primary">
-                Résultats de recherche pour: "{searchQuery}" - {filteredProducts.length} produit(s) trouvé(s)
-              </p>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={clearFilters}
-                className="mt-2 text-primary hover:text-primary"
-              >
-                Effacer la recherche
-              </Button>
-            </motion.div>
-          )}
         </div>
 
         {/* Sticky Controls */}
         <div className="sticky top-16 md:top-20 z-40 bg-background/95 backdrop-blur-sm border-b pb-4 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="flex items-center gap-4 w-full sm:w-auto relative">
               <Button
                 variant="outline"
                 size="sm"
@@ -145,6 +154,49 @@ const Products = () => {
                 <Filter className="w-4 h-4" />
                 Filtres
               </Button>
+              
+              {/* Barre de recherche avec overlay centré */}
+              <div className="relative" ref={searchRef}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSearchIconClick}
+                  className="p-2"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+                
+                {/* Overlay de recherche centré */}
+                {isSearchExpanded && (
+                  <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/20" onClick={() => setIsSearchExpanded(false)} />
+                    
+                    {/* Search overlay */}
+                    <div className="relative bg-background border rounded-lg shadow-xl p-4 mx-4 w-full max-w-md">
+                      <div className="flex items-center gap-2">
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Rechercher des produits..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="border-0 focus-visible:ring-0 px-0"
+                          autoFocus
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsSearchExpanded(false)}
+                          className="p-1 h-6 w-6"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              
+              </div>
               
               <span className="text-sm text-muted-foreground whitespace-nowrap">
                 {isLoading ? 'Chargement...' : `${sortedProducts.length} produit(s)`}
@@ -200,30 +252,19 @@ const Products = () => {
           </div>
         ) : paginatedProducts.length > 0 ? (
           <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className={viewMode === 'grid' 
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
-                : "space-y-4"
-              }
-            >
-              {paginatedProducts.map((product, index) => (
-                <motion.div 
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  onClick={() => handleProductClick(product.id)}
-                >
+            <div className={viewMode === 'grid' 
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
+              : "space-y-4"
+            }>
+              {paginatedProducts.map(product => (
+                <div key={product.id} onClick={() => handleProductClick(product.id)}>
                   <ProductCard 
                     product={product} 
                     viewMode={viewMode}
                   />
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -264,25 +305,18 @@ const Products = () => {
             )}
           </>
         ) : (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
-          >
+          <div className="text-center py-16">
             <div className="w-24 h-24 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
               <Search className="h-12 w-12 text-muted-foreground" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Aucun produit trouvé</h3>
             <p className="text-muted-foreground mb-4">
-              {searchQuery 
-                ? `Aucun résultat pour "${searchQuery}". Essayez avec d'autres mots-clés ou explorez nos catégories.`
-                : "Essayez de modifier vos critères de recherche ou explorez d'autres catégories."
-              }
+              Essayez de modifier vos critères de recherche ou explorez d'autres catégories.
             </p>
             <Button onClick={clearFilters}>
               Effacer les filtres
             </Button>
-          </motion.div>
+          </div>
         )}
 
         {/* Filters Sidebar */}
