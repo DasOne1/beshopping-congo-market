@@ -79,21 +79,30 @@ export const useCustomerAuth = () => {
     try {
       const passwordHash = await hashPassword(password);
       
-      const { data: authData, error } = await supabase
+      // Récupérer les données d'authentification
+      const { data: authData, error: authError } = await supabase
         .from('customer_auth')
-        .select(`
-          *,
-          customers (*)
-        `)
+        .select('customer_id')
         .eq('phone', phone)
         .eq('password_hash', passwordHash)
         .single();
 
-      if (error || !authData) {
+      if (authError || !authData) {
         throw new Error('Téléphone ou mot de passe incorrect');
       }
 
-      setCurrentCustomer(authData.customers);
+      // Récupérer les données du customer
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', authData.customer_id)
+        .single();
+
+      if (customerError || !customerData) {
+        throw new Error('Erreur lors de la récupération des données utilisateur');
+      }
+
+      setCurrentCustomer(customerData);
       setIsAuthenticated(true);
       
       toast({
