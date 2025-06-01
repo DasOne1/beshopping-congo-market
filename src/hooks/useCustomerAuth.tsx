@@ -38,11 +38,31 @@ export const useCustomerAuth = () => {
 
     setLoading(true);
     try {
+      console.log('Création du compte avec téléphone:', customerData.phone);
+      
+      // Vérifier si un compte avec ce téléphone existe déjà
+      const { data: existingAuth, error: checkError } = await supabase
+        .from('customer_auth')
+        .select('phone')
+        .eq('phone', customerData.phone)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Erreur lors de la vérification:', checkError);
+        throw new Error('Erreur lors de la vérification du compte');
+      }
+
+      if (existingAuth) {
+        throw new Error('Un compte avec ce numéro de téléphone existe déjà');
+      }
+
       // Créer ou récupérer le customer
       const customer = await createCustomer.mutateAsync(customerData);
+      console.log('Customer créé:', customer);
       
       // Hasher le mot de passe
       const passwordHash = await hashPassword(password);
+      console.log('Mot de passe hashé pour création');
       
       // Créer l'authentification
       const { error } = await supabase
@@ -53,8 +73,12 @@ export const useCustomerAuth = () => {
           password_hash: passwordHash
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur lors de la création de l\'auth:', error);
+        throw error;
+      }
 
+      console.log('Authentification créée avec succès');
       setCurrentCustomer(customer);
       setIsAuthenticated(true);
       
@@ -63,6 +87,7 @@ export const useCustomerAuth = () => {
         description: "Vous êtes maintenant connecté",
       });
     } catch (error: any) {
+      console.error('Erreur complète lors de la création:', error);
       toast({
         title: "Erreur lors de la création du compte",
         description: error.message,
@@ -77,48 +102,38 @@ export const useCustomerAuth = () => {
   const signIn = async ({ phone, password }: CustomerAuthData) => {
     setLoading(true);
     try {
+      console.log('Tentative de connexion avec téléphone:', phone);
+      
+      // Hasher le mot de passe de la même façon qu'à la création
       const passwordHash = await hashPassword(password);
+      console.log('Mot de passe hashé pour connexion');
       
-      console.log('Tentative de connexion avec:', { phone, passwordHash });
-      
-      // Récupérer les données d'authentification - utiliser .maybeSingle() au lieu de .single()
+      // Récupérer les données d'authentification avec jointure sur customers
       const { data: authData, error: authError } = await supabase
         .from('customer_auth')
-        .select('customer_id')
+        .select(`
+          customer_id,
+          customers!inner(*)
+        `)
         .eq('phone', phone)
         .eq('password_hash', passwordHash)
         .maybeSingle();
 
-      console.log('Résultat auth:', { authData, authError });
+      console.log('Résultat de la requête auth:', { authData, authError });
 
       if (authError) {
-        console.error('Erreur auth:', authError);
+        console.error('Erreur lors de la requête auth:', authError);
         throw new Error('Erreur lors de la vérification des identifiants');
       }
 
       if (!authData) {
+        console.log('Aucune correspondance trouvée pour:', { phone, passwordHash });
         throw new Error('Téléphone ou mot de passe incorrect');
       }
 
-      // Récupérer les données du customer
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('id', authData.customer_id)
-        .maybeSingle();
-
-      console.log('Résultat customer:', { customerData, customerError });
-
-      if (customerError) {
-        console.error('Erreur customer:', customerError);
-        throw new Error('Erreur lors de la récupération des données utilisateur');
-      }
-
-      if (!customerData) {
-        throw new Error('Utilisateur introuvable');
-      }
-
-      setCurrentCustomer(customerData);
+      console.log('Connexion réussie, données customer:', authData.customers);
+      
+      setCurrentCustomer(authData.customers);
       setIsAuthenticated(true);
       
       toast({
@@ -126,7 +141,7 @@ export const useCustomerAuth = () => {
         description: "Bienvenue !",
       });
     } catch (error: any) {
-      console.error('Erreur de connexion complète:', error);
+      console.error('Erreur de connexion:', error);
       toast({
         title: "Erreur de connexion",
         description: error.message,
