@@ -205,6 +205,7 @@ export type Database = {
           last_order_date: string | null
           name: string
           orders_count: number | null
+          password_hash: string | null
           phone: string | null
           status: string | null
           total_spent: number | null
@@ -218,6 +219,7 @@ export type Database = {
           last_order_date?: string | null
           name: string
           orders_count?: number | null
+          password_hash?: string | null
           phone?: string | null
           status?: string | null
           total_spent?: number | null
@@ -231,6 +233,7 @@ export type Database = {
           last_order_date?: string | null
           name?: string
           orders_count?: number | null
+          password_hash?: string | null
           phone?: string | null
           status?: string | null
           total_spent?: number | null

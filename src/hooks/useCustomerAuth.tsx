@@ -90,15 +90,20 @@ export const useCustomerAuth = () => {
     try {
       console.log('Connexion du client...');
       
-      // Chercher le customer par numéro de téléphone
+      // Chercher le customer par numéro de téléphone avec password_hash
       const { data: customer, error } = await supabase
         .from('customers')
-        .select('*')
+        .select('*, password_hash')
         .eq('phone', loginData.phone)
         .maybeSingle();
 
       if (error || !customer) {
         throw new Error('Numéro de téléphone ou mot de passe incorrect');
+      }
+
+      // Vérifier si le customer a un mot de passe
+      if (!customer.password_hash) {
+        throw new Error('Aucun mot de passe défini pour ce compte');
       }
 
       // Vérifier le mot de passe
