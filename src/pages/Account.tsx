@@ -16,17 +16,29 @@ import { useProducts } from '@/hooks/useProducts';
 import ProductSkeleton from '@/components/ProductSkeleton';
 import { motion } from 'framer-motion';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import EmailVerificationDialog from '@/components/EmailVerificationDialog';
 
 const Account = () => {
   const { favorites } = useFavorites();
   const { cart } = useCart();
   const { products, isLoading } = useProducts();
-  const { currentCustomer, isAuthenticated, loading, signUp, signIn, signOut, updateProfile } = useCustomerAuth();
+  const { 
+    currentCustomer, 
+    isAuthenticated, 
+    loading, 
+    showEmailVerification,
+    pendingEmail,
+    signUp, 
+    signIn, 
+    signOut, 
+    updateProfile,
+    verifyEmail
+  } = useCustomerAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authForm, setAuthForm] = useState({ phone: '', password: '' });
+  const [authForm, setAuthForm] = useState({ email: '', password: '' });
   const [profileForm, setProfileForm] = useState({
     name: '',
     email: '',
@@ -62,19 +74,29 @@ const Account = () => {
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isSignUp && !profileForm.email) {
+      return;
+    }
+
     try {
       if (isSignUp) {
         await signUp({
           name: profileForm.name,
           email: profileForm.email,
-          phone: authForm.phone,
+          phone: profileForm.phone,
           address: profileForm.address
         }, authForm.password);
+        // Ne fermer le modal que si pas de vérification d'email requise
+        if (!showEmailVerification) {
+          setShowAuthModal(false);
+          setAuthForm({ email: '', password: '' });
+        }
       } else {
         await signIn(authForm);
+        setShowAuthModal(false);
+        setAuthForm({ email: '', password: '' });
       }
-      setShowAuthModal(false);
-      setAuthForm({ phone: '', password: '' });
     } catch (error) {
       // Error is handled in the hook
     }
@@ -100,11 +122,21 @@ const Account = () => {
     setShowAuthModal(true);
   };
 
+  const handleEmailVerification = async (code: string) => {
+    try {
+      await verifyEmail(code);
+      setShowAuthModal(false);
+      setAuthForm({ email: '', password: '' });
+    } catch (error) {
+      // Error is handled in the hook
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className={`container mx-auto px-4 py-8 pt-20 md:pt-24 pb-20 md:pb-8 transition-all duration-300 ${showAuthModal ? 'blur-sm' : ''}`}>
+      <main className={`container mx-auto px-4 py-8 pt-20 md:pt-24 pb-20 md:pb-8 transition-all duration-300 ${showAuthModal || showEmailVerification ? 'blur-sm' : ''}`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -508,7 +540,7 @@ const Account = () => {
                   {isSignUp && (
                     <>
                       <div>
-                        <Label htmlFor="name">Nom complet</Label>
+                        <Label htmlFor="name">Nom complet *</Label>
                         <Input
                           id="name"
                           type="text"
@@ -518,12 +550,25 @@ const Account = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email">Email (optionnel)</Label>
+                        <Label htmlFor="signup-email">Email *</Label>
                         <Input
-                          id="email"
+                          id="signup-email"
                           type="email"
                           value={profileForm.email}
                           onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                          required
+                        />
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Un email de vérification sera envoyé à cette adresse
+                        </p>
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Téléphone (optionnel)</Label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          value={profileForm.phone}
+                          onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
                         />
                       </div>
                       <div>
@@ -538,12 +583,12 @@ const Account = () => {
                   )}
                   
                   <div>
-                    <Label htmlFor="phone">Numéro de téléphone</Label>
+                    <Label htmlFor="auth-email">Email</Label>
                     <Input
-                      id="phone"
-                      type="tel"
-                      value={authForm.phone}
-                      onChange={(e) => setAuthForm({...authForm, phone: e.target.value})}
+                      id="auth-email"
+                      type="email"
+                      value={authForm.email}
+                      onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
                       required
                     />
                   </div>
@@ -581,6 +626,15 @@ const Account = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Email Verification Dialog */}
+      <EmailVerificationDialog
+        isOpen={showEmailVerification}
+        email={pendingEmail}
+        loading={loading}
+        onVerify={handleEmailVerification}
+        onClose={() => setShowAuthModal(false)}
+      />
 
       <Footer />
     </div>

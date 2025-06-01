@@ -83,6 +83,7 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
       customer_id: currentCustomer?.id || null,
       customer_name: customerData.customerName,
       customer_phone: customerData.customerPhone,
+      customer_email: currentCustomer?.email || null,
       shipping_address: { address: customerData.customerAddress },
       total_amount: subtotal || 0,
       subtotal: subtotal || 0,

@@ -5,13 +5,13 @@ import { toast } from '@/hooks/use-toast';
 import { useCustomers } from './useCustomers';
 
 interface CustomerAuthData {
-  phone: string;
+  email: string;
   password: string;
 }
 
 interface CustomerData {
   name: string;
-  email?: string;
+  email: string;
   phone?: string;
   address?: any;
 }
@@ -20,6 +20,8 @@ export const useCustomerAuth = () => {
   const [currentCustomer, setCurrentCustomer] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string>('');
   const { createCustomer, updateCustomer } = useCustomers();
 
   const hashPassword = async (password: string): Promise<string> => {
@@ -31,20 +33,24 @@ export const useCustomerAuth = () => {
       .join('');
   };
 
+  const generateVerificationToken = (): string => {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  };
+
   const signUp = async (customerData: CustomerData, password: string) => {
-    if (!customerData.phone) {
-      throw new Error('Le numéro de téléphone est requis');
+    if (!customerData.email) {
+      throw new Error('L\'email est requis');
     }
 
     setLoading(true);
     try {
-      console.log('Création du compte avec téléphone:', customerData.phone);
+      console.log('Création du compte avec email:', customerData.email);
       
-      // Vérifier si un compte avec ce téléphone existe déjà
+      // Vérifier si un compte avec cet email existe déjà
       const { data: existingAuth, error: checkError } = await supabase
         .from('customer_auth')
-        .select('phone')
-        .eq('phone', customerData.phone)
+        .select('email')
+        .eq('email', customerData.email)
         .maybeSingle();
 
       if (checkError) {
@@ -53,7 +59,7 @@ export const useCustomerAuth = () => {
       }
 
       if (existingAuth) {
-        throw new Error('Un compte avec ce numéro de téléphone existe déjà');
+        throw new Error('Un compte avec cet email existe déjà');
       }
 
       // Créer ou récupérer le customer
@@ -63,14 +69,22 @@ export const useCustomerAuth = () => {
       // Hasher le mot de passe
       const passwordHash = await hashPassword(password);
       console.log('Mot de passe hashé pour création');
+
+      // Générer un token de vérification
+      const verificationToken = generateVerificationToken();
+      const tokenExpiry = new Date();
+      tokenExpiry.setHours(tokenExpiry.getHours() + 24); // Token valide 24h
       
-      // Créer l'authentification
+      // Créer l'authentification avec email non vérifié
       const { error } = await supabase
         .from('customer_auth')
         .insert({
           customer_id: customer.id,
-          phone: customerData.phone,
-          password_hash: passwordHash
+          email: customerData.email,
+          password_hash: passwordHash,
+          email_verified: false,
+          verification_token: verificationToken,
+          verification_token_expires_at: tokenExpiry.toISOString()
         });
 
       if (error) {
@@ -79,12 +93,14 @@ export const useCustomerAuth = () => {
       }
 
       console.log('Authentification créée avec succès');
-      setCurrentCustomer(customer);
-      setIsAuthenticated(true);
+      
+      // Afficher le popup de vérification d'email
+      setPendingEmail(customerData.email);
+      setShowEmailVerification(true);
       
       toast({
         title: "Compte créé avec succès",
-        description: "Vous êtes maintenant connecté",
+        description: "Un email de vérification vous a été envoyé",
       });
     } catch (error: any) {
       console.error('Erreur complète lors de la création:', error);
@@ -99,10 +115,85 @@ export const useCustomerAuth = () => {
     }
   };
 
-  const signIn = async ({ phone, password }: CustomerAuthData) => {
+  const verifyEmail = async (verificationCode: string) => {
     setLoading(true);
     try {
-      console.log('Tentative de connexion avec téléphone:', phone);
+      console.log('Vérification de l\'email avec le code:', verificationCode);
+      
+      // Vérifier le token de vérification
+      const { data: authData, error: verifyError } = await supabase
+        .from('customer_auth')
+        .select(`
+          customer_id,
+          verification_token_expires_at,
+          customers!inner(*)
+        `)
+        .eq('email', pendingEmail)
+        .eq('verification_token', verificationCode)
+        .eq('email_verified', false)
+        .maybeSingle();
+
+      if (verifyError) {
+        console.error('Erreur lors de la vérification:', verifyError);
+        throw new Error('Erreur lors de la vérification du code');
+      }
+
+      if (!authData) {
+        throw new Error('Code de vérification invalide ou expiré');
+      }
+
+      // Vérifier que le token n'a pas expiré
+      const now = new Date();
+      const expiryDate = new Date(authData.verification_token_expires_at);
+      if (now > expiryDate) {
+        throw new Error('Le code de vérification a expiré');
+      }
+
+      // Marquer l'email comme vérifié
+      const { error: updateError } = await supabase
+        .from('customer_auth')
+        .update({
+          email_verified: true,
+          verification_token: null,
+          verification_token_expires_at: null
+        })
+        .eq('email', pendingEmail)
+        .eq('verification_token', verificationCode);
+
+      if (updateError) {
+        console.error('Erreur lors de la mise à jour:', updateError);
+        throw new Error('Erreur lors de la vérification');
+      }
+
+      console.log('Email vérifié avec succès');
+      
+      // Connecter l'utilisateur
+      setCurrentCustomer(authData.customers);
+      setIsAuthenticated(true);
+      setShowEmailVerification(false);
+      setPendingEmail('');
+      
+      toast({
+        title: "Email vérifié avec succès",
+        description: "Vous êtes maintenant connecté",
+      });
+    } catch (error: any) {
+      console.error('Erreur de vérification:', error);
+      toast({
+        title: "Erreur de vérification",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signIn = async ({ email, password }: CustomerAuthData) => {
+    setLoading(true);
+    try {
+      console.log('Tentative de connexion avec email:', email);
       
       // Hasher le mot de passe de la même façon qu'à la création
       const passwordHash = await hashPassword(password);
@@ -113,9 +204,10 @@ export const useCustomerAuth = () => {
         .from('customer_auth')
         .select(`
           customer_id,
+          email_verified,
           customers!inner(*)
         `)
-        .eq('phone', phone)
+        .eq('email', email)
         .eq('password_hash', passwordHash)
         .maybeSingle();
 
@@ -127,8 +219,12 @@ export const useCustomerAuth = () => {
       }
 
       if (!authData) {
-        console.log('Aucune correspondance trouvée pour:', { phone, passwordHash });
-        throw new Error('Téléphone ou mot de passe incorrect');
+        console.log('Aucune correspondance trouvée pour:', { email, passwordHash });
+        throw new Error('Email ou mot de passe incorrect');
+      }
+
+      if (!authData.email_verified) {
+        throw new Error('Votre email n\'a pas encore été vérifié. Veuillez vérifier votre boîte mail.');
       }
 
       console.log('Connexion réussie, données customer:', authData.customers);
@@ -156,6 +252,8 @@ export const useCustomerAuth = () => {
   const signOut = () => {
     setCurrentCustomer(null);
     setIsAuthenticated(false);
+    setShowEmailVerification(false);
+    setPendingEmail('');
     toast({
       title: "Déconnexion réussie",
       description: "À bientôt !",
@@ -194,9 +292,12 @@ export const useCustomerAuth = () => {
     currentCustomer,
     isAuthenticated,
     loading,
+    showEmailVerification,
+    pendingEmail,
     signUp,
     signIn,
     signOut,
     updateProfile,
+    verifyEmail,
   };
 };
