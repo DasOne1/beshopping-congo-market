@@ -25,7 +25,7 @@ const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
   onCustomClick
 }) => {
   // Utiliser le WhatsApp officiel par défaut, et le business en alternative
-  const defaultPhoneNumber = useAlternate ? "243123456789" : "243978100940";
+  const defaultPhoneNumber = useAlternate ? "243978100940" : "243978100940";
   const finalPhoneNumber = phoneNumber || defaultPhoneNumber;
 
   const handleWhatsAppClick = () => {

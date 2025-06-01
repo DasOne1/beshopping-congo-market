@@ -23,10 +23,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 
 const formSchema = z.object({
-  name: z.string().min(2, 'Name is required'),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(9, 'Phone number is required'),
-  message: z.string().min(10, 'Message must be at least 10 characters'),
+  name: z.string().min(2, 'Le nom est requis'),
+  email: z.string().email('Adresse email invalide'),
+  phone: z.string().min(9, 'Le numéro de téléphone est requis'),
+  message: z.string().min(10, 'Le message doit contenir au moins 10 caractères'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,8 +55,8 @@ export default function Contact() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     toast({
-      title: "Message sent!",
-      description: "We'll get back to you as soon as possible.",
+      title: "Message envoyé !",
+      description: "Nous reviendrons vers vous dès que possible.",
     });
     
     form.reset();
@@ -86,7 +86,7 @@ export default function Contact() {
     <div className="flex flex-col min-h-screen">
       <Header />
       
-      <main className="flex-1">
+      <main className="flex-1 pt-20">
         <section className="py-10 bg-accent/30">
           <div className="container">
             <motion.h1 
@@ -95,7 +95,7 @@ export default function Contact() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              Contact Us
+              Contactez-nous
             </motion.h1>
             <motion.p 
               className="text-center max-w-xl mx-auto text-muted-foreground"
@@ -103,7 +103,7 @@ export default function Contact() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              Have questions about our products or services? We're here to help!
+              Des questions sur nos produits ou services ? Nous sommes là pour vous aider !
             </motion.p>
           </div>
         </section>
@@ -121,7 +121,7 @@ export default function Contact() {
                   className="text-2xl font-semibold mb-6" 
                   variants={itemAnimation}
                 >
-                  Get in Touch
+                  Prenez contact avec nous
                 </motion.h2>
                 
                 <div className="space-y-6">
@@ -132,7 +132,7 @@ export default function Contact() {
                           <MapPin className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h3 className="font-medium">Address</h3>
+                          <h3 className="font-medium">Adresse</h3>
                           <p className="text-sm text-muted-foreground">
                             123 Commerce Street, Kinshasa, Democratic Republic of Congo
                           </p>
@@ -148,7 +148,7 @@ export default function Contact() {
                           <Phone className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h3 className="font-medium">Phone</h3>
+                          <h3 className="font-medium">Téléphone</h3>
                           <p className="text-sm text-muted-foreground">
                             +243 978 100 940<br />
                             +243 974 984 449
@@ -176,22 +176,22 @@ export default function Contact() {
                   </motion.div>
                   
                   <motion.div variants={itemAnimation} className="mt-8">
-                    <h3 className="font-medium mb-4">Contact us via WhatsApp</h3>
+                    <h3 className="font-medium mb-4">Contactez-nous via WhatsApp</h3>
                     <div className="flex flex-col sm:flex-row gap-4">
                       <WhatsAppContact 
-                        message="Hello! I'd like to inquire about your products."
+                        message="Bonjour ! Je souhaite me renseigner sur vos produits."
                         className="w-full sm:w-auto bg-whatsapp hover:bg-whatsapp-dark"
                       >
-                        Primary Contact
+                        Contact principal
                       </WhatsAppContact>
                       
                       <WhatsAppContact 
                         useAlternate={true}
-                        message="Hello! I'd like to speak with your support team."
+                        message="Bonjour ! Je souhaite parler à votre équipe de support."
                         variant="outline"
                         className="w-full sm:w-auto border-whatsapp text-whatsapp hover:bg-whatsapp/10"
                       >
-                        Alternative Contact
+                        Contact alternatif
                       </WhatsAppContact>
                     </div>
                   </motion.div>
@@ -206,7 +206,7 @@ export default function Contact() {
               >
                 <Card className="overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm">
                   <CardContent className="p-6">
-                    <h2 className="text-2xl font-semibold mb-6">Send a Message</h2>
+                    <h2 className="text-2xl font-semibold mb-6">Envoyer un message</h2>
                     
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -215,9 +215,9 @@ export default function Contact() {
                           name="name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Name</FormLabel>
+                              <FormLabel>Nom</FormLabel>
                               <FormControl>
-                                <Input placeholder="Your name" {...field} />
+                                <Input placeholder="votre nom" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -243,9 +243,9 @@ export default function Contact() {
                           name="phone"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Phone</FormLabel>
+                              <FormLabel>Téléphone</FormLabel>
                               <FormControl>
-                                <Input placeholder="Your phone number" {...field} />
+                                <Input placeholder="Votre numéro de téléphone" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -260,7 +260,7 @@ export default function Contact() {
                               <FormLabel>Message</FormLabel>
                               <FormControl>
                                 <Textarea 
-                                  placeholder="How can we help you?" 
+                                  placeholder="Comment pouvons-nous vous aider ?" 
                                   className="min-h-32"
                                   {...field} 
                                 />
@@ -280,7 +280,7 @@ export default function Contact() {
                           ) : (
                             <>
                               <Send className="mr-2 h-4 w-4" /> 
-                              Send Message
+                              Envoyer le messagee
                             </>
                           )}
                         </Button>

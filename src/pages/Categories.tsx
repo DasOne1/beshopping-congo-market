@@ -29,7 +29,7 @@ const Categories = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 pt-20">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

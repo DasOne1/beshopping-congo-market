@@ -236,7 +236,7 @@ const AboutUs = () => {
                   <Phone className="h-8 w-8 text-primary mb-2" />
                   <h3 className="font-semibold mb-1">Téléphone</h3>
                   <p className="text-sm text-muted-foreground">
-                    +243 978 100 940
+                    +243 974 984 449
                   </p>
                 </div>
 
