@@ -48,9 +48,13 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
   // Pré-remplir le formulaire avec les données du client connecté
   useEffect(() => {
     if (currentCustomer) {
+      const customerAddress = typeof currentCustomer.address === 'string' 
+        ? currentCustomer.address 
+        : currentCustomer.address?.address || '';
+        
       form.setValue('customerName', currentCustomer.name || '');
       form.setValue('customerPhone', currentCustomer.phone || '');
-      form.setValue('customerAddress', currentCustomer.address || '');
+      form.setValue('customerAddress', customerAddress);
     }
   }, [currentCustomer, form]);
 

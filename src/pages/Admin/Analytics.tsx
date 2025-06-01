@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { TrendingUp, Users, ShoppingCart, DollarSign } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import AdminLayout from '@/components/Admin/AdminLayout';
+import AnalyticsClearButton from '@/components/Admin/AnalyticsClearButton';
 
 const Analytics = () => {
   const { analytics, isLoading } = useAnalytics();
@@ -40,6 +41,7 @@ const Analytics = () => {
               Analyse détaillée de vos performances
             </p>
           </div>
+          <AnalyticsClearButton />
         </div>
 
         {/* KPI Cards */}

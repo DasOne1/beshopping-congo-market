@@ -55,7 +55,7 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
           <CardTitle>Informations de livraison</CardTitle>
           {isAuthenticated && (
             <p className="text-sm text-muted-foreground">
-              Vos informations ont été pré-remplies
+              Vos informations ont été pré-remplies depuis votre profil
             </p>
           )}
         </CardHeader>

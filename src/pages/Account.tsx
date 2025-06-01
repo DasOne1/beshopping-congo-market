@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -46,7 +47,7 @@ const Account = () => {
         name: currentCustomer.name || '',
         email: currentCustomer.email || '',
         phone: currentCustomer.phone || '',
-        address: currentCustomer.address || '',
+        address: typeof currentCustomer.address === 'string' ? currentCustomer.address : currentCustomer.address?.address || '',
         password: ''
       });
     }
@@ -78,6 +79,14 @@ const Account = () => {
 
   const handleSignInClick = () => {
     setShowAuthModal(true);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   return (
@@ -173,14 +182,15 @@ const Account = () => {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                {/* User Profile */}
+              {/* Informations détaillées du profil */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                {/* Profil utilisateur détaillé */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       <span className="flex items-center">
                         <User className="mr-2 h-5 w-5" />
-                        Profil Utilisateur
+                        Informations Personnelles
                       </span>
                       <Button
                         variant="ghost"
@@ -248,80 +258,104 @@ const Account = () => {
                       </form>
                     ) : (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span>{currentCustomer?.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          <span>{currentCustomer?.phone}</span>
-                        </div>
-                        {currentCustomer?.email && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span>{currentCustomer.email}</span>
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm text-muted-foreground">Nom complet</p>
+                              <p className="font-medium">{currentCustomer?.name}</p>
+                            </div>
                           </div>
-                        )}
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm text-muted-foreground">Téléphone</p>
+                              <p className="font-medium">{currentCustomer?.phone}</p>
+                            </div>
+                          </div>
+                          {currentCustomer?.email && (
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <p className="text-sm text-muted-foreground">Email</p>
+                                <p className="font-medium">{currentCustomer.email}</p>
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <Badge variant={currentCustomer?.status === 'active' ? 'default' : 'secondary'}>
+                              {currentCustomer?.status === 'active' ? 'Actif' : 'Inactif'}
+                            </Badge>
+                          </div>
+                        </div>
                         {currentCustomer?.address && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span>{currentCustomer.address}</span>
+                          <div className="flex items-start gap-2 mt-4">
+                            <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
+                            <div>
+                              <p className="text-sm text-muted-foreground">Adresse</p>
+                              <p className="font-medium">
+                                {typeof currentCustomer.address === 'string' 
+                                  ? currentCustomer.address 
+                                  : currentCustomer.address?.address || 'Non spécifiée'
+                                }
+                              </p>
+                            </div>
                           </div>
                         )}
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Membre depuis</p>
+                            <p className="font-medium">{formatDate(currentCustomer?.created_at)}</p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </CardContent>
                 </Card>
 
-                {/* Favorites Summary */}
+                {/* Statistiques du compte */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <Heart className="mr-2 h-5 w-5" />
-                      Mes Favoris
+                      <Package className="mr-2 h-5 w-5" />
+                      Statistiques de Compte
                     </CardTitle>
-                    <CardDescription>
-                      {favorites.length} produit(s) dans vos favoris
-                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-primary mb-2">
-                      {favorites.length}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-4 bg-muted/50 rounded-lg">
+                        <div className="text-2xl font-bold text-primary">
+                          {currentCustomer?.orders_count || 0}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Commandes</p>
+                      </div>
+                      <div className="text-center p-4 bg-muted/50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">
+                          {(currentCustomer?.total_spent || 0).toLocaleString()} FC
+                        </div>
+                        <p className="text-sm text-muted-foreground">Total dépensé</p>
+                      </div>
+                      <div className="text-center p-4 bg-muted/50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {favorites.length}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Favoris</p>
+                      </div>
+                      <div className="text-center p-4 bg-muted/50 rounded-lg">
+                        <div className="text-2xl font-bold text-orange-600">
+                          {cart.length}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Panier</p>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Produits sauvegardés pour plus tard
-                    </p>
-                    <Link to="/favorites">
-                      <Button variant="outline" className="w-full">
-                        Voir mes favoris
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-
-                {/* Cart Summary */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <ShoppingCart className="mr-2 h-5 w-5" />
-                      Mon Panier
-                    </CardTitle>
-                    <CardDescription>
-                      {cart.length} article(s) dans votre panier
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-primary mb-2">
-                      {cart.length}
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Articles prêts pour la commande
-                    </p>
-                    <Link to="/cart">
-                      <Button variant="outline" className="w-full">
-                        Voir mon panier
-                      </Button>
-                    </Link>
+                    {currentCustomer?.last_order_date && (
+                      <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          <strong>Dernière commande :</strong> {formatDate(currentCustomer.last_order_date)}
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
