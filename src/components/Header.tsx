@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   ShoppingBag, 
   Heart, 
@@ -26,14 +26,18 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Search for:', searchQuery);
-    setIsSearchOpen(false);
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false);
+      setSearchQuery('');
+    }
   };
 
   const cartQuantity = getTotalQuantity();
@@ -89,7 +93,7 @@ const Header = () => {
 
         {/* Right Icons - dans l'ordre spécifié */}
         <div className="flex items-center space-x-1 md:space-x-2 ml-auto">
-          <Button variant="ghost" size="icon" onClick={toggleSearch} className="hidden sm:flex">
+          <Button variant="ghost" size="icon" onClick={toggleSearch}>
             <Search className="h-5 w-5" />
             <span className="sr-only">Recherche</span>
           </Button>
@@ -136,32 +140,48 @@ const Header = () => {
       <AnimatePresence>
         {isSearchOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-background/90 backdrop-blur-md z-50"
+            className="absolute top-full left-0 right-0 bg-background/98 backdrop-blur-md border-b shadow-lg z-50"
           >
-            <div className="container py-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Rechercher des produits</h2>
-                <Button variant="ghost" size="icon" onClick={toggleSearch}>
-                  <X className="h-5 w-5" />
-                  <span className="sr-only">Fermer</span>
-                </Button>
-              </div>
-              <form onSubmit={handleSearchSubmit}>
-                <div className="flex space-x-2">
-                  <Input
-                    placeholder="Rechercher des produits..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1"
-                    autoFocus
-                  />
-                  <Button type="submit">Rechercher</Button>
+            <div className="container py-6">
+              <div className="max-w-2xl mx-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">Rechercher des produits</h2>
+                  <Button variant="ghost" size="icon" onClick={toggleSearch}>
+                    <X className="h-5 w-5" />
+                    <span className="sr-only">Fermer</span>
+                  </Button>
                 </div>
-              </form>
+                <form onSubmit={handleSearchSubmit} className="relative">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      placeholder="Rechercher des produits, catégories, marques..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 pr-20 h-12 text-base rounded-lg border-2 focus:border-primary"
+                      autoFocus
+                    />
+                    <Button 
+                      type="submit" 
+                      size="sm"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                    >
+                      Rechercher
+                    </Button>
+                  </div>
+                </form>
+                {searchQuery && (
+                  <div className="mt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Appuyez sur Entrée ou cliquez sur Rechercher pour voir les résultats pour "{searchQuery}"
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
