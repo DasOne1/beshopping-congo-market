@@ -1,5 +1,6 @@
-
-import { useState } from 'react';
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import bcrypt from 'bcryptjs';
@@ -21,6 +22,35 @@ export const useCustomerAuth = () => {
   const [currentCustomer, setCurrentCustomer] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Charger l'état de connexion au démarrage
+  useEffect(() => {
+    const loadAuthState = async () => {
+      const savedCustomerId = localStorage.getItem('customerId');
+      if (savedCustomerId) {
+        try {
+          const { data: customer, error } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('id', savedCustomerId)
+            .single();
+
+          if (customer && !error) {
+            setCurrentCustomer(customer);
+            setIsAuthenticated(true);
+          } else {
+            // Si le client n'existe plus, nettoyer le localStorage
+            localStorage.removeItem('customerId');
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement de l\'état de connexion:', error);
+          localStorage.removeItem('customerId');
+        }
+      }
+    };
+
+    loadAuthState();
+  }, []);
 
   const signUp = async (customerData: CustomerData) => {
     setLoading(true);
@@ -65,6 +95,7 @@ export const useCustomerAuth = () => {
       // Connecter automatiquement l'utilisateur après création
       setCurrentCustomer(newCustomer);
       setIsAuthenticated(true);
+      localStorage.setItem('customerId', newCustomer.id);
       
       toast({
         title: "Compte créé avec succès",
@@ -117,6 +148,7 @@ export const useCustomerAuth = () => {
       
       setCurrentCustomer(customer);
       setIsAuthenticated(true);
+      localStorage.setItem('customerId', customer.id);
       
       toast({
         title: "Connexion réussie",
@@ -140,6 +172,7 @@ export const useCustomerAuth = () => {
   const signOut = () => {
     setCurrentCustomer(null);
     setIsAuthenticated(false);
+    localStorage.removeItem('customerId');
     
     toast({
       title: "Déconnexion réussie",

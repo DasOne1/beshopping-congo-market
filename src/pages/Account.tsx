@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -79,6 +78,10 @@ const Account = () => {
 
   const handleSignInClick = () => {
     setShowAuthModal(true);
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -263,50 +266,33 @@ const Account = () => {
                             <User className="h-4 w-4 text-muted-foreground" />
                             <div>
                               <p className="text-sm text-muted-foreground">Nom complet</p>
-                              <p className="font-medium">{currentCustomer?.name}</p>
+                              <p className="font-medium">{currentCustomer?.name || 'Non renseigné'}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <Phone className="h-4 w-4 text-muted-foreground" />
                             <div>
                               <p className="text-sm text-muted-foreground">Téléphone</p>
-                              <p className="font-medium">{currentCustomer?.phone}</p>
+                              <p className="font-medium">{currentCustomer?.phone || 'Non renseigné'}</p>
                             </div>
                           </div>
-                          {currentCustomer?.email && (
-                            <div className="flex items-center gap-2">
-                              <Mail className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <p className="text-sm text-muted-foreground">Email</p>
-                                <p className="font-medium">{currentCustomer.email}</p>
-                              </div>
-                            </div>
-                          )}
                           <div className="flex items-center gap-2">
-                            <Badge variant={currentCustomer?.status === 'active' ? 'default' : 'secondary'}>
-                              {currentCustomer?.status === 'active' ? 'Actif' : 'Inactif'}
-                            </Badge>
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm text-muted-foreground">Email</p>
+                              <p className="font-medium">{currentCustomer?.email || 'Non renseigné'}</p>
+                            </div>
                           </div>
-                        </div>
-                        {currentCustomer?.address && (
-                          <div className="flex items-start gap-2 mt-4">
-                            <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
                             <div>
                               <p className="text-sm text-muted-foreground">Adresse</p>
                               <p className="font-medium">
-                                {typeof currentCustomer.address === 'string' 
+                                {typeof currentCustomer?.address === 'string' 
                                   ? currentCustomer.address 
-                                  : currentCustomer.address?.address || 'Non spécifiée'
-                                }
+                                  : currentCustomer?.address?.address || 'Non renseigné'}
                               </p>
                             </div>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Membre depuis</p>
-                            <p className="font-medium">{formatDate(currentCustomer?.created_at)}</p>
                           </div>
                         </div>
                       </div>
@@ -314,187 +300,81 @@ const Account = () => {
                   </CardContent>
                 </Card>
 
-                {/* Statistiques du compte */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Package className="mr-2 h-5 w-5" />
-                      Statistiques de Compte
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <div className="text-2xl font-bold text-primary">
-                          {currentCustomer?.orders_count || 0}
-                        </div>
-                        <p className="text-sm text-muted-foreground">Commandes</p>
+                {/* Favorites and Cart Summary */}
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Heart className="mr-2 h-5 w-5" />
+                        Mes Favoris
+                      </CardTitle>
+                      <CardDescription>
+                        {favorites.length} produit(s) dans vos favoris
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-primary mb-2">
+                        {favorites.length}
                       </div>
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <div className="text-2xl font-bold text-green-600">
-                          {(currentCustomer?.total_spent || 0).toLocaleString()} FC
-                        </div>
-                        <p className="text-sm text-muted-foreground">Total dépensé</p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Produits sauvegardés pour plus tard
+                      </p>
+                      <Link to="/favorites">
+                        <Button variant="outline" className="w-full">
+                          Voir mes favoris
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <ShoppingCart className="mr-2 h-5 w-5" />
+                        Mon Panier
+                      </CardTitle>
+                      <CardDescription>
+                        {cart.length} article(s) dans votre panier
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-primary mb-2">
+                        {cart.length}
                       </div>
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {favorites.length}
-                        </div>
-                        <p className="text-sm text-muted-foreground">Favoris</p>
-                      </div>
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <div className="text-2xl font-bold text-orange-600">
-                          {cart.length}
-                        </div>
-                        <p className="text-sm text-muted-foreground">Panier</p>
-                      </div>
-                    </div>
-                    {currentCustomer?.last_order_date && (
-                      <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                        <p className="text-sm text-blue-700 dark:text-blue-300">
-                          <strong>Dernière commande :</strong> {formatDate(currentCustomer.last_order_date)}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Articles prêts pour la commande
+                      </p>
+                      <Link to="/cart">
+                        <Button variant="outline" className="w-full">
+                          Voir mon panier
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-
-              {/* Recent Activity */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recent Favorites */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Favoris Récents</CardTitle>
-                    <CardDescription>Vos derniers produits ajoutés aux favoris</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoading ? (
-                      <div className="space-y-4">
-                        <ProductSkeleton count={3} />
-                      </div>
-                    ) : favoriteProducts.length > 0 ? (
-                      <div className="space-y-4">
-                        {favoriteProducts.slice(0, 3).map(product => (
-                          <div key={product.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                            <img 
-                              src={product.images[0] || '/shopping_logo.png'} 
-                              alt={product.name}
-                              className="w-12 h-12 object-cover rounded-md"
-                            />
-                            <div className="flex-1">
-                              <h4 className="font-medium text-sm">{product.name}</h4>
-                              <p className="text-sm text-primary font-medium">
-                                {(product.discounted_price || product.original_price).toLocaleString()} FC
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                        {favoriteProducts.length > 3 && (
-                          <Link to="/favorites">
-                            <Button variant="ghost" className="w-full">
-                              Voir tous les favoris ({favoriteProducts.length})
-                            </Button>
-                          </Link>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-muted-foreground">Aucun favori pour le moment</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Cart Items */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Articles du Panier</CardTitle>
-                    <CardDescription>Vos articles actuels dans le panier</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoading ? (
-                      <div className="space-y-4">
-                        <ProductSkeleton count={3} />
-                      </div>
-                    ) : cartProducts.length > 0 ? (
-                      <div className="space-y-4">
-                        {cartProducts.slice(0, 3).map(item => (
-                          <div key={item.productId} className="flex items-center gap-3 p-3 border rounded-lg">
-                            <img 
-                              src={item.product?.images[0] || '/shopping_logo.png'} 
-                              alt={item.product?.name}
-                              className="w-12 h-12 object-cover rounded-md"
-                            />
-                            <div className="flex-1">
-                              <h4 className="font-medium text-sm">{item.product?.name}</h4>
-                              <p className="text-sm text-muted-foreground">Quantité: {item.quantity}</p>
-                              <p className="text-sm text-primary font-medium">
-                                {((item.product?.discounted_price || item.product?.original_price || 0) * item.quantity).toLocaleString()} FC
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                        {cartProducts.length > 3 && (
-                          <Link to="/cart">
-                            <Button variant="ghost" className="w-full">
-                              Voir tout le panier ({cartProducts.length})
-                            </Button>
-                          </Link>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-muted-foreground">Votre panier est vide</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Quick Actions */}
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Actions Rapides</CardTitle>
-                  <CardDescription>Gérez votre compte et vos préférences</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Link to="/cart">
-                      <Button variant="outline" className="h-20 flex flex-col gap-2 w-full">
-                        <Package className="h-5 w-5" />
-                        <span className="text-xs">Mes Commandes</span>
-                      </Button>
-                    </Link>
-                    <Link to="/favorites">
-                      <Button variant="outline" className="h-20 flex flex-col gap-2 w-full">
-                        <Heart className="h-5 w-5" />
-                        <span className="text-xs">Favoris</span>
-                      </Button>
-                    </Link>
-                    <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => setIsEditing(true)}>
-                      <User className="h-5 w-5" />
-                      <span className="text-xs">Profil</span>
-                    </Button>
-                    <Button variant="outline" className="h-20 flex flex-col gap-2">
-                      <Mail className="h-5 w-5" />
-                      <span className="text-xs">Support</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </>
           )}
         </motion.div>
       </main>
 
-      {/* Simple Auth Modal */}
-      <SimpleAuthForm 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowAuthModal(false)} />
+          <div className="relative bg-background p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-4 top-4"
+              onClick={() => setShowAuthModal(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <SimpleAuthForm onSuccess={handleAuthSuccess} />
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
