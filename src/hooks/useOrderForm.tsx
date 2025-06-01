@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,9 +27,10 @@ interface UseOrderFormProps {
   cartProducts?: any[];
   subtotal?: number;
   formatPrice?: (price: number) => string;
+  currentCustomer?: any;
 }
 
-export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: UseOrderFormProps) => {
+export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice, currentCustomer }: UseOrderFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
@@ -43,6 +44,15 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
       customerAddress: '',
     },
   });
+
+  // Pré-remplir le formulaire avec les données du client connecté
+  useEffect(() => {
+    if (currentCustomer) {
+      form.setValue('customerName', currentCustomer.name || '');
+      form.setValue('customerPhone', currentCustomer.phone || '');
+      form.setValue('customerAddress', currentCustomer.address || '');
+    }
+  }, [currentCustomer, form]);
 
   const validateFormBeforeAction = (): boolean => {
     const values = form.getValues();
@@ -70,6 +80,7 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
 
   const createOrderInDB = async (customerData: OrderFormData) => {
     const orderData = {
+      customer_id: currentCustomer?.id || null,
       customer_name: customerData.customerName,
       customer_phone: customerData.customerPhone,
       shipping_address: { address: customerData.customerAddress },

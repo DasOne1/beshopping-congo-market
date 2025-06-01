@@ -6,6 +6,7 @@ import OrderFormButtons from '@/components/OrderFormButtons';
 import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
 import { useOrderForm } from '@/hooks/useOrderForm';
 import { generateWhatsAppMessage } from '@/utils/whatsappMessageGenerator';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 
 interface OrderFormProps {
   onOrderComplete?: () => void;
@@ -15,6 +16,8 @@ interface OrderFormProps {
 }
 
 const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: OrderFormProps) => {
+  const { currentCustomer, isAuthenticated } = useCustomerAuth();
+  
   const {
     form,
     isSubmitting,
@@ -23,7 +26,7 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
     setShowConfirmation,
     handleSubmit,
     handleWhatsAppOrder
-  } = useOrderForm({ onOrderComplete, cartProducts, subtotal, formatPrice });
+  } = useOrderForm({ onOrderComplete, cartProducts, subtotal, formatPrice, currentCustomer });
 
   // Observer les valeurs du formulaire pour la validation en temps réel
   const formValues = form.watch();
@@ -50,6 +53,11 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>Informations de livraison</CardTitle>
+          {isAuthenticated && (
+            <p className="text-sm text-muted-foreground">
+              Vos informations ont été pré-remplies
+            </p>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           <OrderFormFields form={form} onSubmit={handleSubmit}>
