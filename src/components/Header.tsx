@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   ShoppingBag, 
   Heart, 
@@ -26,14 +26,18 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Search for:', searchQuery);
-    setIsSearchOpen(false);
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false);
+      setSearchQuery('');
+    }
   };
 
   const cartQuantity = getTotalQuantity();
@@ -89,7 +93,7 @@ const Header = () => {
 
         {/* Right Icons - dans l'ordre spécifié */}
         <div className="flex items-center space-x-1 md:space-x-2 ml-auto">
-          <Button variant="ghost" size="icon" onClick={toggleSearch} className="hidden sm:flex">
+          <Button variant="ghost" size="icon" onClick={toggleSearch}>
             <Search className="h-5 w-5" />
             <span className="sr-only">Recherche</span>
           </Button>
@@ -132,7 +136,7 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Search Overlay */}
+      {/* Search Overlay - Style amélioré */}
       <AnimatePresence>
         {isSearchOpen && (
           <motion.div
@@ -140,29 +144,63 @@ const Header = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-background/90 backdrop-blur-md z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center pt-20"
+            onClick={() => setIsSearchOpen(false)}
           >
-            <div className="container py-4">
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="bg-background/95 backdrop-blur-md border border-border/50 rounded-2xl shadow-2xl p-6 mx-4 w-full max-w-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Rechercher des produits</h2>
-                <Button variant="ghost" size="icon" onClick={toggleSearch}>
+                <h2 className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                  Rechercher des produits
+                </h2>
+                <Button variant="ghost" size="icon" onClick={toggleSearch} className="rounded-full">
                   <X className="h-5 w-5" />
                   <span className="sr-only">Fermer</span>
                 </Button>
               </div>
-              <form onSubmit={handleSearchSubmit}>
-                <div className="flex space-x-2">
+              
+              <form onSubmit={handleSearchSubmit} className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
-                    placeholder="Rechercher des produits..."
+                    placeholder="Rechercher des produits par nom, description ou tags..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1"
+                    className="pl-12 pr-4 py-3 text-lg rounded-xl border-2 focus:border-primary/50 transition-all duration-200"
                     autoFocus
                   />
-                  <Button type="submit">Rechercher</Button>
+                </div>
+                
+                <div className="flex gap-3">
+                  <Button 
+                    type="submit" 
+                    className="flex-1 py-3 rounded-xl font-medium"
+                    disabled={!searchQuery.trim()}
+                  >
+                    <Search className="mr-2 h-5 w-5" />
+                    Rechercher
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={toggleSearch}
+                    className="px-6 py-3 rounded-xl"
+                  >
+                    Annuler
+                  </Button>
                 </div>
               </form>
-            </div>
+              
+              <div className="mt-4 text-sm text-muted-foreground">
+                <p>💡 Astuce: Utilisez des mots-clés pour affiner votre recherche</p>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

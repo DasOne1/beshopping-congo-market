@@ -1,22 +1,26 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Calendar } from 'lucide-react';
+import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Calendar, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useCart } from '@/contexts/CartContext';
 import { useProducts } from '@/hooks/useProducts';
+import { useAuth } from '@/hooks/useAuth';
 import ProductSkeleton from '@/components/ProductSkeleton';
+import AuthDialog from '@/components/Auth/AuthDialog';
 import { motion } from 'framer-motion';
 
 const Account = () => {
   const { favorites } = useFavorites();
   const { cart } = useCart();
   const { products, isLoading } = useProducts();
+  const { user, isAuthenticated, signOut } = useAuth();
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
 
   // Get favorite products
   const favoriteProducts = products.filter(product => 
@@ -32,12 +36,25 @@ const Account = () => {
     };
   }).filter(item => item.product);
 
-  // Mock user data - in a real app, this would come from authentication
-  const user = {
-    name: "Utilisateur",
-    email: "utilisateur@example.com",
-    phone: "+243 XXX XXX XXX",
-    address: "Lubumbashi, Congo"
+  const handleProfileEdit = () => {
+    if (!isAuthenticated) {
+      setIsAuthDialogOpen(true);
+    } else {
+      // Ici on pourrait ouvrir un formulaire d'édition de profil
+      console.log('Éditer le profil');
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  // User data from authentication or default
+  const userData = {
+    name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Utilisateur",
+    email: user?.email || "utilisateur@example.com",
+    phone: user?.user_metadata?.phone || "+243 XXX XXX XXX",
+    address: user?.user_metadata?.address || "Lubumbashi, Congo"
   };
 
   return (
@@ -50,10 +67,17 @@ const Account = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-2xl md:text-3xl font-bold mb-6 flex items-center">
-            <User className="mr-2 h-6 w-6" />
-            Mon Compte
-          </h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center">
+              <User className="mr-2 h-6 w-6" />
+              Mon Compte
+            </h1>
+            {isAuthenticated && (
+              <Button variant="outline" onClick={handleSignOut}>
+                Déconnexion
+              </Button>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* User Profile */}
@@ -65,25 +89,47 @@ const Account = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span>{user.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{user.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{user.phone}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>{user.address}</span>
-                </div>
-                <Button variant="outline" className="w-full mt-4">
-                  Modifier le profil
-                </Button>
+                {isAuthenticated ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>{userData.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span>{userData.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span>{userData.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span>{userData.address}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>Membre depuis {new Date(user?.created_at || '').toLocaleDateString('fr-FR')}</span>
+                    </div>
+                    <Button variant="outline" className="w-full mt-4" onClick={handleProfileEdit}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Modifier le profil
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-center py-8">
+                      <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Connectez-vous</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Connectez-vous pour accéder à votre profil et personnaliser votre expérience
+                      </p>
+                    </div>
+                    <Button className="w-full" onClick={handleProfileEdit}>
+                      Se connecter / Créer un compte
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -254,14 +300,16 @@ const Account = () => {
                     <span className="text-xs">Favoris</span>
                   </Button>
                 </Link>
-                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={handleProfileEdit}>
                   <User className="h-5 w-5" />
                   <span className="text-xs">Profil</span>
                 </Button>
-                <Button variant="outline" className="h-20 flex flex-col gap-2">
-                  <Mail className="h-5 w-5" />
-                  <span className="text-xs">Support</span>
-                </Button>
+                <Link to="/contact">
+                  <Button variant="outline" className="h-20 flex flex-col gap-2 w-full">
+                    <Mail className="h-5 w-5" />
+                    <span className="text-xs">Support</span>
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -269,6 +317,12 @@ const Account = () => {
       </main>
 
       <Footer />
+      
+      {/* Auth Dialog */}
+      <AuthDialog 
+        isOpen={isAuthDialogOpen} 
+        onClose={() => setIsAuthDialogOpen(false)} 
+      />
     </div>
   );
 };
