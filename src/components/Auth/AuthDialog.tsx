@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { X, User, Phone, Lock, Eye, EyeOff, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,7 @@ interface AuthDialogProps {
 
 const AuthDialog = ({ isOpen, onClose, defaultMode = 'login' }: AuthDialogProps) => {
   const [mode, setMode] = useState<'login' | 'signup'>(defaultMode);
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -25,6 +26,7 @@ const AuthDialog = ({ isOpen, onClose, defaultMode = 'login' }: AuthDialogProps)
   const { signIn, signUp } = useAuth();
 
   const resetForm = () => {
+    setPhone('');
     setEmail('');
     setPassword('');
     setFullName('');
@@ -50,7 +52,15 @@ const AuthDialog = ({ isOpen, onClose, defaultMode = 'login' }: AuthDialogProps)
           });
           return;
         }
-        await signUp(email, password, fullName);
+        if (!phone.trim()) {
+          toast({
+            title: "Erreur",
+            description: "Le numéro de téléphone est requis",
+            variant: "destructive",
+          });
+          return;
+        }
+        await signUp(phone, password, fullName, email || undefined);
         toast({
           title: "Compte créé avec succès",
           description: "Vous pouvez maintenant vous connecter",
@@ -58,7 +68,15 @@ const AuthDialog = ({ isOpen, onClose, defaultMode = 'login' }: AuthDialogProps)
         setMode('login');
         setPassword('');
       } else {
-        await signIn(email, password);
+        if (!phone.trim()) {
+          toast({
+            title: "Erreur",
+            description: "Le numéro de téléphone est requis",
+            variant: "destructive",
+          });
+          return;
+        }
+        await signIn(phone, password);
         toast({
           title: "Connexion réussie",
           description: "Bienvenue !",
@@ -112,7 +130,7 @@ const AuthDialog = ({ isOpen, onClose, defaultMode = 'login' }: AuthDialogProps)
               </div>
               <CardDescription>
                 {mode === 'login' 
-                  ? 'Connectez-vous à votre compte pour accéder à votre profil'
+                  ? 'Connectez-vous avec votre numéro de téléphone'
                   : 'Créez votre compte pour personnaliser votre profil'
                 }
               </CardDescription>
@@ -122,7 +140,7 @@ const AuthDialog = ({ isOpen, onClose, defaultMode = 'login' }: AuthDialogProps)
               <form onSubmit={handleSubmit} className="space-y-4">
                 {mode === 'signup' && (
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Nom complet</Label>
+                    <Label htmlFor="fullName">Nom complet *</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -139,23 +157,40 @@ const AuthDialog = ({ isOpen, onClose, defaultMode = 'login' }: AuthDialogProps)
                 )}
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="phone">Numéro de téléphone *</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="votre@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="phone"
+                      type="tel"
+                      placeholder="+243 XXX XXX XXX"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                       className="pl-10"
                       required
                     />
                   </div>
                 </div>
+
+                {mode === 'signup' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email (facultatif)</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="votre@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                )}
                 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="password">Mot de passe *</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input

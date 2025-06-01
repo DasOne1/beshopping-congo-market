@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
+import { motion } from 'framer-motion';
 import {
   Carousel,
   CarouselContent,
@@ -9,8 +9,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { Badge } from '@/components/ui/badge';
-import { motion } from 'framer-motion';
 import { useCategories } from '@/hooks/useCategories';
 import CategorySkeleton from './CategorySkeleton';
 
@@ -25,7 +23,7 @@ const CategoryCarousel = () => {
             Explorez nos Catégories
           </h2>
           <div className="flex justify-center">
-            <CategorySkeleton count={4} />
+            <CategorySkeleton count={6} />
           </div>
         </div>
       </section>
@@ -50,53 +48,34 @@ const CategoryCarousel = () => {
                 align: "start",
                 loop: true,
               }}
-              className="w-full max-w-6xl mx-auto"
+              className="w-full max-w-5xl mx-auto"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
                 {categories.map((category, index) => (
-                  <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                  <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-1/3 sm:basis-1/4 md:basis-1/5 lg:basis-1/6">
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.5, delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.05 }}
                       className="h-full"
                     >
-                      <Link to={`/products?category=${category.id}`} className="block h-full">
-                        <Card className="h-full hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20 bg-gradient-to-br from-background to-background/80 backdrop-blur-sm">
-                          <CardContent className="p-0 h-full flex flex-col">
-                            <div className="relative overflow-hidden rounded-t-lg">
-                              <img
-                                src={category.image || '/shopping_logo.png'}
-                                alt={category.name}
-                                className="w-full h-48 object-cover transition-transform duration-300 hover:scale-110"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                              <Badge 
-                                variant="secondary" 
-                                className="absolute top-3 right-3 bg-primary/90 text-primary-foreground border-0 backdrop-blur-sm"
-                              >
-                                Nouveau
-                              </Badge>
-                            </div>
-                            <div className="p-6 flex-grow flex flex-col justify-between">
-                              <div>
-                                <h3 className="font-bold text-lg mb-2 text-foreground group-hover:text-primary transition-colors">
-                                  {category.name}
-                                </h3>
-                                <p className="text-muted-foreground text-sm line-clamp-3">
-                                  {category.description || `Découvrez notre collection ${category.name.toLowerCase()}`}
-                                </p>
-                              </div>
-                              <div className="mt-4 flex items-center text-primary font-medium text-sm">
-                                Voir les produits
-                                <svg className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                      <Link to={`/products?category=${category.id}`} className="block h-full group">
+                        <div className="flex flex-col items-center space-y-2 p-3">
+                          <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-primary/10 group-hover:border-primary/30 transition-colors">
+                            <img
+                              src={category.image || '/shopping_logo.png'}
+                              alt={category.name}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                          <div className="text-center">
+                            <h3 className="font-medium text-xs sm:text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                              {category.name}
+                            </h3>
+                          </div>
+                        </div>
                       </Link>
                     </motion.div>
                   </CarouselItem>

@@ -21,18 +21,18 @@ export const useUserProfile = () => {
   // Chercher le profil utilisateur dans la table customers
   useEffect(() => {
     if (isAuthenticated && user && customers.length > 0) {
-      // Chercher par email ou téléphone
+      // Chercher par numéro de téléphone ou email
       const profile = customers.find(customer => 
-        customer.email === user.email || 
-        customer.phone === user.user_metadata?.phone
+        customer.phone === user.phone || 
+        (customer.email && customer.email === user.user_metadata?.email)
       );
       
       if (profile) {
         setUserProfile({
           id: profile.id,
           name: profile.name,
-          phone: profile.phone || '',
-          email: profile.email || user.email || '',
+          phone: profile.phone || user.phone || '',
+          email: profile.email || user.user_metadata?.email || '',
           address: typeof profile.address === 'object' && profile.address?.address 
             ? profile.address.address 
             : profile.address || ''
@@ -40,9 +40,9 @@ export const useUserProfile = () => {
       } else {
         // Créer un profil par défaut basé sur les métadonnées
         setUserProfile({
-          name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
-          phone: user.user_metadata?.phone || '',
-          email: user.email || '',
+          name: user.user_metadata?.full_name || user.phone?.split('+')[1] || '',
+          phone: user.phone || '',
+          email: user.user_metadata?.email || '',
           address: user.user_metadata?.address || ''
         });
       }

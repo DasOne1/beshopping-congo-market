@@ -1,9 +1,7 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Calendar, Settings, Edit } from 'lucide-react';
+import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Calendar, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -18,7 +16,7 @@ import UserProfileForm from '@/components/UserProfileForm';
 import { motion } from 'framer-motion';
 
 const Account = () => {
-  const { favorites } = useFavorites();
+  const { favorites }  = useFavorites();
   const { cart } = useCart();
   const { products, isLoading } = useProducts();
   const { user, isAuthenticated, signOut } = useAuth();
@@ -104,7 +102,7 @@ const Account = () => {
                       <>
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
-                          <span>{userProfile?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilisateur'}</span>
+                          <span>{userProfile?.name || user?.user_metadata?.full_name || user?.phone || 'Utilisateur'}</span>
                         </div>
                         {userProfile?.phone && (
                           <div className="flex items-center gap-2">
@@ -112,10 +110,12 @@ const Account = () => {
                             <span>{userProfile.phone}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <span>{userProfile?.email || user?.email || 'Non spécifié'}</span>
-                        </div>
+                        {(userProfile?.email || user?.user_metadata?.email) && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span>{userProfile?.email || user?.user_metadata?.email || 'Non spécifié'}</span>
+                          </div>
+                        )}
                         {userProfile?.address && (
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4 text-muted-foreground" />

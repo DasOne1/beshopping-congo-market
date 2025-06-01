@@ -18,7 +18,7 @@ export const useAuth = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+        console.log('Auth state changed:', event, session?.user?.phone);
         setUser(session?.user ?? null);
         setLoading(false);
       }
@@ -27,18 +27,18 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (phone: string, password: string) => {
     try {
-      console.log('Attempting to sign in with:', email);
+      console.log('Attempting to sign in with phone:', phone);
       
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        phone,
         password,
       });
 
       if (error) throw error;
 
-      console.log('Sign in successful:', data.user?.email);
+      console.log('Sign in successful:', data.user?.phone);
       
       toast({
         title: "Connexion réussie",
@@ -55,14 +55,15 @@ export const useAuth = () => {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (phone: string, password: string, fullName: string, email?: string) => {
     try {
       const { error } = await supabase.auth.signUp({
-        email,
+        phone,
         password,
         options: {
           data: {
             full_name: fullName,
+            email: email || null,
           },
         },
       });
