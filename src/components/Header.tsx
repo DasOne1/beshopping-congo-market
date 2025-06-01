@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   ShoppingBag, 
@@ -17,37 +17,67 @@ import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useProducts } from '@/hooks/useProducts';
 import Sidebar from './Sidebar';
 
 const Header = () => {
   const { getTotalQuantity } = useCart();
   const { favorites } = useFavorites();
+  const { products } = useProducts();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
+  const toggleSearch = () => {
+    setIsSearchOpen(!isSearchOpen);
+    if (!isSearchOpen) {
+      setSearchQuery('');
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  // Générer des suggestions basées sur la requête de recherche
+  useEffect(() => {
+    if (searchQuery.trim() && searchQuery.length > 1) {
+      const filtered = products.filter(product => 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      ).slice(0, 6); // Limiter à 6 suggestions
+
+      setSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, [searchQuery, products]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false);
+      setShowSuggestions(false);
     }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
-    
-    // Recherche en temps réel - naviguer vers la page products avec le terme de recherche
-    if (value.trim()) {
-      navigate(`/products?search=${encodeURIComponent(value.trim())}`);
-    } else {
-      navigate('/products');
-    }
+  };
+
+  const handleSuggestionClick = (product: any) => {
+    setSearchQuery(product.name);
+    navigate(`/products?search=${encodeURIComponent(product.name)}`);
+    setIsSearchOpen(false);
+    setShowSuggestions(false);
   };
 
   const cartQuantity = getTotalQuantity();
@@ -148,7 +178,21 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Search Bar - positioned just below header */}
+      {/* Overlay avec effet de flou */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+            onClick={toggleSearch}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Search Bar avec suggestions */}
       <AnimatePresence>
         {isSearchOpen && (
           <motion.div
@@ -156,9 +200,9 @@ const Header = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="fixed top-14 md:top-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border/40 shadow-sm"
+            className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/40 shadow-lg"
           >
-            <div className="container py-3">
+            <div className="container py-4">
               <form onSubmit={handleSearchSubmit} className="relative max-w-md mx-auto">
                 <div className="flex items-center space-x-2">
                   <div className="relative flex-1">
@@ -182,6 +226,47 @@ const Header = () => {
                     <span className="sr-only">Fermer</span>
                   </Button>
                 </div>
+
+                {/* Suggestions */}
+                <AnimatePresence>
+                  {showSuggestions && suggestions.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-md shadow-lg z-10"
+                    >
+                      {suggestions.map((product) => (
+                        <div
+                          key={product.id}
+                          onClick={() => handleSuggestionClick(product)}
+                          className="flex items-center p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                        >
+                          <div className="w-10 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0 mr-3">
+                            {product.images && product.images.length > 0 ? (
+                              <img 
+                                src={product.images[0]} 
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                <Search className="h-4 w-4 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{product.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {product.discounted_price ? product.discounted_price : product.original_price} €
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </form>
             </div>
           </motion.div>
