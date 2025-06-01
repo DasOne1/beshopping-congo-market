@@ -9,7 +9,6 @@ import {
 import { useCategories } from '@/hooks/useCategories';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useNavigate } from 'react-router-dom';
-import Autoplay from "embla-carousel-autoplay";
 
 const CategoryCarousel = () => {
   const { categories, isLoading } = useCategories();
@@ -84,13 +83,6 @@ const CategoryCarousel = () => {
               align: "center",
               loop: true,
             }}
-            plugins={[
-              Autoplay({
-                delay: 2000,
-                stopOnInteraction: false,
-                stopOnMouseEnter: false,
-              }),
-            ]}
           >
             <CarouselContent className="-ml-2 flex">
               {duplicatedCategories?.map((category, index) => (
