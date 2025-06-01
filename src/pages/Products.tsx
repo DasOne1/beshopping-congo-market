@@ -112,11 +112,23 @@ const Products = () => {
             Découvrez notre sélection de produits de qualité
           </p>
           {searchQuery && (
-            <div className="mt-2 p-3 bg-muted/50 rounded-lg">
-              <p className="text-sm">
-                Résultats de recherche pour: <span className="font-medium">"{searchQuery}"</span>
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg"
+            >
+              <p className="text-sm font-medium text-primary">
+                Résultats de recherche pour: "{searchQuery}" - {filteredProducts.length} produit(s) trouvé(s)
               </p>
-            </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={clearFilters}
+                className="mt-2 text-primary hover:text-primary"
+              >
+                Effacer la recherche
+              </Button>
+            </motion.div>
           )}
         </div>
 
@@ -188,19 +200,30 @@ const Products = () => {
           </div>
         ) : paginatedProducts.length > 0 ? (
           <>
-            <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
-              : "space-y-4"
-            }>
-              {paginatedProducts.map(product => (
-                <div key={product.id} onClick={() => handleProductClick(product.id)}>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className={viewMode === 'grid' 
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
+                : "space-y-4"
+              }
+            >
+              {paginatedProducts.map((product, index) => (
+                <motion.div 
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  onClick={() => handleProductClick(product.id)}
+                >
                   <ProductCard 
                     product={product} 
                     viewMode={viewMode}
                   />
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -241,7 +264,11 @@ const Products = () => {
             )}
           </>
         ) : (
-          <div className="text-center py-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16"
+          >
             <div className="w-24 h-24 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
               <Search className="h-12 w-12 text-muted-foreground" />
             </div>
@@ -255,7 +282,7 @@ const Products = () => {
             <Button onClick={clearFilters}>
               Effacer les filtres
             </Button>
-          </div>
+          </motion.div>
         )}
 
         {/* Filters Sidebar */}
