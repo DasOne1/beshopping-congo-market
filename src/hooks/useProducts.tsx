@@ -98,6 +98,11 @@ export const useProducts = () => {
     return products.filter(product => product.is_visible && product.status === 'active');
   };
 
+  // Fonction pour obtenir tous les produits (y compris cachés) pour l'admin
+  const getAllProducts = () => {
+    return products;
+  };
+
   // Dériver les produits vedettes et populaires (uniquement les visibles)
   const featuredProducts = getVisibleProducts().filter(product => product.featured);
   const popularProducts = getVisibleProducts().filter(product => product.featured);
@@ -257,6 +262,7 @@ export const useProducts = () => {
     deleteProduct,
     refetch: forceRefresh,
     getVisibleProducts,
+    getAllProducts,
   };
 };
 

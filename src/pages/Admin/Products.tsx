@@ -88,6 +88,9 @@ const Products = () => {
     );
   }
 
+  const visibleCount = products.filter(p => p.is_visible).length;
+  const hiddenCount = products.filter(p => !p.is_visible).length;
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -101,6 +104,16 @@ const Products = () => {
             <p className="text-muted-foreground mt-1">
               Gérez votre catalogue de produits ({filteredProducts.length} sur {products.length})
             </p>
+            <div className="flex gap-4 mt-2">
+              <span className="text-sm text-green-600">
+                {visibleCount} visible{visibleCount > 1 ? 's' : ''}
+              </span>
+              {hiddenCount > 0 && (
+                <span className="text-sm text-red-600">
+                  {hiddenCount} masqué{hiddenCount > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
           </div>
           <Button 
             onClick={() => navigate('/dasgabriel@adminaccess/products/new')}
@@ -116,7 +129,7 @@ const Products = () => {
           <CardHeader>
             <CardTitle className="text-lg">Liste des Produits</CardTitle>
             <CardDescription>
-              {filteredProducts.length} produit(s) trouvé(s)
+              {filteredProducts.length} produit(s) trouvé(s). Les produits masqués apparaissent grisés.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -150,7 +163,7 @@ const Products = () => {
                             <SelectItem value="all">Toutes</SelectItem>
                             {categories.map((category) => (
                               <SelectItem key={category.id} value={category.id}>
-                                {category.name}
+                                {category.parent_id ? `↳ ${category.name}` : category.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -209,7 +222,7 @@ const Products = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredProducts.map((product) => (
-                    <TableRow key={product.id} className="hover:bg-muted/50">
+                    <TableRow key={product.id} className={`hover:bg-muted/50 ${!product.is_visible ? 'opacity-60 bg-gray-100 dark:bg-gray-900' : ''}`}>
                       <TableCell>
                         <div className="w-16 h-12 rounded-lg overflow-hidden bg-muted">
                           {product.images && product.images.length > 0 ? (
@@ -227,10 +240,10 @@ const Products = () => {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="font-medium text-foreground line-clamp-1">
+                          <div className={`font-medium text-foreground line-clamp-1 ${!product.is_visible ? 'line-through text-gray-500' : ''}`}>
                             {product.name}
                           </div>
-                          <div className="text-sm text-muted-foreground line-clamp-1">
+                          <div className={`text-sm text-muted-foreground line-clamp-1 ${!product.is_visible ? 'text-gray-500' : ''}`}>
                             {product.description}
                           </div>
                           <div className="flex items-center gap-2">
@@ -244,21 +257,24 @@ const Products = () => {
                                 Promo
                               </Badge>
                             )}
+                            {!product.is_visible && (
+                              <Badge variant="destructive" className="text-xs">Masqué</Badge>
+                            )}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
+                        <span className={`text-sm text-muted-foreground ${!product.is_visible ? 'text-gray-500' : ''}`}>
                           {getCategoryName(product.category_id || '')}
                         </span>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="font-medium text-foreground">
+                          <div className={`font-medium text-foreground ${!product.is_visible ? 'text-gray-500' : ''}`}>
                             {formatPrice(product.discounted_price || product.original_price)} FC
                           </div>
                           {product.discounted_price && (
-                            <div className="text-sm text-muted-foreground line-through">
+                            <div className={`text-sm text-muted-foreground line-through ${!product.is_visible ? 'text-gray-500' : ''}`}>
                               {formatPrice(product.original_price)} FC
                             </div>
                           )}

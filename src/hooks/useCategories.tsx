@@ -87,6 +87,11 @@ export const useCategories = () => {
     return categories.filter(cat => cat.parent_id === parentId);
   };
 
+  // Fonction pour obtenir toutes les catégories (y compris cachées) pour l'admin
+  const getAllCategories = () => {
+    return categories;
+  };
+
   const createCategory = useMutation({
     mutationFn: async (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('Création d\'une nouvelle catégorie...');
@@ -225,5 +230,6 @@ export const useCategories = () => {
     getVisibleCategories,
     getRootCategories,
     getSubCategories,
+    getAllCategories,
   };
 };

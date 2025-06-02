@@ -34,7 +34,7 @@ const Categories = () => {
     });
   };
 
-  // Organiser les catégories en hiérarchie
+  // Organiser les catégories en hiérarchie - montrer TOUTES les catégories côté admin
   const rootCategories = categories.filter(cat => !cat.parent_id);
   const getSubCategories = (parentId: string) => categories.filter(cat => cat.parent_id === parentId);
 
@@ -44,7 +44,7 @@ const Categories = () => {
 
     return (
       <React.Fragment key={category.id}>
-        <TableRow className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+        <TableRow className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 ${!category.is_visible ? 'opacity-60 bg-gray-100 dark:bg-gray-900' : ''}`}>
           <TableCell>
             {category.image ? (
               <img 
@@ -62,19 +62,26 @@ const Categories = () => {
             <div className="flex items-center" style={{ paddingLeft: `${indent}px` }}>
               {level > 0 && <span className="text-gray-400 mr-2">└─</span>}
               <div className="flex items-center gap-2">
-                <span className="font-medium">{category.name}</span>
+                <span className={`font-medium ${!category.is_visible ? 'line-through text-gray-500' : ''}`}>
+                  {category.name}
+                </span>
                 {level > 0 && <Badge variant="outline" className="text-xs">Sous-catégorie</Badge>}
                 {subCategories.length > 0 && (
                   <Badge variant="secondary" className="text-xs">
                     {subCategories.length} sous-catégorie{subCategories.length > 1 ? 's' : ''}
                   </Badge>
                 )}
+                {!category.is_visible && (
+                  <Badge variant="destructive" className="text-xs">Masqué</Badge>
+                )}
               </div>
             </div>
           </TableCell>
-          <TableCell>{category.description || 'Aucune description'}</TableCell>
+          <TableCell className={!category.is_visible ? 'text-gray-500' : ''}>
+            {category.description || 'Aucune description'}
+          </TableCell>
           <TableCell>
-            <code className="text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+            <code className={`text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded ${!category.is_visible ? 'text-gray-500' : ''}`}>
               {category.slug}
             </code>
           </TableCell>
@@ -140,6 +147,9 @@ const Categories = () => {
     );
   }
   
+  const visibleCount = categories.filter(cat => cat.is_visible).length;
+  const hiddenCount = categories.filter(cat => !cat.is_visible).length;
+  
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -152,6 +162,16 @@ const Categories = () => {
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Organisez vos produits par catégories et sous-catégories
             </p>
+            <div className="flex gap-4 mt-2">
+              <span className="text-sm text-green-600">
+                {visibleCount} visible{visibleCount > 1 ? 's' : ''}
+              </span>
+              {hiddenCount > 0 && (
+                <span className="text-sm text-red-600">
+                  {hiddenCount} masqué{hiddenCount > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
           </div>
           <Button 
             onClick={() => navigate('/dasgabriel@adminaccess/categories/new')}
@@ -165,7 +185,10 @@ const Categories = () => {
         <Card className="shadow-sm">
           <CardHeader className="bg-gray-50 dark:bg-gray-800/50">
             <CardTitle className="text-lg">Liste des Catégories ({categories.length})</CardTitle>
-            <CardDescription>Gérez toutes vos catégories et sous-catégories depuis cette interface</CardDescription>
+            <CardDescription>
+              Gérez toutes vos catégories et sous-catégories depuis cette interface.
+              Les catégories masquées apparaissent grisées et ne sont pas visibles pour les utilisateurs.
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
