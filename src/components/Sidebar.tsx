@@ -45,7 +45,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       <DrawerContent className="max-h-[85vh]">
         <DrawerHeader className="flex items-center justify-between border-b pb-2">
           <Link to="/" onClick={onClose} className="flex items-center space-x-2">
-            <img src="/shopping_logo.png" alt="BeShopping Logo" className="h-10 w-10" />
+            <img src="/shopping-cart-logo.svg" alt="BeShopping Logo" className="h-10 w-10" />
             <span className="text-lg font-bold text-primary">BeShopping</span>
           </Link>
           <DrawerClose asChild>

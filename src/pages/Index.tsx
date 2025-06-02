@@ -24,6 +24,8 @@ const heroImages = [
   '/images/pic2.jpeg',
   '/images/pic3.jpeg',
   '/images/pic4.jpeg',
+  '/images/pic5.jpeg',
+  '/images/pic6.jpeg',
 ];
 
 const Index = () => {

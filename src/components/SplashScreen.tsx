@@ -73,26 +73,34 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             transition={{ duration: 0.3 }}
             className="flex flex-col items-center"
           >
-            <motion.div
-              animate={{ 
-                rotate: 360,
-                transition: { 
-                  repeat: Infinity, 
-                  duration: 1.5, // Rotation plus rapide
-                  ease: "linear"
-                }
-              }}
-              className="mb-6"
-            >
-              <img
-                src="/shopping_logo.png"
-                alt="BeShopping Logo"
-                className="w-24 h-24 object-contain"
-              />
-            </motion.div>
+            {/* Container pour l'animation de roulement */}
+            <div className="w-48 h-24 mb-0 relative flex items-center">
+              <motion.div
+                animate={{ 
+                  x: [-96, 168], // Plus large pour permettre la disparition complète
+                  opacity: [0, 1, 1, 1, 0], // Apparition, visible, puis disparition
+                  transition: { 
+                    repeat: Infinity, 
+                    duration: 3, // Durée légèrement plus longue
+                    ease: "linear",
+                    times: [0, 0.2, 0.5, 0.8, 1] // Timing de l'opacity
+                  }
+                }}
+                className="absolute"
+                style={{
+                  left: 0
+                }}
+              >
+                <img
+                  src="/shopping-cart-logo.svg"
+                  alt="BeShopping Logo"
+                  className="w-32 h-32 object-contain"
+                />
+              </motion.div>
+            </div>
             
             <motion.h1 
-              className={`text-2xl font-bold text-primary mb-8 ${
+              className={`text-2xl font-bold text-primary mb-6 ${
                 effectiveTheme === 'dark' ? 'text-orange-400' : 'text-primary'
               }`}
               initial={{ opacity: 0, y: 20 }}

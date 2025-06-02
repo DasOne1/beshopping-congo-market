@@ -33,7 +33,7 @@ const CategoryCard = ({
       <Card className="overflow-hidden transition-shadow hover:shadow-lg">
         <div className="relative aspect-square overflow-hidden">
           <img 
-            src={image || `/shopping_logo.png`} 
+            src={image || `/shopping-cart-logo.svg`} 
             alt={name}
             className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
           />
