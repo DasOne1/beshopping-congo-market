@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -32,7 +33,8 @@ const ProductForm = () => {
     images: [],
     tags: [],
     featured: false,
-    status: 'active'
+    status: 'active',
+    is_visible: true
   });
   
   const [newTag, setNewTag] = useState('');
@@ -98,6 +100,38 @@ const ProductForm = () => {
     }
   };
 
+  // Organiser les catégories pour l'affichage hiérarchique
+  const getCategoryDisplay = (category: any, level: number = 0): string => {
+    const indent = '  '.repeat(level);
+    return `${indent}${category.name}`;
+  };
+
+  const renderCategoryOptions = () => {
+    const rootCategories = categories.filter(cat => !cat.parent_id);
+    const getSubCategories = (parentId: string) => categories.filter(cat => cat.parent_id === parentId);
+    
+    const options: JSX.Element[] = [];
+    
+    rootCategories.forEach(rootCat => {
+      options.push(
+        <SelectItem key={rootCat.id} value={rootCat.id}>
+          {getCategoryDisplay(rootCat, 0)}
+        </SelectItem>
+      );
+      
+      const subCategories = getSubCategories(rootCat.id);
+      subCategories.forEach(subCat => {
+        options.push(
+          <SelectItem key={subCat.id} value={subCat.id}>
+            {getCategoryDisplay(subCat, 1)} (sous-catégorie)
+          </SelectItem>
+        );
+      });
+    });
+    
+    return options;
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -155,7 +189,7 @@ const ProductForm = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="category">Catégorie</Label>
+                  <Label htmlFor="category">Catégorie ou Sous-catégorie</Label>
                   <Select 
                     value={formData.category_id || 'none'} 
                     onValueChange={(value) => handleInputChange('category_id', value === 'none' ? null : value)}
@@ -165,13 +199,24 @@ const ProductForm = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Aucune catégorie</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
+                      {renderCategoryOptions()}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Choisissez une catégorie principale ou une sous-catégorie
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is_visible"
+                    checked={formData.is_visible || false}
+                    onCheckedChange={(checked) => handleInputChange('is_visible', checked)}
+                  />
+                  <Label htmlFor="is_visible">Produit visible</Label>
+                  <p className="text-xs text-gray-500">
+                    Les produits masqués ne sont pas visibles pour les utilisateurs
+                  </p>
                 </div>
               </CardContent>
             </Card>
