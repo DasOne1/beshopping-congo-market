@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
@@ -34,7 +33,9 @@ const Favorites = () => {
           </div>
         </main>
         
-        <Footer />
+        <div className="pb-16 md:pb-0">
+          <Footer />
+        </div>
       </>
     );
   }
@@ -87,7 +88,9 @@ const Favorites = () => {
         )}
       </main>
       
-      <Footer />
+      <div className="pb-16 md:pb-0">
+        <Footer />
+      </div>
     </>
   );
 };

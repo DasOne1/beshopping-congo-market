@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Users, Award, Truck, Shield, Star, MapPin, Phone, Mail } from 'lucide-react';
@@ -252,8 +251,10 @@ const AboutUs = () => {
           </Card>
         </motion.div>
       </main>
-
-      <Footer />
+      
+      <div className="pb-16 md:pb-0">
+        <Footer />
+      </div>
     </div>
   );
 };

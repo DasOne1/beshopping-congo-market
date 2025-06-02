@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -317,7 +316,9 @@ export default function Contact() {
         </section>
       </main>
       
-      <Footer />
+      <div className="pb-16 md:pb-0">
+        <Footer />
+      </div>
     </div>
   );
 }

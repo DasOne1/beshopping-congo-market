@@ -103,7 +103,7 @@ const Cart = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8 pb-20 md:pb-8">
+      <main className="container mx-auto px-4 py-20 pb-20 md:pb-8">
         <motion.h1 
           className="text-2xl md:text-3xl font-bold mb-6 flex items-center text-foreground"
           initial={{ opacity: 0, y: -10 }}
@@ -111,7 +111,7 @@ const Cart = () => {
           transition={{ duration: 0.3 }}
         >
           <ShoppingCart className="mr-2 h-6 w-6" />
-          Votre Panier
+          Votre Panier.....
         </motion.h1>
         
         {cart.length === 0 ? (
@@ -264,7 +264,9 @@ const Cart = () => {
         )}
       </main>
       
-      <Footer />
+      <div className="pb-16 md:pb-0">
+        <Footer />
+      </div>
     </div>
   );
 };

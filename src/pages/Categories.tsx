@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Package, ArrowRight } from 'lucide-react';
@@ -147,7 +146,9 @@ const Categories = () => {
         )}
       </div>
 
-      <Footer />
+      <div className="pb-16 md:pb-0">
+        <Footer />
+      </div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -17,6 +18,7 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { toast } from '@/hooks/use-toast';
+import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
 
 const ProductDetails = () => {
   const { id: productId } = useParams();
@@ -28,6 +30,8 @@ const ProductDetails = () => {
   const { currentCustomer, isAuthenticated } = useCustomerAuth();
   
   const [quantity, setQuantity] = useState(1);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
   
   console.log('ProductDetails - productId:', productId);
   console.log('ProductDetails - products:', products);
@@ -141,6 +145,31 @@ const ProductDetails = () => {
       : '\n\nClient: Anonyme';
 
     return `Bonjour! Je suis intéressé par ${product.name} au prix de ${formatPrice(currentPrice)} FC.${customerInfo}\n\nPouvez-vous me donner plus d'informations?`;
+  };
+
+  const handleWhatsAppClick = () => {
+    const message = getWhatsAppMessage();
+    const encodedMessage = encodeURIComponent(message);
+    const url = `https://wa.me/243978100940?text=${encodedMessage}`;
+    
+    setOrderDetails({
+      customerName: currentCustomer?.name || 'Anonyme',
+      customerPhone: currentCustomer?.phone || 'Non spécifié',
+      customerAddress: typeof currentCustomer?.address === 'string' 
+        ? currentCustomer.address 
+        : currentCustomer?.address?.address || 'Non spécifiée',
+      orderType: 'whatsapp'
+    });
+    
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmWhatsApp = () => {
+    const message = getWhatsAppMessage();
+    const encodedMessage = encodeURIComponent(message);
+    const url = `https://wa.me/243978100940?text=${encodedMessage}`;
+    window.open(url, '_blank');
+    setShowConfirmation(false);
   };
 
   return (
@@ -283,16 +312,22 @@ const ProductDetails = () => {
                 Ajouter au panier
               </Button>
 
-              <WhatsAppContact
-                phoneNumber="+243978100940"
-                message={getWhatsAppMessage()}
+              <Button
                 variant="outline"
                 size="lg"
+                onClick={handleWhatsAppClick}
                 className="bg-whatsapp hover:bg-whatsapp-dark text-white border-whatsapp"
               >
                 WhatsApp
-              </WhatsAppContact>
+              </Button>
             </div>
+
+            {/* Order Confirmation Dialog */}
+            <OrderConfirmationDialog
+              isOpen={showConfirmation}
+              onClose={() => setShowConfirmation(false)}
+              orderDetails={orderDetails}
+            />
 
             {/* Features */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
