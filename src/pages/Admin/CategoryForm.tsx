@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -6,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCategories, Category } from '@/hooks/useCategories';
 import ImageUpload from '@/components/Admin/ImageUpload';
@@ -22,7 +25,9 @@ const CategoryForm = () => {
     name: '',
     slug: '',
     description: '',
-    image: ''
+    image: '',
+    parent_id: null,
+    is_visible: true
   });
 
   useEffect(() => {
@@ -60,16 +65,24 @@ const CategoryForm = () => {
     }
 
     try {
+      const submitData = {
+        ...formData,
+        parent_id: formData.parent_id === 'none' ? null : formData.parent_id
+      };
+
       if (isEditing && id) {
-        await updateCategory.mutateAsync({ ...formData, id } as Category & { id: string });
+        await updateCategory.mutateAsync({ ...submitData, id } as Category & { id: string });
       } else {
-        await createCategory.mutateAsync(formData as Omit<Category, 'id' | 'created_at' | 'updated_at'>);
+        await createCategory.mutateAsync(submitData as Omit<Category, 'id' | 'created_at' | 'updated_at'>);
       }
       navigate('/dasgabriel@adminaccess/categories');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
     }
   };
+
+  // Obtenir les catégories principales (qui peuvent être parentes)
+  const parentCategories = categories.filter(cat => !cat.parent_id && cat.id !== id);
 
   return (
     <AdminLayout>
@@ -88,7 +101,7 @@ const CategoryForm = () => {
               {isEditing ? 'Modifier la catégorie' : 'Ajouter une catégorie'}
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              {isEditing ? 'Modifiez les informations de la catégorie' : 'Créez une nouvelle catégorie'}
+              {isEditing ? 'Modifiez les informations de la catégorie' : 'Créez une nouvelle catégorie ou sous-catégorie'}
             </p>
           </div>
         </div>
@@ -130,6 +143,29 @@ const CategoryForm = () => {
                   </div>
 
                   <div>
+                    <Label htmlFor="parent_id">Catégorie parente</Label>
+                    <Select 
+                      value={formData.parent_id || 'none'} 
+                      onValueChange={(value) => handleInputChange('parent_id', value === 'none' ? null : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choisir une catégorie parente (optionnel)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Catégorie principale</SelectItem>
+                        {parentCategories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Laisser vide pour créer une catégorie principale, ou choisir une catégorie parente pour créer une sous-catégorie
+                    </p>
+                  </div>
+
+                  <div>
                     <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
@@ -138,6 +174,18 @@ const CategoryForm = () => {
                       placeholder="Description de la catégorie"
                       rows={4}
                     />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="is_visible"
+                      checked={formData.is_visible || false}
+                      onCheckedChange={(checked) => handleInputChange('is_visible', checked)}
+                    />
+                    <Label htmlFor="is_visible">Catégorie visible</Label>
+                    <p className="text-xs text-gray-500">
+                      Les catégories masquées ne sont pas visibles pour les utilisateurs
+                    </p>
                   </div>
                 </div>
 

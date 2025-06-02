@@ -2,11 +2,11 @@
 import { Product, Category } from '@/types';
 
 export const mockCategories: Category[] = [
-  { id: 'cat1', name: 'Electronics', slug: 'electronics', description: 'Latest gadgets and tech products' },
-  { id: 'cat2', name: 'Fashion', slug: 'fashion', description: 'Trendy clothes and accessories' },
-  { id: 'cat3', name: 'Home & Kitchen', slug: 'home-kitchen', description: 'Everything for your home' },
-  { id: 'cat4', name: 'Beauty & Health', slug: 'beauty-health', description: 'Beauty and personal care products' },
-  { id: 'cat5', name: 'Sports', slug: 'sports', description: 'Sports equipment and activewear' }
+  { id: 'cat1', name: 'Electronics', slug: 'electronics', description: 'Latest gadgets and tech products', is_visible: true },
+  { id: 'cat2', name: 'Fashion', slug: 'fashion', description: 'Trendy clothes and accessories', is_visible: true },
+  { id: 'cat3', name: 'Home & Kitchen', slug: 'home-kitchen', description: 'Everything for your home', is_visible: true },
+  { id: 'cat4', name: 'Beauty & Health', slug: 'beauty-health', description: 'Beauty and personal care products', is_visible: true },
+  { id: 'cat5', name: 'Sports', slug: 'sports', description: 'Sports equipment and activewear', is_visible: true }
 ];
 
 export const mockProducts: Product[] = [
@@ -22,7 +22,8 @@ export const mockProducts: Product[] = [
     category_id: 'cat1',
     tags: ['smartphone', 'tech', 'camera'],
     featured: true,
-    popular: 85
+    popular: 85,
+    is_visible: true
   },
   {
     id: 'prod2',
@@ -36,7 +37,8 @@ export const mockProducts: Product[] = [
     category_id: 'cat1',
     tags: ['audio', 'wireless', 'tech'],
     featured: false,
-    popular: 63
+    popular: 63,
+    is_visible: true
   },
   {
     id: 'prod3',
@@ -50,7 +52,8 @@ export const mockProducts: Product[] = [
     category_id: 'cat2',
     tags: ['fashion', 'clothing', 'casual'],
     featured: true,
-    popular: 92
+    popular: 92,
+    is_visible: true
   },
   {
     id: 'prod4',
@@ -64,7 +67,8 @@ export const mockProducts: Product[] = [
     category_id: 'cat3',
     tags: ['kitchen', 'appliance', 'blender'],
     featured: true,
-    popular: 45
+    popular: 45,
+    is_visible: true
   },
   {
     id: 'prod5',
@@ -78,7 +82,8 @@ export const mockProducts: Product[] = [
     category_id: 'cat4',
     tags: ['skincare', 'beauty', 'organic'],
     featured: false,
-    popular: 78
+    popular: 78,
+    is_visible: true
   },
   {
     id: 'prod6',
@@ -92,6 +97,7 @@ export const mockProducts: Product[] = [
     category_id: 'cat5',
     tags: ['shoes', 'sports', 'running'],
     featured: true,
-    popular: 58
+    popular: 58,
+    is_visible: true
   }
 ];
