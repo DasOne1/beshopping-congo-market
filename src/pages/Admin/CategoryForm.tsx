@@ -1,8 +1,7 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useCategories, Category } from '@/hooks/useCategories';
 import ImageUpload from '@/components/Admin/ImageUpload';
 import AdminLayout from '@/components/Admin/AdminLayout';
+import { toast } from '@/hooks/use-toast';
 
 const CategoryForm = () => {
   const navigate = useNavigate();
@@ -29,6 +29,7 @@ const CategoryForm = () => {
     parent_id: null,
     is_visible: true
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isEditing && id && categories.length > 0) {
@@ -61,23 +62,49 @@ const CategoryForm = () => {
     e.preventDefault();
     
     if (!formData.name || !formData.slug) {
+      toast({
+        title: "Erreur de validation",
+        description: "Veuillez remplir tous les champs obligatoires.",
+        variant: "destructive",
+      });
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       const submitData = {
-        ...formData,
-        parent_id: formData.parent_id === 'none' ? null : formData.parent_id
+        name: formData.name!,
+        slug: formData.slug!,
+        description: formData.description || '',
+        image: formData.image || '',
+        parent_id: formData.parent_id === 'none' ? null : formData.parent_id,
+        is_visible: formData.is_visible ?? true
       };
 
       if (isEditing && id) {
-        await updateCategory.mutateAsync({ ...submitData, id } as Category & { id: string });
+        await updateCategory.mutateAsync({ ...submitData, id });
+        toast({
+          title: "Succès",
+          description: "La catégorie a été modifiée avec succès.",
+        });
       } else {
-        await createCategory.mutateAsync(submitData as Omit<Category, 'id' | 'created_at' | 'updated_at'>);
+        await createCategory.mutateAsync(submitData);
+        toast({
+          title: "Succès",
+          description: "La catégorie a été créée avec succès.",
+        });
       }
-      navigate('/dasgabriel@adminaccess/categories');
+      navigate('/dasgabriel@adminaccess/catalog');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la sauvegarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -106,7 +133,7 @@ const CategoryForm = () => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Informations de la catégorie</CardTitle>
@@ -199,23 +226,30 @@ const CategoryForm = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t">
+              <div className="flex justify-end space-x-4">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/dasgabriel@adminaccess/categories')}
+                  onClick={() => navigate('/dasgabriel@adminaccess/catalog')}
+                  disabled={isSubmitting}
                 >
                   Annuler
                 </Button>
                 <Button 
                   type="submit"
-                  disabled={createCategory.isPending || updateCategory.isPending}
+                  disabled={isSubmitting}
                 >
-                  <Save className="mr-2 h-4 w-4" />
-                  {createCategory.isPending || updateCategory.isPending 
-                    ? (isEditing ? 'Mise à jour...' : 'Création...') 
-                    : (isEditing ? 'Mettre à jour' : 'Créer la catégorie')
-                  }
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isEditing ? 'Modification...' : 'Création...'}
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      {isEditing ? 'Modifier la catégorie' : 'Créer la catégorie'}
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>
