@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Star } from 'lucide-react';
@@ -9,24 +9,24 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { Product } from '@/types';
-import ProductImageCarousel from './ProductImageCarousel';
+import OptimizedImage from './OptimizedImage';
 
 interface ProductCardProps {
   product: Product;
   viewMode?: 'grid' | 'list';
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' }) => {
+const ProductCard: React.FC<ProductCardProps> = memo(({ product, viewMode = 'grid' }) => {
   const { addToCart, isInCart } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     addToCart(product.id, 1);
-  };
+  }, [addToCart, product.id]);
 
-  const handleToggleFavorite = (e: React.MouseEvent) => {
+  const handleToggleFavorite = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isFavorite(product.id)) {
@@ -34,11 +34,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
     } else {
       addToFavorites(product.id);
     }
-  };
+  }, [isFavorite, removeFromFavorites, addToFavorites, product.id]);
 
-  const formatPrice = (price: number): string => {
+  const formatPrice = useCallback((price: number): string => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  };
+  }, []);
 
   const discountPercentage = product.discounted_price 
     ? Math.round(((product.original_price - product.discounted_price) / product.original_price) * 100)
@@ -46,20 +46,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
 
   const cardClasses = viewMode === 'list' ? "w-full" : "w-full";
   const isOutOfStock = product.status === 'inactive';
+  const isFavoriteProduct = isFavorite(product.id);
+  const isInCartProduct = isInCart(product.id);
 
   return (
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
       className={cardClasses}
+      layout
     >
       <Card className={`group relative overflow-hidden border border-border/40 hover:border-border/80 hover:shadow-lg transition-all duration-300 bg-card ${isOutOfStock ? 'opacity-75' : ''}`}>
         <div className="relative">
           <Link to={`/product/${product.id}`}>
-            <ProductImageCarousel
-              images={product.images || []}
-              productName={product.name}
-              className="w-full"
+            <OptimizedImage
+              src={product.images?.[0] || '/shopping-cart-logo.svg'}
+              alt={product.name}
+              className="aspect-square w-full"
+              loading="lazy"
             />
           </Link>
           
@@ -85,9 +89,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
             size="icon"
             className="absolute top-2 right-2 bg-background/80 hover:bg-background z-10"
             onClick={handleToggleFavorite}
+            aria-label={isFavoriteProduct ? 'Retirer des favoris' : 'Ajouter aux favoris'}
           >
             <Heart 
-              className={`h-4 w-4 ${isFavorite(product.id) ? 'fill-red-500 text-red-500' : ''}`} 
+              className={`h-4 w-4 ${isFavoriteProduct ? 'fill-red-500 text-red-500' : ''}`} 
             />
           </Button>
         </div>
@@ -139,18 +144,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
             
             <Button 
               onClick={handleAddToCart}
-              disabled={isInCart(product.id)}
+              disabled={isInCartProduct || isOutOfStock}
               className="w-full h-8 text-xs"
               variant={isOutOfStock ? "secondary" : "default"}
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
-              {isInCart(product.id) ? 'Dans le panier' : 'Ajouter'}
+              {isInCartProduct ? 'Dans le panier' : 'Ajouter'}
             </Button>
           </div>
         </CardContent>
       </Card>
     </motion.div>
   );
-};
+});
+
+ProductCard.displayName = 'ProductCard';
 
 export default ProductCard;
