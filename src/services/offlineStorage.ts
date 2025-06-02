@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import Dexie, { Table } from 'dexie';
 
 export interface CachedProduct {
@@ -31,21 +30,11 @@ export interface PerformanceLog {
   data: any;
 }
 
-export type DataType = 'products' | 'categories' | 'settings';
-
-interface CacheItem {
-  id: string;
-  type: DataType;
-  subtype: string;
-  data: unknown;
-}
-
 export class OfflineDatabase extends Dexie {
   products!: Table<CachedProduct>;
   categories!: Table<CachedCategory>;
   syncQueue!: Table<SyncQueue>;
   performanceLogs!: Table<PerformanceLog>;
-  cache: Dexie.Table<CacheItem, string>;
 
   constructor() {
     super('BeShopping_OfflineDB');
@@ -55,24 +44,46 @@ export class OfflineDatabase extends Dexie {
       categories: 'id, timestamp, ttl',
       syncQueue: '++id, timestamp, retries',
       performanceLogs: '++id, timestamp, type',
-      cache: 'id, type, subtype'
     });
-
-    this.cache = this.table('cache');
   }
 
   async isExpired(timestamp: number, ttl: number): Promise<boolean> {
     return Date.now() - timestamp > ttl;
   }
 
-  async getCachedData(type: DataType, subtype: string): Promise<unknown | null> {
-    const cacheItem = await this.cache.get({ type, subtype });
-    return cacheItem?.data || null;
+  async getCachedData<T>(table: 'products' | 'categories', id: string): Promise<T | null> {
+    try {
+      const cached = await this[table].get(id);
+      if (!cached) return null;
+      
+      if (await this.isExpired(cached.timestamp, cached.ttl)) {
+        await this[table].delete(id);
+        return null;
+      }
+      
+      return cached.data;
+    } catch (error) {
+      console.error('Error getting cached data:', error);
+      return null;
+    }
   }
 
-  async setCachedData(type: DataType, subtype: string, data: unknown): Promise<void> {
-    const id = `${type}-${subtype}`;
-    await this.cache.put({ id, type, subtype, data });
+  async setCachedData(
+    table: 'products' | 'categories',
+    id: string,
+    data: any,
+    ttl: number = 5 * 60 * 1000 // 5 minutes default
+  ): Promise<void> {
+    try {
+      await this[table].put({
+        id,
+        data,
+        timestamp: Date.now(),
+        ttl,
+      });
+    } catch (error) {
+      console.error('Error setting cached data:', error);
+    }
   }
 
   async addToSyncQueue(action: SyncQueue['action'], table: string, data: any): Promise<void> {

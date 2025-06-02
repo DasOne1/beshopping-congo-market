@@ -1,7 +1,8 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +14,6 @@ import { useProducts, Product } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import ImageUpload from '@/components/Admin/ImageUpload';
 import AdminLayout from '@/components/Admin/AdminLayout';
-import { toast } from '@/hooks/use-toast';
 
 const ProductForm = () => {
   const navigate = useNavigate();
@@ -38,7 +38,6 @@ const ProductForm = () => {
   });
   
   const [newTag, setNewTag] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isEditing && id && products.length > 0) {
@@ -81,15 +80,8 @@ const ProductForm = () => {
     e.preventDefault();
     
     if (!formData.name || !formData.description || !formData.original_price) {
-      toast({
-        title: "Erreur de validation",
-        description: "Veuillez remplir tous les champs obligatoires.",
-        variant: "destructive",
-      });
       return;
     }
-
-    setIsSubmitting(true);
 
     try {
       const submitData = {
@@ -99,27 +91,12 @@ const ProductForm = () => {
 
       if (isEditing && id) {
         await updateProduct.mutateAsync({ ...submitData, id } as Product & { id: string });
-        toast({
-          title: "Succès",
-          description: "Le produit a été modifié avec succès.",
-        });
       } else {
         await createProduct.mutateAsync(submitData as Omit<Product, 'id' | 'created_at' | 'updated_at'>);
-        toast({
-          title: "Succès",
-          description: "Le produit a été créé avec succès.",
-        });
       }
       navigate('/dasgabriel@adminaccess/catalog');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la sauvegarde.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -378,30 +355,24 @@ const ProductForm = () => {
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-end gap-3 pt-6">
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate('/dasgabriel@adminaccess/catalog')}
-              disabled={isSubmitting}
             >
               Annuler
             </Button>
             <Button 
               type="submit"
-              disabled={isSubmitting}
+              disabled={createProduct.isPending || updateProduct.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEditing ? 'Modification...' : 'Création...'}
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  {isEditing ? 'Modifier le produit' : 'Créer le produit'}
-                </>
-              )}
+              <Save className="mr-2 h-4 w-4" />
+              {createProduct.isPending || updateProduct.isPending 
+                ? (isEditing ? 'Mise à jour...' : 'Création...') 
+                : (isEditing ? 'Mettre à jour' : 'Créer le produit')
+              }
             </Button>
           </div>
         </form>
