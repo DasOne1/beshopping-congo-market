@@ -16,7 +16,6 @@ export interface Product {
   weight?: number;
   dimensions?: any;
   status?: string;
-  is_visible: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -27,12 +26,8 @@ export interface Category {
   description?: string;
   image?: string;
   slug?: string;
-  parent_id?: string;
-  is_visible: boolean;
   created_at?: string;
   updated_at?: string;
-  children?: Category[];
-  parent?: Category;
 }
 
 export interface Customer {

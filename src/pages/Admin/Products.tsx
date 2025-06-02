@@ -1,13 +1,12 @@
 
 import React, { useState, useMemo } from 'react';
-import { Plus, Edit, Trash2, Search, Package, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Package, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -22,14 +21,13 @@ import AdminLayout from '@/components/Admin/AdminLayout';
 
 const Products = () => {
   const navigate = useNavigate();
-  const { products, isLoading, deleteProduct, updateProduct } = useProducts();
+  const { products, isLoading, deleteProduct } = useProducts();
   const { categories } = useCategories();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
-  const [visibilityFilter, setVisibilityFilter] = useState('all');
 
   const formatPrice = (price: number) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -39,13 +37,6 @@ const Products = () => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
       deleteProduct.mutate(id);
     }
-  };
-
-  const toggleVisibility = (id: string, currentVisibility: boolean) => {
-    updateProduct.mutate({
-      id,
-      is_visible: !currentVisibility
-    });
   };
 
   const getCategoryName = (categoryId: string) => {
@@ -67,13 +58,9 @@ const Products = () => {
                           (stockFilter === 'low-stock' && product.stock > 0 && product.stock <= 5) ||
                           (stockFilter === 'out-of-stock' && product.stock === 0);
 
-      const matchesVisibility = visibilityFilter === 'all' ||
-                               (visibilityFilter === 'visible' && product.is_visible) ||
-                               (visibilityFilter === 'hidden' && !product.is_visible);
-
-      return matchesSearch && matchesStatus && matchesCategory && matchesStock && matchesVisibility;
+      return matchesSearch && matchesStatus && matchesCategory && matchesStock;
     });
-  }, [products, searchTerm, statusFilter, categoryFilter, stockFilter, visibilityFilter]);
+  }, [products, searchTerm, statusFilter, categoryFilter, stockFilter]);
 
   if (isLoading) {
     return (
@@ -88,9 +75,6 @@ const Products = () => {
     );
   }
 
-  const visibleCount = products.filter(p => p.is_visible).length;
-  const hiddenCount = products.filter(p => !p.is_visible).length;
-
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -104,16 +88,6 @@ const Products = () => {
             <p className="text-muted-foreground mt-1">
               Gérez votre catalogue de produits ({filteredProducts.length} sur {products.length})
             </p>
-            <div className="flex gap-4 mt-2">
-              <span className="text-sm text-green-600">
-                {visibleCount} visible{visibleCount > 1 ? 's' : ''}
-              </span>
-              {hiddenCount > 0 && (
-                <span className="text-sm text-red-600">
-                  {hiddenCount} masqué{hiddenCount > 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
           </div>
           <Button 
             onClick={() => navigate('/dasgabriel@adminaccess/products/new')}
@@ -129,7 +103,7 @@ const Products = () => {
           <CardHeader>
             <CardTitle className="text-lg">Liste des Produits</CardTitle>
             <CardDescription>
-              {filteredProducts.length} produit(s) trouvé(s). Les produits masqués apparaissent grisés.
+              {filteredProducts.length} produit(s) trouvé(s)
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -163,7 +137,7 @@ const Products = () => {
                             <SelectItem value="all">Toutes</SelectItem>
                             {categories.map((category) => (
                               <SelectItem key={category.id} value={category.id}>
-                                {category.parent_id ? `↳ ${category.name}` : category.name}
+                                {category.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -202,27 +176,12 @@ const Products = () => {
                         </Select>
                       </div>
                     </TableHead>
-                    <TableHead className="min-w-[120px]">
-                      <div className="space-y-2">
-                        <span className="font-medium">Visibilité</span>
-                        <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
-                          <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="Tous" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Tous</SelectItem>
-                            <SelectItem value="visible">Visible</SelectItem>
-                            <SelectItem value="hidden">Masqué</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredProducts.map((product) => (
-                    <TableRow key={product.id} className={`hover:bg-muted/50 ${!product.is_visible ? 'opacity-60 bg-gray-100 dark:bg-gray-900' : ''}`}>
+                    <TableRow key={product.id} className="hover:bg-muted/50">
                       <TableCell>
                         <div className="w-16 h-12 rounded-lg overflow-hidden bg-muted">
                           {product.images && product.images.length > 0 ? (
@@ -240,10 +199,10 @@ const Products = () => {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <div className={`font-medium text-foreground line-clamp-1 ${!product.is_visible ? 'line-through text-gray-500' : ''}`}>
+                          <div className="font-medium text-foreground line-clamp-1">
                             {product.name}
                           </div>
-                          <div className={`text-sm text-muted-foreground line-clamp-1 ${!product.is_visible ? 'text-gray-500' : ''}`}>
+                          <div className="text-sm text-muted-foreground line-clamp-1">
                             {product.description}
                           </div>
                           <div className="flex items-center gap-2">
@@ -257,24 +216,21 @@ const Products = () => {
                                 Promo
                               </Badge>
                             )}
-                            {!product.is_visible && (
-                              <Badge variant="destructive" className="text-xs">Masqué</Badge>
-                            )}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className={`text-sm text-muted-foreground ${!product.is_visible ? 'text-gray-500' : ''}`}>
+                        <span className="text-sm text-muted-foreground">
                           {getCategoryName(product.category_id || '')}
                         </span>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <div className={`font-medium text-foreground ${!product.is_visible ? 'text-gray-500' : ''}`}>
+                          <div className="font-medium text-foreground">
                             {formatPrice(product.discounted_price || product.original_price)} FC
                           </div>
                           {product.discounted_price && (
-                            <div className={`text-sm text-muted-foreground line-through ${!product.is_visible ? 'text-gray-500' : ''}`}>
+                            <div className="text-sm text-muted-foreground line-through">
                               {formatPrice(product.original_price)} FC
                             </div>
                           )}
@@ -298,21 +254,6 @@ const Products = () => {
                         >
                           {product.status === 'active' ? 'Actif' : 'Inactif'}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={product.is_visible}
-                            onCheckedChange={() => toggleVisibility(product.id, product.is_visible)}
-                          />
-                          <span className="text-xs">
-                            {product.is_visible ? (
-                              <Eye className="h-4 w-4 text-green-600" />
-                            ) : (
-                              <EyeOff className="h-4 w-4 text-red-600" />
-                            )}
-                          </span>
-                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1 justify-end">

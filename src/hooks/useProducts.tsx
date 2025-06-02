@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -16,7 +15,6 @@ export interface Product {
   featured: boolean;
   popular?: number;
   status: 'active' | 'inactive' | 'draft';
-  is_visible: boolean;
   category_id: string;
   stock: number;
   created_at: string;
@@ -77,7 +75,6 @@ export const useProducts = () => {
         discount: product.discount || 0,
         popular: product.popular || 0,
         status: (product.status as 'active' | 'inactive' | 'draft') || 'active',
-        is_visible: product.is_visible ?? true,
         created_at: product.created_at || new Date().toISOString(),
         updated_at: product.updated_at || new Date().toISOString()
       })) as Product[];
@@ -93,28 +90,15 @@ export const useProducts = () => {
     throwOnError: false,
   });
 
-  // Fonction pour obtenir uniquement les produits visibles (côté utilisateur)
-  const getVisibleProducts = () => {
-    return products.filter(product => product.is_visible && product.status === 'active');
-  };
-
-  // Fonction pour obtenir tous les produits (y compris cachés) pour l'admin
-  const getAllProducts = () => {
-    return products;
-  };
-
-  // Dériver les produits vedettes et populaires (uniquement les visibles)
-  const featuredProducts = getVisibleProducts().filter(product => product.featured);
-  const popularProducts = getVisibleProducts().filter(product => product.featured);
+  // Dériver les produits vedettes et populaires
+  const featuredProducts = products.filter(product => product.featured);
+  const popularProducts = products.filter(product => product.featured); // On utilise featured comme critère
 
   const createProduct = useMutation({
     mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('products')
-        .insert([{
-          ...product,
-          is_visible: product.is_visible ?? true
-        }])
+        .insert([product])
         .select()
         .single();
       
@@ -134,7 +118,6 @@ export const useProducts = () => {
           discount: newProduct.discount || 0,
           popular: newProduct.popular || 0,
           status: (newProduct.status as 'active' | 'inactive' | 'draft') || 'active',
-          is_visible: newProduct.is_visible ?? true,
           created_at: newProduct.created_at || new Date().toISOString(),
           updated_at: newProduct.updated_at || new Date().toISOString()
         } as Product;
@@ -184,7 +167,6 @@ export const useProducts = () => {
           discount: updatedProduct.discount || 0,
           popular: updatedProduct.popular || 0,
           status: (updatedProduct.status as 'active' | 'inactive' | 'draft') || 'active',
-          is_visible: updatedProduct.is_visible ?? true,
           created_at: updatedProduct.created_at || new Date().toISOString(),
           updated_at: updatedProduct.updated_at || new Date().toISOString()
         } as Product;
@@ -261,8 +243,6 @@ export const useProducts = () => {
     updateProduct,
     deleteProduct,
     refetch: forceRefresh,
-    getVisibleProducts,
-    getAllProducts,
   };
 };
 
@@ -295,7 +275,6 @@ export const useProduct = (id: string) => {
         discount: data.discount || 0,
         popular: data.popular || 0,
         status: (data.status as 'active' | 'inactive' | 'draft') || 'active',
-        is_visible: data.is_visible ?? true,
         created_at: data.created_at || new Date().toISOString(),
         updated_at: data.updated_at || new Date().toISOString()
       } as Product;
