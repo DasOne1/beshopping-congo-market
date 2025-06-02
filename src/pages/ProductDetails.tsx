@@ -15,6 +15,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { toast } from '@/hooks/use-toast';
 
 const ProductDetails = () => {
@@ -24,6 +25,7 @@ const ProductDetails = () => {
   const { addToCart } = useCart();
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites();
   const { trackEvent } = useAnalytics();
+  const { currentCustomer, isAuthenticated } = useCustomerAuth();
   
   const [quantity, setQuantity] = useState(1);
   
@@ -133,6 +135,14 @@ const ProductDetails = () => {
     }
   };
 
+  const getWhatsAppMessage = () => {
+    const customerInfo = isAuthenticated && currentCustomer
+      ? `\n\nInformations client:\nNom: ${currentCustomer.name}\nTéléphone: ${currentCustomer.phone}${currentCustomer.email ? `\nEmail: ${currentCustomer.email}` : ''}${currentCustomer.address ? `\nAdresse: ${typeof currentCustomer.address === 'string' ? currentCustomer.address : currentCustomer.address?.address}` : ''}`
+      : '\n\nClient: Anonyme';
+
+    return `Bonjour! Je suis intéressé par ${product.name} au prix de ${formatPrice(currentPrice)} FC.${customerInfo}\n\nPouvez-vous me donner plus d'informations?`;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -168,14 +178,24 @@ const ProductDetails = () => {
                   -{product.discount}%
                 </Badge>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleShare}
-                className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm z-10"
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
+              <div className="absolute top-4 right-4 flex gap-2 z-10">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => isFav ? removeFromFavorites(product.id) : addToFavorites(product.id)}
+                  className="bg-white/80 backdrop-blur-sm"
+                >
+                  <Heart className={`h-4 w-4 ${isFav ? 'fill-current text-red-500' : ''}`} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleShare}
+                  className="bg-white/80 backdrop-blur-sm"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </motion.div>
 
@@ -262,18 +282,10 @@ const ProductDetails = () => {
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 Ajouter au panier
               </Button>
-              
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => isFav ? removeFromFavorites(product.id) : addToFavorites(product.id)}
-              >
-                <Heart className={`h-5 w-5 ${isFav ? 'fill-current text-red-500' : ''}`} />
-              </Button>
 
               <WhatsAppContact
                 phoneNumber="+243978100940"
-                message={`Bonjour! Je suis intéressé par ${product.name} au prix de ${formatPrice(currentPrice)} FC. Pouvez-vous me donner plus d'informations?`}
+                message={getWhatsAppMessage()}
                 variant="outline"
                 size="lg"
                 className="bg-whatsapp hover:bg-whatsapp-dark text-white border-whatsapp"
