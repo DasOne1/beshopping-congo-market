@@ -3,13 +3,6 @@ import { useEffect, useRef } from 'react';
 import { useAppStore } from '@/stores/appStore';
 import { db } from '@/services/offlineStorage';
 
-interface PerformanceEntry extends PerformanceNavigationTiming {
-  entryType: string;
-  name: string;
-  startTime: number;
-  duration: number;
-}
-
 export const usePerformanceMonitor = () => {
   const { recordRequest } = useAppStore();
   const performanceObserver = useRef<PerformanceObserver | null>(null);
@@ -23,15 +16,15 @@ export const usePerformanceMonitor = () => {
           // Monitor navigation timing
           if (entry.entryType === 'navigation') {
             const navEntry = entry as PerformanceNavigationTiming;
-            const loadTime = navEntry.loadEventEnd - navEntry.navigationStart;
+            const loadTime = navEntry.loadEventEnd - navEntry.fetchStart;
             
             recordRequest(loadTime);
             
             db.logPerformance('api_call', {
               type: 'navigation',
               loadTime,
-              domContentLoaded: navEntry.domContentLoadedEventEnd - navEntry.navigationStart,
-              firstPaint: navEntry.loadEventStart - navEntry.navigationStart,
+              domContentLoaded: navEntry.domContentLoadedEventEnd - navEntry.fetchStart,
+              firstPaint: navEntry.loadEventStart - navEntry.fetchStart,
             });
           }
           
@@ -60,9 +53,10 @@ export const usePerformanceMonitor = () => {
           
           // Monitor FID (First Input Delay)
           if (entry.entryType === 'first-input') {
+            const fidEntry = entry as any; // Type assertion for first-input
             db.logPerformance('api_call', {
               type: 'fid',
-              delay: entry.processingStart - entry.startTime,
+              delay: fidEntry.processingStart ? fidEntry.processingStart - entry.startTime : 0,
             });
           }
         });
@@ -104,7 +98,7 @@ export const usePerformanceMonitor = () => {
   }, [recordRequest]);
 
   // Function to manually measure performance
-  const measurePerformance = (name: string, fn: () => Promise<any> | any) => {
+  const measurePerformance = (name: string, fn: (...args: any[]) => Promise<any> | any) => {
     return async (...args: any[]) => {
       const startTime = performance.now();
       
