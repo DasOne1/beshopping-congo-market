@@ -2,8 +2,6 @@
 import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { persistQueryClient } from '@tanstack/react-query-persist-client-core';
-import { get, set, del } from 'idb-keyval';
 import { Toaster } from '@/components/ui/toaster';
 import { CartProvider } from '@/contexts/CartContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
@@ -58,35 +56,44 @@ const queryClient = new QueryClient({
         return failureCount < 2;
       },
       refetchOnWindowFocus: false,
-      networkMode: 'offlineFirst',
+      networkMode: 'offlineFirst'
     },
     mutations: {
       networkMode: 'offlineFirst',
       retry: (failureCount, error) => {
         if (!navigator.onLine) return false;
         return failureCount < 1;
-      },
-    },
-  },
+      }
+    }
+  }
 });
 
-// Persist query client to IndexedDB
-persistQueryClient({
-  queryClient,
-  persister: {
-    persistClient: async (client) => {
-      await set('query-cache', client);
-    },
-    restoreClient: async () => {
-      return await get('query-cache');
-    },
-    removeClient: async () => {
-      await del('query-cache');
-    },
-  },
-  maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  buster: 'v1', // Increment to invalidate cache
-});
+// Simple persistence using localStorage
+const persistQueryClient = () => {
+  const cacheKey = 'react-query-cache';
+  
+  // Save cache on page unload
+  window.addEventListener('beforeunload', () => {
+    const cache = queryClient.getQueryCache().getAll();
+    localStorage.setItem(cacheKey, JSON.stringify(cache.map(query => ({
+      queryKey: query.queryKey,
+      state: query.state
+    }))));
+  });
+
+  // Restore cache on load
+  try {
+    const cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
+      const parsedCache = JSON.parse(cachedData);
+      parsedCache.forEach((item: any) => {
+        queryClient.setQueryData(item.queryKey, item.state.data);
+      });
+    }
+  } catch (error) {
+    console.error('Failed to restore cache:', error);
+  }
+};
 
 function AppContent() {
   const { isLoading } = useDataPreloader();
@@ -95,6 +102,11 @@ function AppContent() {
   useRealtimeSync();
   useNetworkStatus();
   usePerformanceMonitor();
+
+  // Initialize cache persistence
+  useEffect(() => {
+    persistQueryClient();
+  }, []);
 
   // Clean up expired cache periodically
   useEffect(() => {
@@ -109,7 +121,6 @@ function AppContent() {
     // Clean up on mount and every 5 minutes
     cleanup();
     const interval = setInterval(cleanup, 5 * 60 * 1000);
-    
     return () => clearInterval(interval);
   }, []);
 
@@ -136,7 +147,7 @@ function AppContent() {
   return (
     <>
       <Routes>
-        {/* Public Routes with UserLayout and Suspense */}
+        {/* Public Routes */}
         <Route path="/" element={
           <Suspense fallback={<PageFallback />}>
             <UserLayout><Index /></UserLayout>
@@ -188,14 +199,13 @@ function AppContent() {
           </Suspense>
         } />
 
-        {/* Admin Authentication Route */}
+        {/* Admin Routes */}
         <Route path="/dasgabriel@adminaccess" element={
           <Suspense fallback={<AdminFallback />}>
             <AdminAuthPage />
           </Suspense>
         } />
-
-        {/* Admin Routes - Protected with AdminAuth and Suspense */}
+        
         <Route path="/dasgabriel@adminaccess/dashboard" element={
           <Suspense fallback={<AdminFallback />}>
             <AdminAuth><Dashboard /></AdminAuth>
@@ -251,7 +261,7 @@ function AppContent() {
             <AdminAuth><Analytics /></AdminAuth>
           </Suspense>
         } />
-        <Route path="/dasgabriel@adminaccess/accounts" element={
+        <Route path="/dasgabriel@adminaccess/admin-accounts" element={
           <Suspense fallback={<AdminFallback />}>
             <AdminAuth><AdminAccounts /></AdminAuth>
           </Suspense>
@@ -269,7 +279,6 @@ function AppContent() {
           </Suspense>
         } />
       </Routes>
-      
       <PerformanceIndicator />
     </>
   );
@@ -282,8 +291,10 @@ function App() {
         <CartProvider>
           <FavoritesProvider>
             <Router>
-              <AppContent />
-              <Toaster />
+              <div className="App">
+                <AppContent />
+                <Toaster />
+              </div>
             </Router>
           </FavoritesProvider>
         </CartProvider>

@@ -1,7 +1,6 @@
 
 import React, { memo, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import ProductCard from '@/components/ProductCard';
 import { Product } from '@/types';
 
@@ -52,6 +51,29 @@ const ProductGridItem = memo(({
 
 ProductGridItem.displayName = 'ProductGridItem';
 
+// Simple AutoSizer replacement
+const SimpleAutoSizer = ({ children }: { children: (size: { height: number; width: number }) => React.ReactNode }) => {
+  const [size, setSize] = React.useState({ width: 800, height: 600 });
+
+  React.useEffect(() => {
+    const updateSize = () => {
+      const container = document.querySelector('[data-autosizer]');
+      if (container) {
+        setSize({
+          width: container.clientWidth,
+          height: container.clientHeight
+        });
+      }
+    };
+
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+
+  return <div data-autosizer className="w-full h-full">{children(size)}</div>;
+};
+
 const VirtualizedProductList: React.FC<VirtualizedProductListProps> = memo(({
   products,
   itemsPerRow = 4,
@@ -78,7 +100,7 @@ const VirtualizedProductList: React.FC<VirtualizedProductListProps> = memo(({
 
   return (
     <div className="h-[600px] w-full">
-      <AutoSizer>
+      <SimpleAutoSizer>
         {({ height, width }) => {
           // Calculate responsive items per row
           const responsiveItemsPerRow = Math.floor(width / (itemWidth + gap));
@@ -106,7 +128,7 @@ const VirtualizedProductList: React.FC<VirtualizedProductListProps> = memo(({
             </Grid>
           );
         }}
-      </AutoSizer>
+      </SimpleAutoSizer>
     </div>
   );
 });

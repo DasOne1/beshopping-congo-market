@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -9,8 +10,12 @@ export interface Category {
   description?: string;
   image?: string;
   parent_id?: string;
+  is_visible: boolean;
   created_at?: string;
   updated_at?: string;
+  // Relations pour les sous-catégories
+  children?: Category[];
+  parent?: Category;
 }
 
 export const useCategories = () => {
@@ -26,23 +31,71 @@ export const useCategories = () => {
         .order('name', { ascending: true });
 
       if (error) throw error;
-      console.log('Catégories chargées:', data?.length);
-      return data as Category[];
+      
+      // Organiser les catégories avec leurs relations parent/enfant
+      const categoriesMap = new Map<string, Category>();
+      const rootCategories: Category[] = [];
+
+      // D'abord, créer toutes les catégories
+      data?.forEach(cat => {
+        const category: Category = {
+          ...cat,
+          is_visible: cat.is_visible ?? true,
+          children: []
+        };
+        categoriesMap.set(cat.id, category);
+      });
+
+      // Ensuite, établir les relations parent/enfant
+      data?.forEach(cat => {
+        const category = categoriesMap.get(cat.id)!;
+        
+        if (cat.parent_id) {
+          const parent = categoriesMap.get(cat.parent_id);
+          if (parent) {
+            category.parent = parent;
+            parent.children!.push(category);
+          }
+        } else {
+          rootCategories.push(category);
+        }
+      });
+
+      console.log('Catégories chargées:', rootCategories.length, 'catégories principales');
+      return Array.from(categoriesMap.values()) as Category[];
     },
     retry: 1,
     retryDelay: 500,
     refetchOnWindowFocus: false,
-    staleTime: 2 * 60 * 1000, // 2 minutes - catégories changent moins souvent
-    gcTime: 15 * 60 * 1000, // 15 minutes
-    refetchInterval: false, // Désactiver l'actualisation automatique
+    staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchInterval: false,
   });
+
+  // Fonction pour obtenir uniquement les catégories visibles (côté utilisateur)
+  const getVisibleCategories = () => {
+    return categories.filter(cat => cat.is_visible);
+  };
+
+  // Fonction pour obtenir les catégories principales (sans parent)
+  const getRootCategories = () => {
+    return categories.filter(cat => !cat.parent_id);
+  };
+
+  // Fonction pour obtenir les sous-catégories d'une catégorie
+  const getSubCategories = (parentId: string) => {
+    return categories.filter(cat => cat.parent_id === parentId);
+  };
 
   const createCategory = useMutation({
     mutationFn: async (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('Création d\'une nouvelle catégorie...');
       const { data, error } = await supabase
         .from('categories')
-        .insert([category])
+        .insert([{
+          ...category,
+          is_visible: category.is_visible ?? true
+        }])
         .select()
         .single();
 
@@ -52,9 +105,13 @@ export const useCategories = () => {
     onSuccess: (newCategory) => {
       console.log('Catégorie créée avec succès, mise à jour du cache...');
       
-      // Mise à jour optimiste du cache
       queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
-        return [newCategory, ...oldData];
+        const formattedCategory: Category = {
+          ...newCategory,
+          is_visible: newCategory.is_visible ?? true,
+          children: []
+        };
+        return [formattedCategory, ...oldData];
       });
 
       queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -90,10 +147,13 @@ export const useCategories = () => {
     onSuccess: (updatedCategory) => {
       console.log('Catégorie mise à jour avec succès, mise à jour du cache...');
       
-      // Mise à jour optimiste du cache
       queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
         return oldData.map(category => 
-          category.id === updatedCategory.id ? updatedCategory : category
+          category.id === updatedCategory.id ? {
+            ...updatedCategory,
+            is_visible: updatedCategory.is_visible ?? true,
+            children: category.children || []
+          } : category
         );
       });
 
@@ -117,6 +177,13 @@ export const useCategories = () => {
   const deleteCategory = useMutation({
     mutationFn: async (id: string) => {
       console.log('Suppression de la catégorie:', id);
+      
+      // Vérifier s'il y a des sous-catégories
+      const subCategories = getSubCategories(id);
+      if (subCategories.length > 0) {
+        throw new Error('Impossible de supprimer une catégorie qui a des sous-catégories. Supprimez d\'abord les sous-catégories.');
+      }
+
       const { error } = await supabase
         .from('categories')
         .delete()
@@ -128,7 +195,6 @@ export const useCategories = () => {
     onSuccess: (deletedId) => {
       console.log('Catégorie supprimée avec succès, mise à jour du cache...');
       
-      // Mise à jour optimiste du cache
       queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
         return oldData.filter(category => category.id !== deletedId);
       });
@@ -156,5 +222,8 @@ export const useCategories = () => {
     createCategory,
     updateCategory,
     deleteCategory,
+    getVisibleCategories,
+    getRootCategories,
+    getSubCategories,
   };
 };

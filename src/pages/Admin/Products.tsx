@@ -1,12 +1,13 @@
 
 import React, { useState, useMemo } from 'react';
-import { Plus, Edit, Trash2, Search, Package, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Package, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -21,13 +22,14 @@ import AdminLayout from '@/components/Admin/AdminLayout';
 
 const Products = () => {
   const navigate = useNavigate();
-  const { products, isLoading, deleteProduct } = useProducts();
+  const { products, isLoading, deleteProduct, updateProduct } = useProducts();
   const { categories } = useCategories();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
+  const [visibilityFilter, setVisibilityFilter] = useState('all');
 
   const formatPrice = (price: number) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -37,6 +39,13 @@ const Products = () => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
       deleteProduct.mutate(id);
     }
+  };
+
+  const toggleVisibility = (id: string, currentVisibility: boolean) => {
+    updateProduct.mutate({
+      id,
+      is_visible: !currentVisibility
+    });
   };
 
   const getCategoryName = (categoryId: string) => {
@@ -58,9 +67,13 @@ const Products = () => {
                           (stockFilter === 'low-stock' && product.stock > 0 && product.stock <= 5) ||
                           (stockFilter === 'out-of-stock' && product.stock === 0);
 
-      return matchesSearch && matchesStatus && matchesCategory && matchesStock;
+      const matchesVisibility = visibilityFilter === 'all' ||
+                               (visibilityFilter === 'visible' && product.is_visible) ||
+                               (visibilityFilter === 'hidden' && !product.is_visible);
+
+      return matchesSearch && matchesStatus && matchesCategory && matchesStock && matchesVisibility;
     });
-  }, [products, searchTerm, statusFilter, categoryFilter, stockFilter]);
+  }, [products, searchTerm, statusFilter, categoryFilter, stockFilter, visibilityFilter]);
 
   if (isLoading) {
     return (
@@ -176,6 +189,21 @@ const Products = () => {
                         </Select>
                       </div>
                     </TableHead>
+                    <TableHead className="min-w-[120px]">
+                      <div className="space-y-2">
+                        <span className="font-medium">Visibilité</span>
+                        <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Tous" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Tous</SelectItem>
+                            <SelectItem value="visible">Visible</SelectItem>
+                            <SelectItem value="hidden">Masqué</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -254,6 +282,21 @@ const Products = () => {
                         >
                           {product.status === 'active' ? 'Actif' : 'Inactif'}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={product.is_visible}
+                            onCheckedChange={() => toggleVisibility(product.id, product.is_visible)}
+                          />
+                          <span className="text-xs">
+                            {product.is_visible ? (
+                              <Eye className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <EyeOff className="h-4 w-4 text-red-600" />
+                            )}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1 justify-end">
