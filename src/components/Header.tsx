@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -7,7 +8,13 @@ import {
   Menu, 
   Search, 
   X,
-  User
+  User,
+  Wand2,
+  Home,
+  Package,
+  Layers,
+  Info,
+  Phone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -115,19 +122,28 @@ const Header = () => {
 
           {/* Desktop Navigation - centré */}
           <nav className="hidden md:flex items-center space-x-6 flex-1 ml-8">
-            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+              <Home className="h-4 w-4" />
               Accueil
             </Link>
-            <Link to="/products" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link to="/products" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+              <Package className="h-4 w-4" />
               Produits
             </Link>
-            <Link to="/categories" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link to="/categories" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+              <Layers className="h-4 w-4" />
               Catégories
             </Link>
-            <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link to="/custom-order" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+              <Wand2 className="h-4 w-4" />
+              Commande Perso
+            </Link>
+            <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+              <Info className="h-4 w-4" />
               À Propos
             </Link>
-            <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+              <Phone className="h-4 w-4" />
               Contact
             </Link>
           </nav>

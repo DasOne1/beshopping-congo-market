@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShoppingBag, Heart, User, Home, Phone, Info, Menu } from 'lucide-react';
+import { X, ShoppingBag, Heart, User, Home, Phone, Info, Menu, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -36,6 +36,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { icon: ShoppingBag, label: 'Produits', path: '/products' },
     { icon: Heart, label: 'Favoris', path: '/favorites', badge: favorites.length },
     { icon: User, label: 'Compte', path: '/account' },
+    { icon: Wand2, label: 'Commande Personnalisée', path: '/custom-order' },
     { icon: Info, label: 'À propos', path: '/about' },
     { icon: Phone, label: 'Contact', path: '/contact' },
   ];

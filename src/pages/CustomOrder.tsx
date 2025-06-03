@@ -139,6 +139,9 @@ ${formData.description}
 
 📅 *Date de demande:* ${new Date().toLocaleDateString('fr-FR')}
 
+${formData.images.length > 0 ? `\n📸 *Images de référence:* ${formData.images.length} image(s) téléchargée(s)
+*Note:* Veuillez envoyer les images séparément dans le chat WhatsApp après l'envoi de ce message.` : ''}
+
 Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
     
     return message;
