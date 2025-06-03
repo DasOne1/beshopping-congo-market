@@ -1,17 +1,24 @@
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAppStore } from '@/stores/appStore';
 import { db } from '@/services/offlineStorage';
 import { Product } from '@/types';
+import { useOfflineAdminOperations } from './useOfflineAdminOperations';
 
 const PRODUCTS_CACHE_TIME = 5 * 60 * 1000; // 5 minutes
 const FEATURED_PRODUCTS_CACHE_TIME = 10 * 60 * 1000; // 10 minutes
 
 export const useOptimizedProducts = () => {
   const queryClient = useQueryClient();
-  const { recordCacheHit, recordRequest, setLoading, setError } = useAppStore();
+  const { recordCacheHit, recordRequest, setLoading, setError, connection } = useAppStore();
+  const {
+    createProductOffline,
+    updateProductOffline,
+    deleteProductOffline
+  } = useOfflineAdminOperations();
 
   const { data: products = [], isLoading, error, refetch } = useQuery({
     queryKey: ['products-optimized'],
@@ -24,7 +31,7 @@ export const useOptimizedProducts = () => {
         // Try to get from IndexedDB first
         const cachedProducts = await db.getCachedData<Product[]>('products', 'all');
         
-        if (cachedProducts && navigator.onLine) {
+        if (cachedProducts && connection.isOnline) {
           console.log('📦 Using cached products');
           recordCacheHit();
           
@@ -33,8 +40,20 @@ export const useOptimizedProducts = () => {
           return cachedProducts;
         }
 
-        // Fetch fresh data
-        return await fetchAndCacheProducts();
+        // If offline and have cached data, use it
+        if (!connection.isOnline && cachedProducts) {
+          console.log('📦 Using offline cached products');
+          recordCacheHit();
+          return cachedProducts;
+        }
+
+        // Fetch fresh data if online
+        if (connection.isOnline) {
+          return await fetchAndCacheProducts();
+        }
+
+        // No data available
+        return [];
       } catch (error) {
         console.error('Error fetching products:', error);
         setError('products', 'Erreur lors du chargement des produits');
@@ -53,7 +72,7 @@ export const useOptimizedProducts = () => {
     refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
       // Don't retry if offline
-      if (!navigator.onLine) return false;
+      if (!connection.isOnline) return false;
       return failureCount < 2;
     },
   });
@@ -106,6 +125,11 @@ export const useOptimizedProducts = () => {
         return cached;
       }
 
+      // Only fetch if online
+      if (!connection.isOnline) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -131,6 +155,12 @@ export const useOptimizedProducts = () => {
 
   const createProduct = useMutation({
     mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
+      // Try offline operation first
+      if (!connection.isOnline) {
+        await createProductOffline(product);
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('products')
         .insert([product])
@@ -160,23 +190,33 @@ export const useOptimizedProducts = () => {
     },
     onError: (err, newProduct, context) => {
       queryClient.setQueryData(['products-optimized'], context?.previousProducts);
-      toast({
-        title: "Erreur",
-        description: "Impossible de créer le produit.",
-        variant: "destructive",
-      });
+      if (connection.isOnline) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de créer le produit.",
+          variant: "destructive",
+        });
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products-optimized'] });
-      toast({
-        title: "Produit créé",
-        description: "Le produit a été créé avec succès.",
-      });
+    onSuccess: (data) => {
+      if (data) {
+        queryClient.invalidateQueries({ queryKey: ['products-optimized'] });
+        toast({
+          title: "Produit créé",
+          description: "Le produit a été créé avec succès.",
+        });
+      }
     },
   });
 
   const updateProduct = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
+      // Try offline operation first
+      if (!connection.isOnline) {
+        await updateProductOffline({ id, ...updates });
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('products')
         .update(updates)
@@ -202,14 +242,33 @@ export const useOptimizedProducts = () => {
     },
     onError: (err, variables, context) => {
       queryClient.setQueryData(['products-optimized'], context?.previousProducts);
+      if (connection.isOnline) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de modifier le produit.",
+          variant: "destructive",
+        });
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products-optimized'] });
+    onSuccess: (data) => {
+      if (data) {
+        queryClient.invalidateQueries({ queryKey: ['products-optimized'] });
+        toast({
+          title: "Produit modifié",
+          description: "Le produit a été modifié avec succès.",
+        });
+      }
     },
   });
 
   const deleteProduct = useMutation({
     mutationFn: async (id: string) => {
+      // Try offline operation first
+      if (!connection.isOnline) {
+        await deleteProductOffline(id);
+        return id;
+      }
+
       const { error } = await supabase
         .from('products')
         .delete()
@@ -231,9 +290,20 @@ export const useOptimizedProducts = () => {
     },
     onError: (err, deletedId, context) => {
       queryClient.setQueryData(['products-optimized'], context?.previousProducts);
+      if (connection.isOnline) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de supprimer le produit.",
+          variant: "destructive",
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products-optimized'] });
+      toast({
+        title: "Produit supprimé",
+        description: "Le produit a été supprimé avec succès.",
+      });
     },
   });
 

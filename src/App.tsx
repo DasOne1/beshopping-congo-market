@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect, Suspense, lazy } from 'react';
@@ -11,6 +12,7 @@ import { useDataPreloader } from '@/hooks/useDataPreloader';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
+import { useOfflineAdminOperations } from '@/hooks/useOfflineAdminOperations';
 import { db } from '@/services/offlineStorage';
 import SplashScreen from '@/components/SplashScreen';
 import UserLayout from '@/components/UserLayout';
@@ -97,12 +99,13 @@ const persistQueryClient = () => {
 };
 
 function AppContent() {
-  const { isLoading } = useDataPreloader();
+  const { isLoaded } = useDataPreloader();
   
   // Activate optimization hooks
   useRealtimeSync();
   useNetworkStatus();
   usePerformanceMonitor();
+  useOfflineAdminOperations(); // Activate offline admin operations
 
   // Initialize cache persistence
   useEffect(() => {
@@ -125,14 +128,14 @@ function AppContent() {
     return () => clearInterval(interval);
   }, []);
 
-  if (isLoading) {
+  if (!isLoaded) {
     return <SplashScreen onComplete={() => {}} />;
   }
 
   const PageFallback = () => (
     <UserLayout>
       <div className="container mx-auto px-4 py-8">
-        <OptimizedSkeleton type="grid" count={8} />
+        <OptimizedSkeleton />
       </div>
     </UserLayout>
   );
@@ -140,7 +143,7 @@ function AppContent() {
   const AdminFallback = () => (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <OptimizedSkeleton type="list" />
+        <OptimizedSkeleton />
       </div>
     </div>
   );

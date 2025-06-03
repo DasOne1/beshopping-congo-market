@@ -1,21 +1,23 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Calendar, Edit, LogOut, LogIn, X, Lock } from 'lucide-react';
+import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Edit, LogOut, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useCart } from '@/contexts/CartContext';
 import { useProducts } from '@/hooks/useProducts';
-import ProductSkeleton from '@/components/ProductSkeleton';
 import { motion } from 'framer-motion';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { useEnhancedCustomerAuth } from '@/hooks/useEnhancedCustomerAuth';
 import SimpleAuthForm from '@/components/SimpleAuthForm';
+import OptimizedSkeleton from '@/components/OptimizedSkeleton';
+import { useOfflinePageHandler } from '@/hooks/useOfflinePageHandler';
+import OfflineConnectionPrompt from '@/components/OfflineConnectionPrompt';
 
 const Account = () => {
   const { favorites } = useFavorites();
@@ -25,9 +27,22 @@ const Account = () => {
     currentCustomer, 
     isAuthenticated, 
     loading, 
+    sessionLoading,
     signOut, 
-    updateProfile
-  } = useCustomerAuth();
+    updateProfile,
+    extendSession
+  } = useEnhancedCustomerAuth();
+
+  const {
+    showSkeleton,
+    showConnectMessage,
+    hasOfflineData,
+    isOnline
+  } = useOfflinePageHandler({
+    pageName: 'account',
+    requiredData: ['products'],
+    fallbackDelay: 6000
+  });
 
   const [isEditing, setIsEditing] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -38,6 +53,25 @@ const Account = () => {
     address: '',
     password: ''
   });
+
+  // Extend session on activity
+  useEffect(() => {
+    const handleActivity = () => {
+      if (isAuthenticated) {
+        extendSession();
+      }
+    };
+
+    window.addEventListener('click', handleActivity);
+    window.addEventListener('keypress', handleActivity);
+    window.addEventListener('scroll', handleActivity);
+
+    return () => {
+      window.removeEventListener('click', handleActivity);
+      window.removeEventListener('keypress', handleActivity);
+      window.removeEventListener('scroll', handleActivity);
+    };
+  }, [isAuthenticated, extendSession]);
 
   // Update profile form when customer data changes
   useEffect(() => {
@@ -51,6 +85,47 @@ const Account = () => {
       });
     }
   }, [currentCustomer]);
+
+  // Show loading skeleton while session is loading
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8 pt-20 md:pt-24">
+          <OptimizedSkeleton />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show skeleton for offline/no data scenarios
+  if (showSkeleton) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8 pt-20 md:pt-24">
+          <OptimizedSkeleton />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show connection prompt for offline users without data
+  if (showConnectMessage) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8 pt-20 md:pt-24">
+          <OfflineConnectionPrompt 
+            message="Pour accéder à votre compte et aux données, veuillez vous connecter à Internet."
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   // Get favorite products
   const favoriteProducts = products.filter(product => 
@@ -82,14 +157,6 @@ const Account = () => {
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
   };
 
   return (
