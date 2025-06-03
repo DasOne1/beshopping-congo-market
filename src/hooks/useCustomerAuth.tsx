@@ -18,6 +18,28 @@ interface LoginData {
   password: string;
 }
 
+// Fonction pour normaliser les numéros de téléphone
+const normalizePhoneNumber = (phone: string): string => {
+  // Supprimer tous les caractères non numériques
+  let cleaned = phone.replace(/\D/g, '');
+  
+  // Si le numéro commence par 0, le remplacer par 243
+  if (cleaned.startsWith('0')) {
+    cleaned = '243' + cleaned.substring(1);
+  }
+  
+  // Si le numéro commence par 243, s'assurer qu'il a la bonne longueur
+  if (cleaned.startsWith('243')) {
+    // Un numéro congolais complet doit avoir 12 chiffres (243 + 9 chiffres)
+    if (cleaned.length === 12) {
+      return cleaned;
+    }
+  }
+  
+  // Si le numéro n'a pas le bon format, retourner le numéro original
+  return phone;
+};
+
 export const useCustomerAuth = () => {
   const [currentCustomer, setCurrentCustomer] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -79,26 +101,29 @@ export const useCustomerAuth = () => {
     try {
       console.log('Création du compte client...');
       
-      // Vérifier si le numéro de téléphone existe déjà
-      const { data: existingCustomer } = await supabase
-        .from('customers')
-        .select('phone')
-        .eq('phone', customerData.phone)
-        .maybeSingle();
+      // Normaliser le numéro de téléphone
+      const normalizedPhone = normalizePhoneNumber(customerData.phone);
+      
+      // Optimisation : Vérifier le numéro de téléphone en parallèle avec le hashage du mot de passe
+      const [hashedPassword, { data: existingCustomer }] = await Promise.all([
+        bcrypt.hash(customerData.password, 10),
+        supabase
+          .from('customers')
+          .select('phone')
+          .eq('phone', normalizedPhone)
+          .maybeSingle()
+      ]);
 
       if (existingCustomer) {
         throw new Error('Ce numéro de téléphone est déjà utilisé');
       }
 
-      // Hasher le mot de passe
-      const hashedPassword = await bcrypt.hash(customerData.password, 10);
-
-      // Créer le customer avec le mot de passe hashé
+      // Créer le customer avec le numéro normalisé
       const { data: newCustomer, error } = await supabase
         .from('customers')
         .insert({
           name: customerData.name,
-          phone: customerData.phone,
+          phone: normalizedPhone,
           email: customerData.email || null,
           address: customerData.address || null,
           password_hash: hashedPassword,
@@ -112,20 +137,23 @@ export const useCustomerAuth = () => {
         throw new Error('Erreur lors de la création du compte');
       }
 
-      console.log('Compte créé avec succès:', newCustomer);
+      // Mettre à jour l'état immédiatement
+      const customerToStore = {
+        ...newCustomer,
+        password_hash: undefined
+      };
       
-      // Connecter automatiquement l'utilisateur après création
-      setCurrentCustomer(newCustomer);
+      setCurrentCustomer(customerToStore);
       setIsAuthenticated(true);
       localStorage.setItem('customerId', newCustomer.id);
-      localStorage.setItem('customerData', JSON.stringify(newCustomer));
+      localStorage.setItem('customerData', JSON.stringify(customerToStore));
       
       toast({
         title: "Compte créé avec succès",
         description: "Bienvenue !",
       });
 
-      return newCustomer;
+      return customerToStore;
     } catch (error: any) {
       console.error('Erreur de création de compte:', error);
       toast({
@@ -144,42 +172,47 @@ export const useCustomerAuth = () => {
     try {
       console.log('Connexion du client...');
       
-      // Chercher le customer par numéro de téléphone avec password_hash
+      // Normaliser le numéro de téléphone
+      const normalizedPhone = normalizePhoneNumber(loginData.phone);
+      
       const { data: customer, error } = await supabase
         .from('customers')
         .select('*, password_hash')
-        .eq('phone', loginData.phone)
+        .eq('phone', normalizedPhone)
         .maybeSingle();
 
       if (error || !customer) {
         throw new Error('Numéro de téléphone ou mot de passe incorrect');
       }
 
-      // Vérifier si le customer a un mot de passe
       if (!customer.password_hash) {
         throw new Error('Aucun mot de passe défini pour ce compte');
       }
 
-      // Vérifier le mot de passe
       const passwordMatch = await bcrypt.compare(loginData.password, customer.password_hash);
       
       if (!passwordMatch) {
         throw new Error('Numéro de téléphone ou mot de passe incorrect');
       }
 
-      console.log('Connexion réussie:', customer);
+      // Préparer les données du client sans le hash du mot de passe
+      const customerToStore = {
+        ...customer,
+        password_hash: undefined
+      };
       
-      setCurrentCustomer(customer);
+      // Mettre à jour l'état immédiatement
+      setCurrentCustomer(customerToStore);
       setIsAuthenticated(true);
       localStorage.setItem('customerId', customer.id);
-      localStorage.setItem('customerData', JSON.stringify(customer));
+      localStorage.setItem('customerData', JSON.stringify(customerToStore));
       
       toast({
         title: "Connexion réussie",
         description: "Bienvenue !",
       });
 
-      return customer;
+      return customerToStore;
     } catch (error: any) {
       console.error('Erreur de connexion:', error);
       toast({
@@ -212,12 +245,27 @@ export const useCustomerAuth = () => {
     try {
       let updateData: any = { ...customerData };
       
+      // Normaliser le numéro de téléphone si présent
+      if (updateData.phone) {
+        updateData.phone = normalizePhoneNumber(updateData.phone);
+      }
+      
       // Si un nouveau mot de passe est fourni, le hasher
       if (customerData.password) {
         updateData.password_hash = await bcrypt.hash(customerData.password, 10);
         delete updateData.password;
       }
 
+      // Mettre à jour les données localement immédiatement
+      const updatedLocalData = {
+        ...currentCustomer,
+        ...updateData,
+        password_hash: undefined
+      };
+      setCurrentCustomer(updatedLocalData);
+      localStorage.setItem('customerData', JSON.stringify(updatedLocalData));
+
+      // Envoyer la mise à jour à Supabase
       const { data: updatedCustomer, error } = await supabase
         .from('customers')
         .update(updateData)
@@ -226,18 +274,26 @@ export const useCustomerAuth = () => {
         .single();
 
       if (error) {
+        // En cas d'erreur, restaurer les données précédentes
+        setCurrentCustomer(currentCustomer);
+        localStorage.setItem('customerData', JSON.stringify(currentCustomer));
         throw new Error('Erreur lors de la mise à jour du profil');
       }
       
-      setCurrentCustomer(updatedCustomer);
-      localStorage.setItem('customerData', JSON.stringify(updatedCustomer));
+      // Mettre à jour avec les données du serveur
+      const customerToStore = {
+        ...updatedCustomer,
+        password_hash: undefined
+      };
+      setCurrentCustomer(customerToStore);
+      localStorage.setItem('customerData', JSON.stringify(customerToStore));
       
       toast({
         title: "Profil mis à jour",
         description: "Vos informations ont été sauvegardées",
       });
 
-      return updatedCustomer;
+      return customerToStore;
     } catch (error: any) {
       toast({
         title: "Erreur lors de la mise à jour",

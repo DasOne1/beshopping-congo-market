@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Phone, Mail, MapPin, Lock, X } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Lock, X, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { toast } from '@/hooks/use-toast';
 
 interface SimpleAuthFormProps {
   onSuccess?: () => void;
@@ -28,6 +29,8 @@ const SimpleAuthForm = ({ onSuccess }: SimpleAuthFormProps) => {
   });
   
   const { signUp, signIn, loading } = useCustomerAuth();
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,13 +98,20 @@ const SimpleAuthForm = ({ onSuccess }: SimpleAuthFormProps) => {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="signin-password"
-                    type="password"
+                    type={showSignInPassword ? "text" : "password"}
                     placeholder="Votre mot de passe"
                     value={signInForm.password}
                     onChange={(e) => setSignInForm({...signInForm, password: e.target.value})}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowSignInPassword(!showSignInPassword)}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                  >
+                    {showSignInPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
               
@@ -180,13 +190,20 @@ const SimpleAuthForm = ({ onSuccess }: SimpleAuthFormProps) => {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="signup-password"
-                    type="password"
+                    type={showSignUpPassword ? "text" : "password"}
                     placeholder="Choisissez un mot de passe"
                     value={signUpForm.password}
                     onChange={(e) => setSignUpForm({...signUpForm, password: e.target.value})}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                  >
+                    {showSignUpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
               
