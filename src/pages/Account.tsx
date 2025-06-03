@@ -101,7 +101,17 @@ const Account = () => {
         password: ''
       });
     }
+    // Scroll vers le haut de la page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Effet pour gérer l'affichage initial
+  useEffect(() => {
+    if (isAuthenticated && currentCustomer) {
+      // Scroll vers le haut de la page
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [isAuthenticated, currentCustomer]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -141,13 +151,22 @@ const Account = () => {
           </div>
 
           {!isAuthenticated ? (
-            <div className="text-center mb-8">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-8"
+            >
               <p className="text-muted-foreground mb-6">
                 Créez un compte ou connectez-vous pour accéder à votre espace personnel
               </p>
-            </div>
+            </motion.div>
           ) : (
-            <>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
               {/* Tableau de bord des statistiques */}
               <Card className="mb-8">
                 <CardHeader>
@@ -283,7 +302,7 @@ const Account = () => {
                   )}
                 </CardContent>
               </Card>
-            </>
+            </motion.div>
           )}
         </motion.div>
       </main>
