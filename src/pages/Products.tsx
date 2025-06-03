@@ -33,8 +33,8 @@ const Products = () => {
   });
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
   const [sortBy, setSortBy] = useState<string>('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
@@ -76,8 +76,8 @@ const Products = () => {
   const filteredProducts = products
     .filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = !selectedCategory || product.category_id === selectedCategory;
+                           product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || product.category_id === selectedCategory;
       const matchesPrice = product.original_price >= priceRange[0] && product.original_price <= priceRange[1];
       const isVisible = product.is_visible !== false;
       
@@ -100,12 +100,12 @@ const Products = () => {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedCategory('');
-    setPriceRange([0, 10000]);
+    setSelectedCategory('all');
+    setPriceRange([0, 1000000]);
     setSortBy('name');
   };
 
-  const hasActiveFilters = searchTerm || selectedCategory || priceRange[0] > 0 || priceRange[1] < 10000;
+  const hasActiveFilters = searchTerm || selectedCategory !== 'all' || priceRange[0] > 0 || priceRange[1] < 1000000;
 
   return (
     <div className="min-h-screen bg-background">
@@ -230,18 +230,18 @@ const Products = () => {
                       </button>
                     </Badge>
                   )}
-                  {selectedCategory && (
+                  {selectedCategory !== 'all' && (
                     <Badge variant="secondary" className="flex items-center gap-1">
                       Catégorie: {categories.find(c => c.id === selectedCategory)?.name}
-                      <button onClick={() => setSelectedCategory('')} className="ml-1 hover:text-red-500">
+                      <button onClick={() => setSelectedCategory('all')} className="ml-1 hover:text-red-500">
                         ×
                       </button>
                     </Badge>
                   )}
-                  {(priceRange[0] > 0 || priceRange[1] < 10000) && (
+                  {(priceRange[0] > 0 || priceRange[1] < 1000000) && (
                     <Badge variant="secondary" className="flex items-center gap-1">
-                      Prix: {priceRange[0]}€ - {priceRange[1]}€
-                      <button onClick={() => setPriceRange([0, 10000])} className="ml-1 hover:text-red-500">
+                      Prix: {priceRange[0].toLocaleString()}FC - {priceRange[1].toLocaleString()}FC
+                      <button onClick={() => setPriceRange([0, 1000000])} className="ml-1 hover:text-red-500">
                         ×
                       </button>
                     </Badge>
