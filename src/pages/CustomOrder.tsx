@@ -13,19 +13,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from '@/hooks/use-toast';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import WhatsAppContact from '@/components/WhatsAppContact';
+import { useNavigate } from 'react-router-dom';
 
 const CustomOrder = () => {
   const { currentCustomer, isAuthenticated } = useCustomerAuth();
+  const navigate = useNavigate();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    budget: '',
-    contactInfo: '',
-    address: '',
-    images: [] as File[]
+  const [formData, setFormData] = useState(() => {
+    // Récupérer les données sauvegardées du localStorage si elles existent
+    const savedData = localStorage.getItem('customOrderFormData');
+    return savedData ? JSON.parse(savedData) : {
+      name: '',
+      description: '',
+      budget: '',
+      contactInfo: '',
+      address: '',
+      images: [] as File[]
+    };
   });
+
+  // Sauvegarder les données du formulaire dans le localStorage à chaque modification
+  useEffect(() => {
+    const dataToSave = {
+      ...formData,
+      images: [] // On ne sauvegarde pas les images car ce sont des objets File
+    };
+    localStorage.setItem('customOrderFormData', JSON.stringify(dataToSave));
+  }, [formData]);
 
   // Pré-remplir les informations du client connecté
   useEffect(() => {
@@ -39,6 +54,17 @@ const CustomOrder = () => {
       }));
     }
   }, [currentCustomer]);
+
+  // Effacer les informations du compte lors de la déconnexion
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setFormData(prev => ({
+        ...prev,
+        contactInfo: '',
+        address: ''
+      }));
+    }
+  }, [isAuthenticated]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -57,8 +83,13 @@ const CustomOrder = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isAuthenticated) {
+      navigate('/customer-auth', { state: { from: '/custom-order' } });
+      return;
+    }
     
     if (!formData.name || !formData.description) {
       toast({
@@ -87,19 +118,38 @@ const CustomOrder = () => {
       title: "Commande personnalisée envoyée",
       description: "Nous vous contactons bientôt pour discuter de votre projet",
     });
+  };
 
-    // Reset form
-    setFormData({
+  const handleConfirmationClose = () => {
+    setShowConfirmation(false);
+    
+    // Ne réinitialiser que les champs de la commande, pas les informations du client
+    setFormData(prev => ({
+      ...prev,
       name: '',
       description: '',
       budget: '',
-      contactInfo: '',
-      address: '',
       images: []
-    });
+    }));
+    
+    // Mettre à jour le localStorage en conservant les informations du client
+    const dataToSave = {
+      name: '',
+      description: '',
+      budget: '',
+      contactInfo: formData.contactInfo,
+      address: formData.address,
+      images: []
+    };
+    localStorage.setItem('customOrderFormData', JSON.stringify(dataToSave));
   };
 
   const handleWhatsAppOrder = () => {
+    if (!isAuthenticated) {
+      navigate('/customer-auth', { state: { from: '/custom-order' } });
+      return;
+    }
+
     if (!formData.name || !formData.description) {
       toast({
         title: "Erreur",
@@ -121,6 +171,11 @@ const CustomOrder = () => {
     });
     
     setShowConfirmation(true);
+
+    // Ouvrir WhatsApp immédiatement après avoir affiché la confirmation
+    const encodedMessage = encodeURIComponent(generateWhatsAppMessage());
+    const whatsappUrl = `https://wa.me/243978100940?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const generateWhatsAppMessage = () => {
@@ -287,23 +342,14 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      {isAuthenticated ? (
-                        <Button type="submit" size="lg" className="h-14">
-                          <Send className="h-5 w-5 mr-2" />
-                          Envoyer ma commande
-                        </Button>
-                      ) : (
-                        <Button 
-                          type="button" 
-                          variant="outline"
-                          size="lg"
-                          className="h-14"
-                          onClick={() => window.location.href = '/account'}
-                        >
-                          <User className="h-5 w-5 mr-2" />
-                          Se connecter pour valider
-                        </Button>
-                      )}
+                      <Button 
+                        type="submit" 
+                        size="lg" 
+                        className="h-14"
+                      >
+                        <Send className="h-5 w-5 mr-2" />
+                        Passer la commande
+                      </Button>
                       
                       <WhatsAppContact
                         phoneNumber="+243978100940"
@@ -369,7 +415,7 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
             )}
             
             <Button 
-              onClick={() => setShowConfirmation(false)}
+              onClick={handleConfirmationClose}
               className="w-full"
             >
               Parfait !

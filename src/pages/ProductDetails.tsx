@@ -148,10 +148,19 @@ const ProductDetails = () => {
   };
 
   const handleWhatsAppClick = () => {
+    if (!isAuthenticated) {
+      navigate('/customer-auth', { state: { from: `/product/${productId}` } });
+      return;
+    }
+
     const message = getWhatsAppMessage();
     const encodedMessage = encodeURIComponent(message);
     const url = `https://wa.me/243978100940?text=${encodedMessage}`;
     
+    // Ouvrir WhatsApp immédiatement
+    window.open(url, '_blank');
+    
+    // Afficher la confirmation après avoir ouvert WhatsApp
     setOrderDetails({
       customerName: currentCustomer?.name || 'Anonyme',
       customerPhone: currentCustomer?.phone || 'Non spécifié',
@@ -162,14 +171,6 @@ const ProductDetails = () => {
     });
     
     setShowConfirmation(true);
-  };
-
-  const handleConfirmWhatsApp = () => {
-    const message = getWhatsAppMessage();
-    const encodedMessage = encodeURIComponent(message);
-    const url = `https://wa.me/243978100940?text=${encodedMessage}`;
-    window.open(url, '_blank');
-    setShowConfirmation(false);
   };
 
   return (
@@ -312,14 +313,15 @@ const ProductDetails = () => {
                 Ajouter au panier
               </Button>
 
-              <Button
-                variant="outline"
+              <WhatsAppContact
+                phoneNumber="243978100940"
+                message={getWhatsAppMessage()}
                 size="lg"
-                onClick={handleWhatsAppClick}
                 className="bg-whatsapp hover:bg-whatsapp-dark text-white border-whatsapp"
+                onCustomClick={handleWhatsAppClick}
               >
                 WhatsApp
-              </Button>
+              </WhatsAppContact>
             </div>
 
             {/* Order Confirmation Dialog */}

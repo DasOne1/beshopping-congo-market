@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -22,7 +21,9 @@ import CustomOrder from '@/pages/CustomOrder';
 import Contact from '@/pages/Contact';
 import AboutUs from '@/pages/AboutUs';
 import Account from '@/pages/Account';
+import Auth from '@/pages/Auth';
 import NotFound from '@/pages/NotFound';
+import CustomerAuth from '@/pages/CustomerAuth';
 
 // Admin Pages
 import AdminAuth from '@/components/AdminAuth';
@@ -73,6 +74,7 @@ function AppContent() {
       <Route path="/contact" element={<UserLayout><Contact /></UserLayout>} />
       <Route path="/about" element={<UserLayout><AboutUs /></UserLayout>} />
       <Route path="/account" element={<UserLayout><Account /></UserLayout>} />
+      <Route path="/customer-auth" element={<CustomerAuth />} />
 
       {/* Admin Authentication Route */}
       <Route path="/dasgabriel@adminaccess" element={<AdminAuthPage />} />

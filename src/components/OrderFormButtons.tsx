@@ -1,22 +1,34 @@
-
 import React from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WhatsAppIcon } from '@/components/WhatsAppIcon';
+import { useNavigate } from 'react-router-dom';
 
 interface OrderFormButtonsProps {
   isSubmitting: boolean;
   isFormValid: boolean;
   whatsappMessage: string;
   onWhatsAppOrder: () => void;
+  isAuthenticated: boolean;
 }
 
 const OrderFormButtons: React.FC<OrderFormButtonsProps> = ({
   isSubmitting,
   isFormValid,
   whatsappMessage,
-  onWhatsAppOrder
+  onWhatsAppOrder,
+  isAuthenticated
 }) => {
+  const navigate = useNavigate();
+
+  const handleWhatsAppClick = () => {
+    if (!isAuthenticated) {
+      navigate('/customer-auth', { state: { from: '/cart' } });
+      return;
+    }
+    onWhatsAppOrder();
+  };
+
   return (
     <div className="flex flex-col space-y-4">
       <Button 
@@ -42,7 +54,7 @@ const OrderFormButtons: React.FC<OrderFormButtonsProps> = ({
 
       <Button
         type="button"
-        onClick={onWhatsAppOrder}
+        onClick={handleWhatsAppClick}
         className="w-full bg-green-600 hover:bg-green-700 text-white"
         size="lg"
       >

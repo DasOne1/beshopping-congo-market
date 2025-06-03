@@ -1,53 +1,56 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { MessageCircle } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/WhatsAppIcon';
+import { useNavigate } from 'react-router-dom';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 
 interface WhatsAppContactProps {
-  phoneNumber?: string;
-  message?: string;
-  children: React.ReactNode;
+  phoneNumber: string;
+  message: string;
   className?: string;
-  size?: "default" | "sm" | "lg" | "icon";
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
-  useAlternate?: boolean;
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+  children?: React.ReactNode;
   onCustomClick?: () => void;
 }
 
 const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
   phoneNumber,
-  message = "Bonjour, j'aimerais avoir plus d'informations.",
+  message,
+  className = '',
+  size = 'default',
   children,
-  className = "",
-  size = "default",
-  variant = "default",
-  useAlternate = false,
   onCustomClick
 }) => {
-  // Utiliser le WhatsApp officiel par défaut, et le business en alternative
-  const defaultPhoneNumber = useAlternate ? "243978100940" : "243978100940";
-  const finalPhoneNumber = phoneNumber || defaultPhoneNumber;
+  const navigate = useNavigate();
+  const { isAuthenticated } = useCustomerAuth();
 
-  const handleWhatsAppClick = () => {
-    // Si on a une fonction personnalisée, l'exécuter d'abord
+  const handleClick = () => {
+    if (!isAuthenticated) {
+      navigate('/customer-auth', { state: { from: window.location.pathname } });
+      return;
+    }
+
     if (onCustomClick) {
       onCustomClick();
+    } else {
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+      window.open(whatsappUrl, '_blank');
     }
-    
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${finalPhoneNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
   };
 
   return (
     <Button
-      onClick={handleWhatsAppClick}
-      className={`${className} flex items-center gap-2`}
+      onClick={handleClick}
+      className={`bg-green-600 hover:bg-green-700 text-white ${className}`}
       size={size}
-      variant={variant}
     >
-      <MessageCircle className="w-4 h-4" />
-      {children}
+      {children || (
+        <>
+          <WhatsAppIcon className="mr-2 h-4 w-4" />
+          Envoyer via WhatsApp
+        </>
+      )}
     </Button>
   );
 };
