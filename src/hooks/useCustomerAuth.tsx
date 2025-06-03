@@ -27,8 +27,19 @@ export const useCustomerAuth = () => {
   useEffect(() => {
     const loadAuthState = async () => {
       const savedCustomerId = localStorage.getItem('customerId');
-      if (savedCustomerId) {
+      const savedCustomerData = localStorage.getItem('customerData');
+      
+      if (savedCustomerId && savedCustomerData) {
         try {
+          // En mode hors ligne, utiliser les données stockées
+          if (!navigator.onLine) {
+            const customerData = JSON.parse(savedCustomerData);
+            setCurrentCustomer(customerData);
+            setIsAuthenticated(true);
+            return;
+          }
+
+          // En mode en ligne, vérifier avec Supabase
           const { data: customer, error } = await supabase
             .from('customers')
             .select('*')
@@ -38,13 +49,24 @@ export const useCustomerAuth = () => {
           if (customer && !error) {
             setCurrentCustomer(customer);
             setIsAuthenticated(true);
+            // Mettre à jour les données stockées
+            localStorage.setItem('customerData', JSON.stringify(customer));
           } else {
             // Si le client n'existe plus, nettoyer le localStorage
             localStorage.removeItem('customerId');
+            localStorage.removeItem('customerData');
           }
         } catch (error) {
           console.error('Erreur lors du chargement de l\'état de connexion:', error);
-          localStorage.removeItem('customerId');
+          // En cas d'erreur, utiliser les données stockées si disponibles
+          if (savedCustomerData) {
+            const customerData = JSON.parse(savedCustomerData);
+            setCurrentCustomer(customerData);
+            setIsAuthenticated(true);
+          } else {
+            localStorage.removeItem('customerId');
+            localStorage.removeItem('customerData');
+          }
         }
       }
     };
@@ -96,6 +118,7 @@ export const useCustomerAuth = () => {
       setCurrentCustomer(newCustomer);
       setIsAuthenticated(true);
       localStorage.setItem('customerId', newCustomer.id);
+      localStorage.setItem('customerData', JSON.stringify(newCustomer));
       
       toast({
         title: "Compte créé avec succès",
@@ -149,6 +172,7 @@ export const useCustomerAuth = () => {
       setCurrentCustomer(customer);
       setIsAuthenticated(true);
       localStorage.setItem('customerId', customer.id);
+      localStorage.setItem('customerData', JSON.stringify(customer));
       
       toast({
         title: "Connexion réussie",
@@ -173,6 +197,7 @@ export const useCustomerAuth = () => {
     setCurrentCustomer(null);
     setIsAuthenticated(false);
     localStorage.removeItem('customerId');
+    localStorage.removeItem('customerData');
     
     toast({
       title: "Déconnexion réussie",
@@ -205,6 +230,7 @@ export const useCustomerAuth = () => {
       }
       
       setCurrentCustomer(updatedCustomer);
+      localStorage.setItem('customerData', JSON.stringify(updatedCustomer));
       
       toast({
         title: "Profil mis à jour",
