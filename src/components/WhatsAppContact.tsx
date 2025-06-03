@@ -1,46 +1,53 @@
 
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { WhatsAppIcon } from './WhatsAppIcon';
+import { MessageCircle } from 'lucide-react';
 
 interface WhatsAppContactProps {
   phoneNumber?: string;
   message?: string;
-  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
+  children: React.ReactNode;
   className?: string;
-  children?: React.ReactNode;
+  size?: "default" | "sm" | "lg" | "icon";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   useAlternate?: boolean;
+  onCustomClick?: () => void;
 }
 
-const PRIMARY_WHATSAPP = "243978100940";
-const SECONDARY_WHATSAPP = "243974984449";
-
-const WhatsAppContact = ({
+const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
   phoneNumber,
-  message = '',
-  variant = 'default',
-  size = 'default',
-  className,
+  message = "Bonjour, j'aimerais avoir plus d'informations.",
   children,
-  useAlternate = false
-}: WhatsAppContactProps) => {
-  const whatsappNumber = phoneNumber || (useAlternate ? SECONDARY_WHATSAPP : PRIMARY_WHATSAPP);
-  
+  className = "",
+  size = "default",
+  variant = "default",
+  useAlternate = false,
+  onCustomClick
+}) => {
+  // Utiliser le WhatsApp officiel par défaut, et le business en alternative
+  const defaultPhoneNumber = useAlternate ? "243978100940" : "243978100940";
+  const finalPhoneNumber = phoneNumber || defaultPhoneNumber;
+
   const handleWhatsAppClick = () => {
+    // Si on a une fonction personnalisée, l'exécuter d'abord
+    if (onCustomClick) {
+      onCustomClick();
+    }
+    
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/${finalPhoneNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
   };
 
   return (
-    <Button 
-      className={className}
-      variant={variant} 
-      size={size}
+    <Button
       onClick={handleWhatsAppClick}
+      className={`${className} flex items-center gap-2`}
+      size={size}
+      variant={variant}
     >
-      <WhatsAppIcon className="mr-2 h-4 w-4" />
-      {children || 'Contact via WhatsApp'}
+      <MessageCircle className="w-4 h-4" />
+      {children}
     </Button>
   );
 };

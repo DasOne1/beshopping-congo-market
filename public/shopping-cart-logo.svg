@@ -1,0 +1,102 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradients colorés -->
+    <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f7931e;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="pinkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b9d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f093fb;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="cyanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4facfe;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00f2fe;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="yellowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffeaa7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fdcb6e;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Ombre portée -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Panier principal - structure de base -->
+  <g transform="translate(60,60)" filter="url(#shadow)">
+    
+    <!-- Poignée gauche du panier -->
+    <path d="M -35 -5 Q -35 -25 -20 -25 L -15 -25 Q -10 -25 -10 -20 L -10 -15" 
+          fill="none" 
+          stroke="url(#orangeGradient)" 
+          stroke-width="6" 
+          stroke-linecap="round"/>
+    
+    <!-- Poignée droite du panier -->
+    <path d="M 35 -5 Q 35 -25 20 -25 L 15 -25 Q 10 -25 10 -20 L 10 -15" 
+          fill="none" 
+          stroke="url(#orangeGradient)" 
+          stroke-width="6" 
+          stroke-linecap="round"/>
+    
+    <!-- Corps du panier -->
+    <path d="M -25 -5 L -22 20 Q -20 25 -15 25 L 15 25 Q 20 25 22 20 L 25 -5 Z" 
+          fill="none"
+          stroke="url(#cyanGradient)" 
+          stroke-width="6" 
+          stroke-linejoin="round"
+          stroke-linecap="round"/>
+    
+    <!-- Sac shopping rose (à l'intérieur) -->
+    <g transform="translate(-8,-8)">
+      <rect x="0" y="0" width="12" height="15" rx="2" 
+            fill="none" 
+            stroke="url(#pinkGradient)" 
+            stroke-width="4"/>
+      <path d="M 3 0 Q 3 -4 6 -4 Q 9 -4 9 0" 
+            fill="none" 
+            stroke="url(#pinkGradient)" 
+            stroke-width="3" 
+            stroke-linecap="round"/>
+    </g>
+    
+    <!-- Sac shopping jaune (à l'intérieur) -->
+    <g transform="translate(2,-5)">
+      <rect x="0" y="0" width="10" height="12" rx="2" 
+            fill="none" 
+            stroke="url(#yellowGradient)" 
+            stroke-width="4"/>
+      <path d="M 2.5 0 Q 2.5 -3 5 -3 Q 7.5 -3 7.5 0" 
+            fill="none" 
+            stroke="url(#yellowGradient)" 
+            stroke-width="2.5" 
+            stroke-linecap="round"/>
+    </g>
+    
+    <!-- Roues du panier -->
+    <circle cx="-15" cy="30" r="4" fill="url(#orangeGradient)"/>
+    <circle cx="15" cy="30" r="4" fill="url(#orangeGradient)"/>
+    
+    <!-- Barre du panier -->
+    <rect x="-20" y="27" width="40" height="3" rx="1.5" fill="url(#cyanGradient)"/>
+    
+  </g>
+  
+  <!-- Effets décoratifs -->
+  <circle cx="30" cy="30" r="2.5" fill="url(#pinkGradient)" opacity="0.6"/>
+  <circle cx="90" cy="40" r="2" fill="url(#yellowGradient)" opacity="0.7"/>
+  <circle cx="80" cy="80" r="3" fill="url(#cyanGradient)" opacity="0.5"/>
+  
+  <!-- Particules d'effet -->
+  <g opacity="0.4">
+    <rect x="25" y="75" width="3.5" height="3.5" rx="1.75" fill="url(#orangeGradient)" transform="rotate(45 26.75 76.75)"/>
+    <rect x="88" y="65" width="2.5" height="2.5" rx="1.25" fill="url(#pinkGradient)" transform="rotate(45 89.25 66.25)"/>
+    <rect x="35" y="45" width="3" height="3" rx="1.5" fill="url(#yellowGradient)" transform="rotate(45 36.5 46.5)"/>
+  </g>
+  
+</svg>

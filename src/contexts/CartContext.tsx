@@ -1,66 +1,132 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CartItem } from '@/types';
-import { toast } from '@/components/ui/use-toast';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useToast } from '@/hooks/use-toast';
+
+interface CartItem {
+  productId: string;
+  quantity: number;
+}
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (productId: string, quantity?: number, selectedVariants?: {[key: string]: string}) => void;
+  addToCart: (productId: string, quantity: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  getTotalQuantity: () => number;
+  isInCart: (productId: string) => boolean;
+  getCartTotal: () => number;
+  getTotalQuantity: () => number; // Ajout de cette fonction pour compatibilité
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    const savedCart = localStorage.getItem('beshopping-cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+// Cache local pour le panier avec persistance optimisée
+const CART_STORAGE_KEY = 'beshopping-cart';
 
+let cartCache: CartItem[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+const getCartFromCache = (): CartItem[] | null => {
+  if (cartCache && Date.now() - cacheTimestamp < CACHE_DURATION) {
+    return cartCache;
+  }
+  return null;
+};
+
+const setCartCache = (cart: CartItem[]) => {
+  cartCache = cart;
+  cacheTimestamp = Date.now();
+};
+
+const loadCartFromStorage = (): CartItem[] => {
+  try {
+    // Vérifier le cache en mémoire d'abord
+    const cached = getCartFromCache();
+    if (cached) {
+      return cached;
+    }
+
+    // Charger depuis localStorage seulement si nécessaire
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    if (stored) {
+      const cart = JSON.parse(stored);
+      setCartCache(cart);
+      return cart;
+    }
+    return [];
+  } catch (error) {
+    console.error('Erreur lors du chargement du panier:', error);
+    return [];
+  }
+};
+
+const saveCartToStorage = (cart: CartItem[]) => {
+  try {
+    // Mettre à jour le cache en mémoire
+    setCartCache(cart);
+    
+    // Sauvegarder en localStorage de manière asynchrone
+    setTimeout(() => {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    }, 0);
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde du panier:', error);
+  }
+};
+
+export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const { toast } = useToast();
+
+  // Chargement initial optimisé
   useEffect(() => {
-    localStorage.setItem('beshopping-cart', JSON.stringify(cart));
-  }, [cart]);
+    const initialCart = loadCartFromStorage();
+    setCart(initialCart);
+    setIsInitialized(true);
+  }, []);
 
-  const addToCart = (productId: string, quantity = 1, selectedVariants?: {[key: string]: string}) => {
+  // Sauvegarde optimisée avec debouncing
+  useEffect(() => {
+    if (isInitialized) {
+      saveCartToStorage(cart);
+    }
+  }, [cart, isInitialized]);
+
+  const addToCart = (productId: string, quantity: number) => {
     setCart(prevCart => {
-      const existingItemIndex = prevCart.findIndex(item => item.productId === productId);
+      const existingItem = prevCart.find(item => item.productId === productId);
       
-      if (existingItemIndex >= 0) {
-        // Product exists in cart, update quantity
-        const updatedCart = [...prevCart];
-        updatedCart[existingItemIndex].quantity += quantity;
-        
-        // Update variants if provided
-        if (selectedVariants) {
-          updatedCart[existingItemIndex].selectedVariants = selectedVariants;
-        }
-        
+      if (existingItem) {
         toast({
-          title: "Product updated",
-          description: "The quantity has been updated in your cart",
+          title: "Produit déjà dans le panier",
+          description: "Ce produit est déjà dans votre panier.",
         });
-        
-        return updatedCart;
-      } else {
-        // Add new item to cart
-        toast({
-          title: "Product added",
-          description: "The product has been added to your cart",
-        });
-        
-        return [...prevCart, { productId, quantity, selectedVariants }];
+        return prevCart;
       }
+
+      const newCart = [...prevCart, { productId, quantity }];
+      
+      toast({
+        title: "Produit ajouté",
+        description: "Le produit a été ajouté à votre panier.",
+      });
+      
+      return newCart;
     });
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.productId !== productId));
-    toast({
-      title: "Product removed",
-      description: "The product has been removed from your cart",
+    setCart(prevCart => {
+      const newCart = prevCart.filter(item => item.productId !== productId);
+      
+      toast({
+        title: "Produit retiré",
+        description: "Le produit a été retiré de votre panier.",
+      });
+      
+      return newCart;
     });
   };
 
@@ -70,30 +136,50 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    setCart(prevCart => 
-      prevCart.map(item => 
-        item.productId === productId ? { ...item, quantity } : item
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.productId === productId
+          ? { ...item, quantity }
+          : item
       )
     );
   };
 
   const clearCart = () => {
     setCart([]);
+    
+    toast({
+      title: "Panier vidé",
+      description: "Votre panier a été vidé.",
+    });
   };
 
-  const getTotalQuantity = () => {
+  const isInCart = (productId: string): boolean => {
+    return cart.some(item => item.productId === productId);
+  };
+
+  const getCartTotal = (): number => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
+  // Fonction alias pour compatibilité
+  const getTotalQuantity = (): number => {
+    return getCartTotal();
+  };
+
   return (
-    <CartContext.Provider value={{ 
-      cart, 
-      addToCart, 
-      removeFromCart, 
-      updateQuantity,
-      clearCart,
-      getTotalQuantity
-    }}>
+    <CartContext.Provider
+      value={{
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        isInCart,
+        getCartTotal,
+        getTotalQuantity,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
