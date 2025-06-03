@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
-import { Product } from '@/types';
 import { useOfflinePageHandler } from '@/hooks/useOfflinePageHandler';
 import OfflineConnectionPrompt from '@/components/OfflineConnectionPrompt';
 import OptimizedSkeleton from '@/components/OptimizedSkeleton';
