@@ -1,232 +1,197 @@
-
 import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { useEnhancedCustomerAuth } from '@/hooks/useEnhancedCustomerAuth';
-import { Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { User, Phone, Mail, MapPin, Lock, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 
 interface SimpleAuthFormProps {
   onSuccess?: () => void;
 }
 
-const SimpleAuthForm: React.FC<SimpleAuthFormProps> = ({ onSuccess }) => {
-  const { signIn, signUp, loading } = useEnhancedCustomerAuth();
-  
-  const [loginForm, setLoginForm] = useState({
-    phone: '',
-    password: ''
-  });
-
-  const [signupForm, setSignupForm] = useState({
+const SimpleAuthForm = ({ onSuccess }: SimpleAuthFormProps) => {
+  const [signUpForm, setSignUpForm] = useState({
     name: '',
     phone: '',
     email: '',
     address: '',
-    password: '',
-    confirmPassword: ''
+    password: ''
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [signInForm, setSignInForm] = useState({
+    phone: '',
+    password: ''
+  });
+  
+  const { signUp, signIn, loading } = useCustomerAuth();
 
-  const validateSignup = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!signupForm.name.trim()) {
-      newErrors.name = 'Le nom est requis';
-    }
-
-    if (!signupForm.phone.trim()) {
-      newErrors.phone = 'Le téléphone est requis';
-    }
-
-    if (!signupForm.password) {
-      newErrors.password = 'Le mot de passe est requis';
-    } else if (signupForm.password.length < 6) {
-      newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
-    }
-
-    if (signupForm.password !== signupForm.confirmPassword) {
-      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateLogin = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!loginForm.phone.trim()) {
-      newErrors.phone = 'Le téléphone est requis';
-    }
-
-    if (!loginForm.password) {
-      newErrors.password = 'Le mot de passe est requis';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateLogin()) return;
-
     try {
-      await signIn(loginForm);
-      onSuccess?.();
+      await signUp(signUpForm);
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       // Error is handled in the hook
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateSignup()) return;
-
     try {
-      const { confirmPassword, ...customerData } = signupForm;
-      await signUp(customerData);
-      onSuccess?.();
+      await signIn(signInForm);
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       // Error is handled in the hook
     }
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="border-0 shadow-none">
       <CardHeader>
-        <CardTitle>Accès Client</CardTitle>
+        <CardTitle className="flex items-center">
+          <User className="mr-2 h-5 w-5" />
+          Mon Compte
+        </CardTitle>
         <CardDescription>
-          Connectez-vous ou créez votre compte client
+          Créez un compte ou connectez-vous
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs defaultValue="signin" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Connexion</TabsTrigger>
+            <TabsTrigger value="signin">Se connecter</TabsTrigger>
             <TabsTrigger value="signup">Créer un compte</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4">
+          <TabsContent value="signin" className="space-y-4">
+            <form onSubmit={handleSignIn} className="space-y-4">
               <div>
-                <Label htmlFor="login-phone">Numéro de téléphone</Label>
-                <Input
-                  id="login-phone"
-                  type="tel"
-                  placeholder="Votre numéro de téléphone"
-                  value={loginForm.phone}
-                  onChange={(e) => setLoginForm({...loginForm, phone: e.target.value})}
-                  className={errors.phone ? 'border-red-500' : ''}
-                />
-                {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone}</p>}
+                <Label htmlFor="signin-phone">Numéro de téléphone</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="signin-phone"
+                    type="tel"
+                    placeholder="Votre numéro de téléphone"
+                    value={signInForm.phone}
+                    onChange={(e) => setSignInForm({...signInForm, phone: e.target.value})}
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
               
               <div>
-                <Label htmlFor="login-password">Mot de passe</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="Votre mot de passe"
-                  value={loginForm.password}
-                  onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
-                  className={errors.password ? 'border-red-500' : ''}
-                />
-                {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password}</p>}
+                <Label htmlFor="signin-password">Mot de passe</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="signin-password"
+                    type="password"
+                    placeholder="Votre mot de passe"
+                    value={signInForm.password}
+                    onChange={(e) => setSignInForm({...signInForm, password: e.target.value})}
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
               
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Se connecter
+                {loading ? 'Connexion...' : 'Se connecter'}
               </Button>
             </form>
           </TabsContent>
           
-          <TabsContent value="signup">
-            <form onSubmit={handleSignup} className="space-y-4">
+          <TabsContent value="signup" className="space-y-4">
+            <form onSubmit={handleSignUp} className="space-y-4">
               <div>
-                <Label htmlFor="signup-name">Nom complet *</Label>
-                <Input
-                  id="signup-name"
-                  placeholder="Votre nom complet"
-                  value={signupForm.name}
-                  onChange={(e) => setSignupForm({...signupForm, name: e.target.value})}
-                  className={errors.name ? 'border-red-500' : ''}
-                />
-                {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
+                <Label htmlFor="signup-name">Nom complet</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    placeholder="Votre nom complet"
+                    value={signUpForm.name}
+                    onChange={(e) => setSignUpForm({...signUpForm, name: e.target.value})}
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
               
               <div>
-                <Label htmlFor="signup-phone">Numéro de téléphone *</Label>
-                <Input
-                  id="signup-phone"
-                  type="tel"
-                  placeholder="Votre numéro de téléphone"
-                  value={signupForm.phone}
-                  onChange={(e) => setSignupForm({...signupForm, phone: e.target.value})}
-                  className={errors.phone ? 'border-red-500' : ''}
-                />
-                {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone}</p>}
+                <Label htmlFor="signup-phone">Numéro de téléphone</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="signup-phone"
+                    type="tel"
+                    placeholder="Votre numéro de téléphone"
+                    value={signUpForm.phone}
+                    onChange={(e) => setSignUpForm({...signUpForm, phone: e.target.value})}
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
-
+              
               <div>
                 <Label htmlFor="signup-email">Email (optionnel)</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="votre@email.com"
-                  value={signupForm.email}
-                  onChange={(e) => setSignupForm({...signupForm, email: e.target.value})}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="signup-address">Adresse (optionnel)</Label>
-                <Textarea
-                  id="signup-address"
-                  placeholder="Votre adresse"
-                  value={signupForm.address}
-                  onChange={(e) => setSignupForm({...signupForm, address: e.target.value})}
-                  rows={2}
-                />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="Votre adresse email"
+                    value={signUpForm.email}
+                    onChange={(e) => setSignUpForm({...signUpForm, email: e.target.value})}
+                    className="pl-10"
+                  />
+                </div>
               </div>
               
               <div>
-                <Label htmlFor="signup-password">Mot de passe *</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  placeholder="Créez un mot de passe"
-                  value={signupForm.password}
-                  onChange={(e) => setSignupForm({...signupForm, password: e.target.value})}
-                  className={errors.password ? 'border-red-500' : ''}
-                />
-                {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password}</p>}
+                <Label htmlFor="signup-address">Adresse</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Textarea
+                    id="signup-address"
+                    placeholder="Votre adresse de livraison"
+                    value={signUpForm.address}
+                    onChange={(e) => setSignUpForm({...signUpForm, address: e.target.value})}
+                    className="pl-10 pt-3"
+                  />
+                </div>
               </div>
               
               <div>
-                <Label htmlFor="signup-confirm-password">Confirmer le mot de passe *</Label>
-                <Input
-                  id="signup-confirm-password"
-                  type="password"
-                  placeholder="Confirmez votre mot de passe"
-                  value={signupForm.confirmPassword}
-                  onChange={(e) => setSignupForm({...signupForm, confirmPassword: e.target.value})}
-                  className={errors.confirmPassword ? 'border-red-500' : ''}
-                />
-                {errors.confirmPassword && <p className="text-sm text-red-500 mt-1">{errors.confirmPassword}</p>}
+                <Label htmlFor="signup-password">Mot de passe</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="Choisissez un mot de passe"
+                    value={signUpForm.password}
+                    onChange={(e) => setSignUpForm({...signUpForm, password: e.target.value})}
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
               
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Créer mon compte
+                {loading ? 'Création...' : 'Créer mon compte'}
               </Button>
             </form>
           </TabsContent>

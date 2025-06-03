@@ -1,14 +1,13 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import OrderFormFields from '@/components/OrderFormFields';
 import OrderFormButtons from '@/components/OrderFormButtons';
 import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
 import { useOrderForm } from '@/hooks/useOrderForm';
 import { generateWhatsAppMessage } from '@/utils/whatsappMessageGenerator';
-import { useEnhancedCustomerAuth } from '@/hooks/useEnhancedCustomerAuth';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 
 interface OrderFormProps {
   onOrderComplete?: () => void;
@@ -18,7 +17,7 @@ interface OrderFormProps {
 }
 
 const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: OrderFormProps) => {
-  const { currentCustomer, isAuthenticated } = useEnhancedCustomerAuth();
+  const { currentCustomer, isAuthenticated } = useCustomerAuth();
   
   const {
     form,
@@ -29,23 +28,6 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
     handleSubmit,
     handleWhatsAppOrder
   } = useOrderForm({ onOrderComplete, cartProducts, subtotal, formatPrice, currentCustomer });
-
-  // Pré-remplir le formulaire avec les informations du client connecté
-  useEffect(() => {
-    if (isAuthenticated && currentCustomer) {
-      console.log('Pré-remplissage du formulaire avec les données client:', currentCustomer);
-      
-      // Mettre à jour les champs du formulaire avec les données du client
-      form.setValue('customerName', currentCustomer.name || '');
-      form.setValue('customerPhone', currentCustomer.phone || '');
-      form.setValue('customerAddress', currentCustomer.address || '');
-      
-      // Mettre à jour l'email si disponible
-      if (currentCustomer.email) {
-        form.setValue('customerEmail', currentCustomer.email);
-      }
-    }
-  }, [isAuthenticated, currentCustomer, form]);
 
   // Observer les valeurs du formulaire pour la validation en temps réel
   const formValues = form.watch();
@@ -72,14 +54,9 @@ const OrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice }: Ord
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>Informations de livraison</CardTitle>
-          {isAuthenticated && currentCustomer && (
+          {isAuthenticated && (
             <p className="text-sm text-muted-foreground">
-              Connecté en tant que <strong>{currentCustomer.name}</strong> - Vos informations ont été pré-remplies
-            </p>
-          )}
-          {!isAuthenticated && (
-            <p className="text-sm text-muted-foreground">
-              Veuillez remplir vos informations de livraison
+              Vos informations ont été pré-remplies depuis votre profil
             </p>
           )}
         </CardHeader>

@@ -1,53 +1,102 @@
 
-import { Suspense, lazy } from 'react';
-import { Toaster } from '@/components/ui/toaster';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+import { Toaster } from '@/components/ui/toaster';
 import { CartProvider } from '@/contexts/CartContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { useDataPreloader } from '@/hooks/useDataPreloader';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+import SplashScreen from '@/components/SplashScreen';
+import UserLayout from '@/components/UserLayout';
 
-// Lazy loading des composants
-const Index = lazy(() => import('@/pages/Index'));
-const Products = lazy(() => import('@/pages/Products'));
-const ProductDetails = lazy(() => import('@/pages/ProductDetails'));
-const Cart = lazy(() => import('@/pages/Cart'));
-const Account = lazy(() => import('@/pages/Account'));
-const Contact = lazy(() => import('@/pages/Contact'));
+// Public Pages
+import Index from '@/pages/Index';
+import Products from '@/pages/Products';
+import ProductDetails from '@/pages/ProductDetails';
+import PublicCategories from '@/pages/Categories';
+import Cart from '@/pages/Cart';
+import Favorites from '@/pages/Favorites';
+import CustomOrder from '@/pages/CustomOrder';
+import Contact from '@/pages/Contact';
+import AboutUs from '@/pages/AboutUs';
+import Account from '@/pages/Account';
+import NotFound from '@/pages/NotFound';
 
-// Admin routes
-const AdminDashboard = lazy(() => import('@/pages/Admin/Dashboard'));
-const AdminProducts = lazy(() => import('@/pages/Admin/Products'));
-const AdminProductForm = lazy(() => import('@/pages/Admin/ProductForm'));
-const AdminCategories = lazy(() => import('@/pages/Admin/Categories'));
-const AdminCategoryForm = lazy(() => import('@/pages/Admin/CategoryForm'));
-const AdminOrders = lazy(() => import('@/pages/Admin/Orders'));
-const AdminCustomers = lazy(() => import('@/pages/Admin/Customers'));
-const AdminSettings = lazy(() => import('@/pages/Admin/Settings'));
+// Admin Pages
+import AdminAuth from '@/components/AdminAuth';
+import AdminAuthPage from '@/pages/Admin/AdminAuth';
+import Dashboard from '@/pages/Admin/Dashboard';
+import Orders from '@/pages/Admin/Orders';
+import AdminProducts from '@/pages/Admin/Products';
+import ProductForm from '@/pages/Admin/ProductForm';
+import AdminCategories from '@/pages/Admin/Categories';
+import CategoryForm from '@/pages/Admin/CategoryForm';
+import Catalog from '@/pages/Admin/Catalog';
+import Customers from '@/pages/Admin/Customers';
+import Analytics from '@/pages/Admin/Analytics';
+import AdminAccounts from '@/pages/Admin/AdminAccounts';
+import Settings from '@/pages/Admin/Settings';
 
-// Configuration du client React Query
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
-      retry: (failureCount, error) => {
-        // Ne pas retry si l'erreur est une erreur d'authentification
-        if (error && typeof error === 'object' && 'status' in error) {
-          if ([401, 403, 404].includes(error.status as number)) {
-            return false;
-          }
-        }
-        return failureCount < 2;
-      },
+      staleTime: 2 * 60 * 1000, // 2 minutes - données considérées comme fraîches
+      gcTime: 10 * 60 * 1000, // 10 minutes - temps avant suppression du cache
+      retry: 2,
       refetchOnWindowFocus: false,
-    },
-    mutations: {
-      retry: 1,
     },
   },
 });
+
+function AppContent() {
+  const { isLoading } = useDataPreloader();
+  
+  // Activer la synchronisation en temps réel
+  useRealtimeSync();
+
+  if (isLoading) {
+    return <SplashScreen onComplete={() => {}} />;
+  }
+
+  return (
+    <Routes>
+      {/* Public Routes with UserLayout */}
+      <Route path="/" element={<UserLayout><Index /></UserLayout>} />
+      <Route path="/products" element={<UserLayout><Products /></UserLayout>} />
+      <Route path="/product/:id" element={<UserLayout><ProductDetails /></UserLayout>} />
+      <Route path="/categories" element={<UserLayout><PublicCategories /></UserLayout>} />
+      <Route path="/cart" element={<UserLayout><Cart /></UserLayout>} />
+      <Route path="/favorites" element={<UserLayout><Favorites /></UserLayout>} />
+      <Route path="/custom-order" element={<UserLayout><CustomOrder /></UserLayout>} />
+      <Route path="/contact" element={<UserLayout><Contact /></UserLayout>} />
+      <Route path="/about" element={<UserLayout><AboutUs /></UserLayout>} />
+      <Route path="/account" element={<UserLayout><Account /></UserLayout>} />
+
+      {/* Admin Authentication Route */}
+      <Route path="/dasgabriel@adminaccess" element={<AdminAuthPage />} />
+
+      {/* Admin Routes - Protected with AdminAuth */}
+      <Route path="/dasgabriel@adminaccess/dashboard" element={<AdminAuth><Dashboard /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/orders" element={<AdminAuth><Orders /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/products" element={<AdminAuth><AdminProducts /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/products/new" element={<AdminAuth><ProductForm /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/products/edit/:id" element={<AdminAuth><ProductForm /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/categories" element={<AdminAuth><AdminCategories /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/categories/new" element={<AdminAuth><CategoryForm /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/categories/edit/:id" element={<AdminAuth><CategoryForm /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/catalog" element={<AdminAuth><Catalog /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/customers" element={<AdminAuth><Customers /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/analytics" element={<AdminAuth><Analytics /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/accounts" element={<AdminAuth><AdminAccounts /></AdminAuth>} />
+      <Route path="/dasgabriel@adminaccess/settings" element={<AdminAuth><Settings /></AdminAuth>} />
+
+      {/* 404 Route */}
+      <Route path="*" element={<UserLayout><NotFound /></UserLayout>} />
+    </Routes>
+  );
+}
 
 function App() {
   return (
@@ -56,53 +105,9 @@ function App() {
         <CartProvider>
           <FavoritesProvider>
             <Router>
-              <div className="min-h-screen bg-background font-sans antialiased">
-                <Suspense 
-                  fallback={
-                    <div className="min-h-screen flex items-center justify-center">
-                      <div className="flex flex-col items-center space-y-4">
-                        <Skeleton className="h-8 w-48" />
-                        <Skeleton className="h-4 w-32" />
-                      </div>
-                    </div>
-                  }
-                >
-                  <Routes>
-                    {/* Routes publiques */}
-                    <Route path="/" element={<Index />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/product/:id" element={<ProductDetails />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/account" element={<Account />} />
-                    <Route path="/contact" element={<Contact />} />
-
-                    {/* Routes admin */}
-                    <Route path="/dasgabriel@adminaccess" element={<AdminDashboard />} />
-                    <Route path="/dasgabriel@adminaccess/dashboard" element={<AdminDashboard />} />
-                    
-                    {/* Gestion des produits */}
-                    <Route path="/dasgabriel@adminaccess/catalog" element={<AdminProducts />} />
-                    <Route path="/dasgabriel@adminaccess/catalog/new" element={<AdminProductForm />} />
-                    <Route path="/dasgabriel@adminaccess/catalog/edit/:id" element={<AdminProductForm />} />
-                    
-                    {/* Gestion des catégories */}
-                    <Route path="/dasgabriel@adminaccess/catalog/categories" element={<AdminCategories />} />
-                    <Route path="/dasgabriel@adminaccess/catalog/categories/new" element={<AdminCategoryForm />} />
-                    <Route path="/dasgabriel@adminaccess/catalog/categories/edit/:id" element={<AdminCategoryForm />} />
-                    
-                    {/* Gestion des commandes */}
-                    <Route path="/dasgabriel@adminaccess/orders" element={<AdminOrders />} />
-                    
-                    {/* Gestion des clients */}
-                    <Route path="/dasgabriel@adminaccess/customers" element={<AdminCustomers />} />
-                    
-                    {/* Paramètres */}
-                    <Route path="/dasgabriel@adminaccess/settings" element={<AdminSettings />} />
-                  </Routes>
-                </Suspense>
-              </div>
+              <AppContent />
+              <Toaster />
             </Router>
-            <Toaster />
           </FavoritesProvider>
         </CartProvider>
       </ThemeProvider>
