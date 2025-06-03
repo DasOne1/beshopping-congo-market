@@ -29,7 +29,7 @@ export const useOptimizedProducts = () => {
 
       try {
         // Try to get from IndexedDB first
-        const cachedProducts = await db.getCachedData<Product[]>('products', 'all');
+        const cachedProducts = await db.getCachedData('products', 'all');
         
         if (cachedProducts && connection.isOnline) {
           console.log('📦 Using cached products');
@@ -37,14 +37,14 @@ export const useOptimizedProducts = () => {
           
           // Return cached data immediately, then fetch fresh data in background
           setTimeout(() => fetchAndCacheProducts(), 100);
-          return cachedProducts;
+          return cachedProducts as Product[];
         }
 
         // If offline and have cached data, use it
         if (!connection.isOnline && cachedProducts) {
           console.log('📦 Using offline cached products');
           recordCacheHit();
-          return cachedProducts;
+          return cachedProducts as Product[];
         }
 
         // Fetch fresh data if online
@@ -59,8 +59,8 @@ export const useOptimizedProducts = () => {
         setError('products', 'Erreur lors du chargement des produits');
         
         // Try to return cached data as fallback
-        const cachedProducts = await db.getCachedData<Product[]>('products', 'all');
-        return cachedProducts || [];
+        const cachedProducts = await db.getCachedData('products', 'all');
+        return (cachedProducts as Product[]) || [];
       } finally {
         const loadTime = Date.now() - startTime;
         recordRequest(loadTime);
@@ -102,7 +102,7 @@ export const useOptimizedProducts = () => {
     })) as Product[];
 
     // Cache in IndexedDB
-    await db.setCachedData('products', 'all', formattedProducts, PRODUCTS_CACHE_TIME);
+    await db.setCachedData('products', 'all', formattedProducts);
     
     // Log performance
     await db.logPerformance('api_call', {
@@ -119,10 +119,10 @@ export const useOptimizedProducts = () => {
     queryKey: ['products-featured'],
     queryFn: async (): Promise<Product[]> => {
       // Try cache first
-      const cached = await db.getCachedData<Product[]>('products', 'featured');
+      const cached = await db.getCachedData('products', 'featured');
       if (cached) {
         recordCacheHit();
-        return cached;
+        return cached as Product[];
       }
 
       // Only fetch if online
@@ -145,7 +145,7 @@ export const useOptimizedProducts = () => {
         images: product.images || [],
       })) as Product[] || [];
 
-      await db.setCachedData('products', 'featured', formatted, FEATURED_PRODUCTS_CACHE_TIME);
+      await db.setCachedData('products', 'featured', formatted);
       return formatted;
     },
     staleTime: FEATURED_PRODUCTS_CACHE_TIME,

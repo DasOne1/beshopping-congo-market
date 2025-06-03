@@ -39,6 +39,11 @@ const Products = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
 
+  // Handle price range updates correctly
+  const handlePriceRangeChange = (range: number[]) => {
+    setPriceRange([range[0], range[1]]);
+  };
+
   // Show skeleton for offline/no data scenarios
   if (showSkeleton) {
     return (
@@ -122,7 +127,7 @@ const Products = () => {
                   selectedCategory={selectedCategory}
                   setSelectedCategory={setSelectedCategory}
                   priceRange={priceRange}
-                  setPriceRange={setPriceRange}
+                  setPriceRange={handlePriceRangeChange}
                   sortBy={sortBy}
                   setSortBy={setSortBy}
                   categories={categories}
@@ -165,7 +170,7 @@ const Products = () => {
                           selectedCategory={selectedCategory}
                           setSelectedCategory={setSelectedCategory}
                           priceRange={priceRange}
-                          setPriceRange={setPriceRange}
+                          setPriceRange={handlePriceRangeChange}
                           sortBy={sortBy}
                           setSortBy={setSortBy}
                           categories={categories}
@@ -293,7 +298,7 @@ const Products = () => {
                     >
                       <ProductCard 
                         product={product} 
-                        className={viewMode === 'list' ? 'flex-row' : ''}
+                        viewMode={viewMode}
                       />
                     </motion.div>
                   ))}

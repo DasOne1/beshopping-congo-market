@@ -56,13 +56,13 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, viewMode = 'gri
       className={cardClasses}
       layout
     >
-      <Card className={`group relative overflow-hidden border border-border/40 hover:border-border/80 hover:shadow-lg transition-all duration-300 bg-card ${isOutOfStock ? 'opacity-75' : ''}`}>
-        <div className="relative">
+      <Card className={`group relative overflow-hidden border border-border/40 hover:border-border/80 hover:shadow-lg transition-all duration-300 bg-card ${isOutOfStock ? 'opacity-75' : ''} ${viewMode === 'list' ? 'flex flex-row' : ''}`}>
+        <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : ''}`}>
           <Link to={`/product/${product.id}`}>
             <OptimizedImage
               src={product.images?.[0] || '/shopping-cart-logo.svg'}
               alt={product.name}
-              className="aspect-square w-full"
+              className={`${viewMode === 'list' ? 'aspect-square h-48' : 'aspect-square'} w-full`}
               loading="lazy"
             />
           </Link>
@@ -97,31 +97,33 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, viewMode = 'gri
           </Button>
         </div>
         
-        <CardContent className="p-3">
-          <Link to={`/product/${product.id}`}>
-            <h3 className="font-medium text-sm line-clamp-2 mb-2 text-foreground hover:text-primary transition-colors">
-              {product.name}
-            </h3>
-          </Link>
-          
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <Star 
-                  key={i} 
-                  className={`h-3 w-3 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
-                />
-              ))}
-              <span className="text-xs text-muted-foreground ml-1">(4.0)</span>
-            </div>
+        <CardContent className={`p-3 ${viewMode === 'list' ? 'flex-1 flex flex-col justify-between' : ''}`}>
+          <div>
+            <Link to={`/product/${product.id}`}>
+              <h3 className="font-medium text-sm line-clamp-2 mb-2 text-foreground hover:text-primary transition-colors">
+                {product.name}
+              </h3>
+            </Link>
             
-            {/* Status badge on the same line as rating */}
-            <Badge 
-              variant={isOutOfStock ? "secondary" : "default"}
-              className="text-xs"
-            >
-              {isOutOfStock ? 'Hors stock' : 'En stock'}
-            </Badge>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`h-3 w-3 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                  />
+                ))}
+                <span className="text-xs text-muted-foreground ml-1">(4.0)</span>
+              </div>
+              
+              {/* Status badge on the same line as rating */}
+              <Badge 
+                variant={isOutOfStock ? "secondary" : "default"}
+                className="text-xs"
+              >
+                {isOutOfStock ? 'Hors stock' : 'En stock'}
+              </Badge>
+            </div>
           </div>
           
           <div className="space-y-2">

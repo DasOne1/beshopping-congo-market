@@ -37,9 +37,16 @@ export const useOfflineAdminOperations = () => {
   const loadPendingOperations = async () => {
     try {
       const operations = await db.getSyncQueue();
-      setPendingOperations(operations.filter(op => 
-        op.table === 'products' || op.table === 'categories'
-      ) as OfflineOperation[]);
+      // Convert SyncQueue to OfflineOperation format
+      const formattedOperations: OfflineOperation[] = operations.map(op => ({
+        id: op.id,
+        type: op.table === 'products' ? 'product' : 'category',
+        action: op.action as 'create' | 'update' | 'delete',
+        data: op.data,
+        timestamp: op.timestamp || Date.now(),
+        retries: 0
+      }));
+      setPendingOperations(formattedOperations);
     } catch (error) {
       console.error('Error loading pending operations:', error);
     }
