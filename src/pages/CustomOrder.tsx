@@ -1,5 +1,5 @@
-
-import React, { useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, X, Send, User, MessageCircle, CheckCircle } from 'lucide-react';
 import Header from '@/components/Header';
@@ -11,11 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import WhatsAppContact from '@/components/WhatsAppContact';
 
 const CustomOrder = () => {
-  const { user } = useAuth();
+  const { currentCustomer, isAuthenticated } = useCustomerAuth();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -23,8 +23,22 @@ const CustomOrder = () => {
     description: '',
     budget: '',
     contactInfo: '',
+    address: '',
     images: [] as File[]
   });
+
+  // Pré-remplir les informations du client connecté
+  useEffect(() => {
+    if (currentCustomer) {
+      setFormData(prev => ({
+        ...prev,
+        contactInfo: currentCustomer.phone || currentCustomer.email || '',
+        address: typeof currentCustomer.address === 'string' 
+          ? currentCustomer.address 
+          : currentCustomer.address?.address || ''
+      }));
+    }
+  }, [currentCustomer]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -57,7 +71,9 @@ const CustomOrder = () => {
 
     // Set order details for confirmation popup
     setOrderDetails({
-      customerName: user?.user_metadata?.full_name || formData.contactInfo || 'Anonyme',
+      customerName: currentCustomer?.name || formData.contactInfo || 'Anonyme',
+      customerPhone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
+      customerAddress: currentCustomer?.address || formData.address || 'Non spécifiée',
       productName: formData.name,
       description: formData.description,
       budget: formData.budget,
@@ -78,6 +94,7 @@ const CustomOrder = () => {
       description: '',
       budget: '',
       contactInfo: '',
+      address: '',
       images: []
     });
   };
@@ -94,7 +111,9 @@ const CustomOrder = () => {
 
     // Set order details for confirmation popup
     setOrderDetails({
-      customerName: user?.user_metadata?.full_name || formData.contactInfo || 'Client WhatsApp',
+      customerName: currentCustomer?.name || formData.contactInfo || 'Client WhatsApp',
+      customerPhone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
+      customerAddress: currentCustomer?.address || formData.address || 'Non spécifiée',
       productName: formData.name,
       description: formData.description,
       budget: formData.budget,
@@ -107,8 +126,9 @@ const CustomOrder = () => {
   const generateWhatsAppMessage = () => {
     const message = `🛍️ *Commande Personnalisée - BeShopping Congo*
 
-👤 *Client:* ${user?.user_metadata?.full_name || formData.contactInfo || 'Anonyme'}
-📱 *Contact:* ${formData.contactInfo || 'Non spécifié'}
+👤 *Client:* ${currentCustomer?.name || formData.contactInfo || 'Anonyme'}
+📱 *Contact:* ${currentCustomer?.phone || formData.contactInfo || 'Non spécifié'}
+📍 *Adresse:* ${currentCustomer?.address || formData.address || 'Non spécifiée'}
 
 🎯 *Produit souhaité:* ${formData.name}
 
@@ -128,7 +148,7 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8 pb-20 md:pb-8">
+      <main className="container mx-auto px-4 py-8 pt-20 pb-20 md:pb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -145,8 +165,13 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
             <Card className="shadow-lg border-2">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
                 <CardTitle className="text-2xl">Détails de votre commande</CardTitle>
+                {isAuthenticated && (
+                  <p className="text-sm text-muted-foreground">
+                    Vos informations ont été pré-remplies depuis votre profil
+                  </p>
+                )}
               </CardHeader>
-              <CardContent className="p-8">
+              <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-8">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
@@ -187,15 +212,28 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="contact" className="text-base font-semibold">Informations de contact</Label>
-                    <Input
-                      id="contact"
-                      value={formData.contactInfo}
-                      onChange={(e) => setFormData(prev => ({ ...prev, contactInfo: e.target.value }))}
-                      placeholder="Téléphone ou email de contact"
-                      className="mt-2 h-12"
-                    />
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="contact" className="text-base font-semibold">Informations de contact</Label>
+                      <Input
+                        id="contact"
+                        value={formData.contactInfo}
+                        onChange={(e) => setFormData(prev => ({ ...prev, contactInfo: e.target.value }))}
+                        placeholder="Téléphone ou email de contact"
+                        className="mt-2 h-12"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="address" className="text-base font-semibold">Adresse de livraison</Label>
+                      <Input
+                        id="address"
+                        value={formData.address}
+                        onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                        placeholder="Votre adresse de livraison"
+                        className="mt-2 h-12"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -204,50 +242,35 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
                       Ajoutez jusqu'à 5 images pour nous aider à mieux comprendre votre besoin
                     </p>
                     
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                          id="image-upload"
-                        />
-                        <label htmlFor="image-upload">
-                          <Button type="button" variant="outline" size="lg" asChild>
-                            <span className="cursor-pointer">
-                              <Upload className="h-5 w-5 mr-2" />
-                              Ajouter des images
-                            </span>
-                          </Button>
-                        </label>
-                        <span className="text-sm text-muted-foreground">
-                          {formData.images.length}/5 images
-                        </span>
-                      </div>
-
-                      {formData.images.length > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          {formData.images.map((image, index) => (
-                            <div key={index} className="relative group">
-                              <img
-                                src={URL.createObjectURL(image)}
-                                alt={`Reference ${index + 1}`}
-                                className="w-full h-32 object-cover rounded-lg border-2 border-gray-200 group-hover:border-gray-300 transition-colors"
-                              />
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => removeImage(index)}
-                                className="absolute -top-2 -right-2 h-8 w-8 p-0 rounded-full shadow-lg"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      {formData.images.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={`Référence ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
                         </div>
+                      ))}
+                      
+                      {formData.images.length < 5 && (
+                        <label className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            multiple
+                          />
+                          <Upload className="h-8 w-8 text-muted-foreground" />
+                        </label>
                       )}
                     </div>
                   </div>
@@ -261,7 +284,7 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      {user ? (
+                      {isAuthenticated ? (
                         <Button type="submit" size="lg" className="h-14">
                           <Send className="h-5 w-5 mr-2" />
                           Envoyer ma commande
@@ -272,7 +295,7 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
                           variant="outline"
                           size="lg"
                           className="h-14"
-                          onClick={() => window.location.href = '/auth'}
+                          onClick={() => window.location.href = '/account'}
                         >
                           <User className="h-5 w-5 mr-2" />
                           Se connecter pour valider
@@ -318,6 +341,12 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
               <div className="space-y-3">
                 <div>
                   <span className="font-medium">Client:</span> {orderDetails.customerName}
+                </div>
+                <div>
+                  <span className="font-medium">Contact:</span> {orderDetails.customerPhone}
+                </div>
+                <div>
+                  <span className="font-medium">Adresse:</span> {orderDetails.customerAddress}
                 </div>
                 <div>
                   <span className="font-medium">Produit:</span> {orderDetails.productName}

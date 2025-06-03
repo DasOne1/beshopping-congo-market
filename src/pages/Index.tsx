@@ -109,7 +109,7 @@ const Index = () => {
                   className="text-sm md:text-base lg:text-lg px-4 md:px-6 lg:px-8 border-primary text-primary hover:bg-primary/10"
                   onClick={() => navigate('/custom-order')}
                 >
-                  <Palette className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                  <Palette className="mr-2 h-4 w-4 md:h-5 md:w-5  " />
                   Commande personnalisée
                 </Button>
               </div>

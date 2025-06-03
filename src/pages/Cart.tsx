@@ -111,7 +111,7 @@ const Cart = () => {
           transition={{ duration: 0.3 }}
         >
           <ShoppingCart className="mr-2 h-6 w-6" />
-          Votre Panier.....
+          Votre Panier
         </motion.h1>
         
         {cart.length === 0 ? (
