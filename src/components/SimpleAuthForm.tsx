@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,12 +9,14 @@ import { User, Phone, Mail, MapPin, Lock, X, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { toast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface SimpleAuthFormProps {
   onSuccess?: () => void;
 }
 
 const SimpleAuthForm = ({ onSuccess }: SimpleAuthFormProps) => {
+  const navigate = useNavigate();
   const [signUpForm, setSignUpForm] = useState({
     name: '',
     phone: '',
@@ -28,17 +30,34 @@ const SimpleAuthForm = ({ onSuccess }: SimpleAuthFormProps) => {
     password: ''
   });
   
-  const { signUp, signIn, loading } = useCustomerAuth();
+  const { signUp, signIn, loading, isAuthenticated, currentCustomer } = useCustomerAuth();
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+
+  // Réinitialiser les formulaires et rediriger après une connexion réussie
+  useEffect(() => {
+    if (isAuthenticated && currentCustomer) {
+      setSignInForm({ phone: '', password: '' });
+      setSignUpForm({
+        name: '',
+        phone: '',
+        email: '',
+        address: '',
+        password: ''
+      });
+      if (onSuccess) {
+        onSuccess();
+      }
+      // Rediriger vers la page d'accueil
+      navigate('/');
+    }
+  }, [isAuthenticated, currentCustomer, onSuccess, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await signUp(signUpForm);
-      if (onSuccess) {
-        onSuccess();
-      }
+      // La redirection sera gérée par le useEffect
     } catch (error) {
       // Error is handled in the hook
     }
@@ -48,13 +67,16 @@ const SimpleAuthForm = ({ onSuccess }: SimpleAuthFormProps) => {
     e.preventDefault();
     try {
       await signIn(signInForm);
-      if (onSuccess) {
-        onSuccess();
-      }
+      // La redirection sera gérée par le useEffect
     } catch (error) {
       // Error is handled in the hook
     }
   };
+
+  // Si l'utilisateur est authentifié, ne pas afficher le formulaire
+  if (isAuthenticated && currentCustomer) {
+    return null;
+  }
 
   return (
     <Card className="border-0 shadow-none">
