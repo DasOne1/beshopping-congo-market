@@ -385,11 +385,8 @@ const OrderDashboard = ({ orders, isLoading, cartCount = 0, favoritesCount = 0 }
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>Détails de la commande #{selectedOrder?.order_number}</span>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(null)}>
-                <X className="h-4 w-4" />
-              </Button>
+            <DialogTitle>
+              Détails de la commande #{selectedOrder?.order_number}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-6">

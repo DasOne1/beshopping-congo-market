@@ -34,6 +34,11 @@ const Products = () => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const itemsPerPage = 12;
 
+  // Ajouter un effet pour scroller vers le haut lors du changement de page
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
   useEffect(() => {
     if (selectedCategoryId) {
       setSelectedCategory(selectedCategoryId);
