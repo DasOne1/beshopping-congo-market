@@ -43,8 +43,12 @@ const Products = () => {
     setPriceRange([range[0], range[1]]);
   };
 
+  // Convert showSkeleton and showConnectMessage to boolean safely
+  const shouldShowSkeleton = showSkeleton === true || showSkeleton === 'true';
+  const shouldShowConnectMessage = showConnectMessage === true || showConnectMessage === 'true';
+
   // Show skeleton for offline/no data scenarios
-  if (showSkeleton === true) {
+  if (shouldShowSkeleton) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -57,7 +61,7 @@ const Products = () => {
   }
 
   // Show connection prompt for offline users without data
-  if (showConnectMessage === true) {
+  if (shouldShowConnectMessage) {
     return (
       <div className="min-h-screen bg-background">
         <Header />

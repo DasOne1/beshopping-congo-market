@@ -67,24 +67,32 @@ export const useOrderForm = ({
     try {
       console.log('Création de la commande avec les données:', data);
       
+      // Préparer les données de la commande selon le format attendu par useOrders
       const orderData = {
+        customer_id: currentCustomer?.id || null,
         customer_name: data.customerName,
         customer_phone: data.customerPhone,
         customer_email: data.customerEmail || null,
         customer_address: data.customerAddress,
         notes: data.notes || null,
-        items: cartProducts.map(item => ({
-          product_id: item.productId,
-          product_name: item.product?.name || 'Produit inconnu',
-          quantity: item.quantity,
-          unit_price: item.product?.discounted_price || item.product?.original_price || 0,
-          total_price: (item.product?.discounted_price || item.product?.original_price || 0) * item.quantity
-        })),
         total_amount: subtotal,
-        status: 'pending'
+        subtotal: subtotal,
+        status: 'pending' as const
       };
 
-      const result = await createOrder.mutateAsync(orderData);
+      const orderItems = cartProducts.map(item => ({
+        product_id: item.productId,
+        product_name: item.product?.name || 'Produit inconnu',
+        quantity: item.quantity,
+        unit_price: item.product?.discounted_price || item.product?.original_price || 0,
+        total_price: (item.product?.discounted_price || item.product?.original_price || 0) * item.quantity
+      }));
+
+      // Appeler createOrder avec le bon format
+      const result = await createOrder.mutateAsync({ 
+        order: orderData, 
+        items: orderItems 
+      });
       
       if (result) {
         console.log('Commande créée avec succès:', result);
