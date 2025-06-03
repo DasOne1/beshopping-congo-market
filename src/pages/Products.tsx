@@ -44,8 +44,8 @@ const Products = () => {
   };
 
   // Convert showSkeleton and showConnectMessage to boolean safely
-  const shouldShowSkeleton = showSkeleton === true || showSkeleton === 'true';
-  const shouldShowConnectMessage = showConnectMessage === true || showConnectMessage === 'true';
+  const shouldShowSkeleton = Boolean(showSkeleton);
+  const shouldShowConnectMessage = Boolean(showConnectMessage);
 
   // Show skeleton for offline/no data scenarios
   if (shouldShowSkeleton) {
@@ -198,7 +198,7 @@ const Products = () => {
                     ) : (
                       `${filteredProducts.length} produit${filteredProducts.length > 1 ? 's' : ''} trouvé${filteredProducts.length > 1 ? 's' : ''}`
                     )}
-                    {!isOnline && hasOfflineData && (
+                    {!isOnline && Boolean(hasOfflineData) && (
                       <span className="ml-2 text-amber-600">(Données hors ligne)</span>
                     )}
                   </p>
