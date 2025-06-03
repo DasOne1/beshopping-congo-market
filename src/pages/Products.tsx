@@ -36,7 +36,7 @@ const Products = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
   const [sortBy, setSortBy] = useState<string>('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
 
   // Handle price range updates correctly
   const handlePriceRangeChange = (range: number[]) => {
@@ -44,7 +44,7 @@ const Products = () => {
   };
 
   // Show skeleton for offline/no data scenarios
-  if (showSkeleton) {
+  if (showSkeleton === true) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -57,7 +57,7 @@ const Products = () => {
   }
 
   // Show connection prompt for offline users without data
-  if (showConnectMessage) {
+  if (showConnectMessage === true) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
