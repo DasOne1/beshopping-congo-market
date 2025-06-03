@@ -37,6 +37,47 @@ interface OrderDashboardProps {
   favoritesCount?: number;
 }
 
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case 'pending':
+      return {
+        variant: 'outline' as const,
+        label: 'En attente',
+        color: 'text-yellow-600 dark:text-yellow-400'
+      };
+    case 'processing':
+      return {
+        variant: 'secondary' as const,
+        label: 'En cours de traitement',
+        color: 'text-blue-600 dark:text-blue-400'
+      };
+    case 'shipped':
+      return {
+        variant: 'secondary' as const,
+        label: 'Expédiée',
+        color: 'text-purple-600 dark:text-purple-400'
+      };
+    case 'delivered':
+      return {
+        variant: 'default' as const,
+        label: 'Terminée',
+        color: 'text-green-600 dark:text-green-400'
+      };
+    case 'cancelled':
+      return {
+        variant: 'destructive' as const,
+        label: 'Annulée',
+        color: 'text-red-600 dark:text-red-400'
+      };
+    default:
+      return {
+        variant: 'outline' as const,
+        label: 'En attente',
+        color: 'text-yellow-600 dark:text-yellow-400'
+      };
+  }
+};
+
 const OrderDashboard = ({ orders, isLoading, cartCount = 0, favoritesCount = 0 }: OrderDashboardProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -47,14 +88,24 @@ const OrderDashboard = ({ orders, isLoading, cartCount = 0, favoritesCount = 0 }
   const stats = useMemo(() => {
     const totalOrders = orders.length;
     const totalAmount = orders.reduce((sum, order) => sum + order.total_amount, 0);
+    
+    // Commandes en attente
     const pendingOrders = orders.filter(order => order.status === 'pending').length;
-    const processingOrders = orders.filter(order => order.status === 'processing').length;
+    
+    // Commandes en cours (tous les statuts sauf terminée et annulée)
+    const activeOrders = orders.filter(order => 
+      order.status === 'processing' || order.status === 'shipped'
+    ).length;
+    
+    // Commandes terminées
+    const completedOrders = orders.filter(order => order.status === 'delivered').length;
 
     return {
       totalOrders,
       totalAmount,
       pendingOrders,
-      processingOrders
+      activeOrders,
+      completedOrders
     };
   }, [orders]);
 
@@ -117,7 +168,64 @@ const OrderDashboard = ({ orders, isLoading, cartCount = 0, favoritesCount = 0 }
   return (
     <div className="space-y-6">
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Carte des commandes en attente */}
+        <Card className="border-2 border-yellow-200 dark:border-yellow-800">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Commandes en attente</p>
+                <h3 className="text-2xl font-bold">{stats.pendingOrders}</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {((stats.pendingOrders / stats.totalOrders) * 100).toFixed(1)}% des commandes
+                </p>
+              </div>
+              <div className="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-full">
+                <Package className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Carte des commandes en cours */}
+        <Card className="border-2 border-blue-200 dark:border-blue-800">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Commandes en cours</p>
+                <h3 className="text-2xl font-bold">{stats.activeOrders}</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {((stats.activeOrders / stats.totalOrders) * 100).toFixed(1)}% des commandes
+                </p>
+              </div>
+              <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
+                <Calendar className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Carte des commandes terminées */}
+        <Card className="border-2 border-green-200 dark:border-green-800">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Commandes terminées</p>
+                <h3 className="text-2xl font-bold">{stats.completedOrders}</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {((stats.completedOrders / stats.totalOrders) * 100).toFixed(1)}% des commandes
+                </p>
+              </div>
+              <div className="bg-green-100 dark:bg-green-900 p-3 rounded-full">
+                <ShoppingBag className="h-8 w-8 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Résumé des commandes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -125,7 +233,9 @@ const OrderDashboard = ({ orders, isLoading, cartCount = 0, favoritesCount = 0 }
                 <p className="text-sm font-medium text-muted-foreground">Total des commandes</p>
                 <h3 className="text-2xl font-bold">{stats.totalOrders}</h3>
               </div>
-              <ShoppingBag className="h-8 w-8 text-primary" />
+              <div className="bg-primary/10 p-3 rounded-full">
+                <ShoppingBag className="h-8 w-8 text-primary" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -136,51 +246,9 @@ const OrderDashboard = ({ orders, isLoading, cartCount = 0, favoritesCount = 0 }
                 <p className="text-sm font-medium text-muted-foreground">Montant total</p>
                 <h3 className="text-2xl font-bold">{formatPrice(stats.totalAmount)} FC</h3>
               </div>
-              <DollarSign className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">En attente</p>
-                <h3 className="text-2xl font-bold">{stats.pendingOrders}</h3>
+              <div className="bg-primary/10 p-3 rounded-full">
+                <DollarSign className="h-8 w-8 text-primary" />
               </div>
-              <Package className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">En cours</p>
-                <h3 className="text-2xl font-bold">{stats.processingOrders}</h3>
-              </div>
-              <Calendar className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => window.location.href = '/cart'}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Articles en panier</p>
-                <h3 className="text-2xl font-bold">{cartCount}</h3>
-              </div>
-              <ShoppingCart className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => window.location.href = '/favorites'}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Articles likés</p>
-                <h3 className="text-2xl font-bold">{favoritesCount}</h3>
-              </div>
-              <Heart className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -210,7 +278,8 @@ const OrderDashboard = ({ orders, isLoading, cartCount = 0, favoritesCount = 0 }
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
                   <SelectItem value="pending">En attente</SelectItem>
-                  <SelectItem value="processing">En cours</SelectItem>
+                  <SelectItem value="processing">En cours de traitement</SelectItem>
+                  <SelectItem value="shipped">Expédiée</SelectItem>
                   <SelectItem value="delivered">Terminée</SelectItem>
                   <SelectItem value="cancelled">Annulée</SelectItem>
                 </SelectContent>
@@ -246,62 +315,57 @@ const OrderDashboard = ({ orders, isLoading, cartCount = 0, favoritesCount = 0 }
             </thead>
             <tbody>
               {filteredOrders.length > 0 ? (
-                filteredOrders.map((order, index) => (
-                  <motion.tr
-                    key={order.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                    className="border-b hover:bg-accent/50 transition-colors cursor-pointer"
-                    onClick={() => setSelectedOrder(order)}
-                  >
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        {order.order_items && order.order_items.length > 0 && (
-                          <>
-                            <div className="relative">
-                              <img 
-                                src={order.order_items[0].product_image} 
-                                alt={order.order_items[0].product_name}
-                                className="w-12 h-12 object-cover rounded"
-                              />
-                              {order.order_items.length > 1 && (
-                                <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                  +{order.order_items.length - 1}
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <div className="font-medium">{order.order_items[0].product_name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {order.order_items.length} article(s)
+                filteredOrders.map((order, index) => {
+                  const status = getStatusBadge(order.status);
+                  return (
+                    <motion.tr
+                      key={order.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      className="border-b hover:bg-accent/50 transition-colors cursor-pointer"
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          {order.order_items && order.order_items.length > 0 && (
+                            <>
+                              <div className="relative">
+                                <img 
+                                  src={order.order_items[0].product_image} 
+                                  alt={order.order_items[0].product_name}
+                                  className="w-12 h-12 object-cover rounded"
+                                />
+                                {order.order_items.length > 1 && (
+                                  <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                    +{order.order_items.length - 1}
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="font-medium">{formatPrice(order.total_amount)} FC</div>
-                    </td>
-                    <td className="p-4">
-                      <div className="text-sm">{formatDate(order.created_at)}</div>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant={
-                        order.status === 'delivered' ? 'default' :
-                        order.status === 'processing' ? 'secondary' :
-                        order.status === 'cancelled' ? 'destructive' :
-                        'outline'
-                      }>
-                        {order.status === 'delivered' ? 'Terminée' :
-                         order.status === 'processing' ? 'En cours' :
-                         order.status === 'cancelled' ? 'Annulée' :
-                         'En attente'}
-                      </Badge>
-                    </td>
-                  </motion.tr>
-                ))
+                              <div>
+                                <div className="font-medium">{order.order_items[0].product_name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {order.order_items.length} article(s)
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="font-medium">{formatPrice(order.total_amount)} FC</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-sm">{formatDate(order.created_at)}</div>
+                      </td>
+                      <td className="p-4">
+                        <Badge variant={status.variant} className={status.color}>
+                          {status.label}
+                        </Badge>
+                      </td>
+                    </motion.tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={4} className="p-8 text-center">
@@ -337,17 +401,14 @@ const OrderDashboard = ({ orders, isLoading, cartCount = 0, favoritesCount = 0 }
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Statut</p>
-                <Badge variant={
-                  selectedOrder?.status === 'delivered' ? 'default' :
-                  selectedOrder?.status === 'processing' ? 'secondary' :
-                  selectedOrder?.status === 'cancelled' ? 'destructive' :
-                  'outline'
-                }>
-                  {selectedOrder?.status === 'delivered' ? 'Terminée' :
-                   selectedOrder?.status === 'processing' ? 'En cours' :
-                   selectedOrder?.status === 'cancelled' ? 'Annulée' :
-                   'En attente'}
-                </Badge>
+                {selectedOrder && (
+                  <Badge 
+                    variant={getStatusBadge(selectedOrder.status).variant}
+                    className={getStatusBadge(selectedOrder.status).color}
+                  >
+                    {getStatusBadge(selectedOrder.status).label}
+                  </Badge>
+                )}
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total</p>
