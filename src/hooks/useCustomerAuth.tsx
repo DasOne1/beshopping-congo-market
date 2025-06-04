@@ -11,6 +11,7 @@ interface CustomerData {
   email?: string;
   address?: string;
   password: string;
+  currentPassword?: string; // Pour la mise à jour du profil
 }
 
 interface LoginData {
@@ -104,19 +105,26 @@ export const useCustomerAuth = () => {
       // Normaliser le numéro de téléphone
       const normalizedPhone = normalizePhoneNumber(customerData.phone);
       
-      // Optimisation : Vérifier le numéro de téléphone en parallèle avec le hashage du mot de passe
-      const [hashedPassword, { data: existingCustomer }] = await Promise.all([
-        bcrypt.hash(customerData.password, 10),
-        supabase
-          .from('customers')
-          .select('phone')
-          .eq('phone', normalizedPhone)
-          .maybeSingle()
-      ]);
+      // Vérifier si le client existe déjà
+      const { data: existingCustomer, error: searchError } = await supabase
+        .from('customers')
+        .select('phone')
+        .eq('phone', normalizedPhone)
+        .maybeSingle();
+
+      if (searchError) throw searchError;
 
       if (existingCustomer) {
         throw new Error('Ce numéro de téléphone est déjà utilisé');
       }
+
+      // Vérifier la longueur du mot de passe
+      if (customerData.password.length < 4) {
+        throw new Error('Le mot de passe doit contenir au moins 4 caractères');
+      }
+
+      // Hasher le mot de passe
+      const hashedPassword = await bcrypt.hash(customerData.password, 10);
 
       // Créer le customer avec le numéro normalisé
       const { data: newCustomer, error } = await supabase
@@ -127,7 +135,9 @@ export const useCustomerAuth = () => {
           email: customerData.email || null,
           address: customerData.address || null,
           password_hash: hashedPassword,
-          status: 'active'
+          status: 'active',
+          total_spent: 0,
+          orders_count: 0
         })
         .select()
         .single();
@@ -249,11 +259,49 @@ export const useCustomerAuth = () => {
       if (updateData.phone) {
         updateData.phone = normalizePhoneNumber(updateData.phone);
       }
+
+      // Vérifier si le mot de passe actuel est requis
+      const requiresPassword = updateData.name || updateData.phone || updateData.email || updateData.address;
+      
+      if (requiresPassword && !customerData.currentPassword) {
+        throw new Error('Le mot de passe actuel est requis pour modifier vos informations');
+      }
+
+      // Vérifier le mot de passe actuel si fourni
+      if (customerData.currentPassword) {
+        const { data: customer, error } = await supabase
+          .from('customers')
+          .select('password_hash')
+          .eq('id', currentCustomer.id)
+          .single();
+
+        if (error) throw new Error('Erreur lors de la vérification du mot de passe');
+
+        const passwordMatch = await bcrypt.compare(customerData.currentPassword, customer.password_hash);
+        if (!passwordMatch) {
+          throw new Error('Le mot de passe actuel est incorrect');
+        }
+      }
       
       // Si un nouveau mot de passe est fourni, le hasher
-      if (customerData.password) {
+      if (customerData.password && customerData.password.trim() !== '') {
+        if (customerData.password.length < 4) {
+          throw new Error('Le nouveau mot de passe doit contenir au moins 4 caractères');
+        }
         updateData.password_hash = await bcrypt.hash(customerData.password, 10);
-        delete updateData.password;
+      }
+      delete updateData.password;
+
+      // Supprimer le mot de passe actuel des données de mise à jour
+      delete updateData.currentPassword;
+
+      // Vérifier si des données ont été modifiées
+      const hasChanges = Object.keys(updateData).some(key => 
+        updateData[key] !== currentCustomer[key]
+      );
+
+      if (!hasChanges) {
+        throw new Error('Aucune modification n\'a été effectuée');
       }
 
       // Mettre à jour les données localement immédiatement
@@ -277,7 +325,7 @@ export const useCustomerAuth = () => {
         // En cas d'erreur, restaurer les données précédentes
         setCurrentCustomer(currentCustomer);
         localStorage.setItem('customerData', JSON.stringify(currentCustomer));
-        throw new Error('Erreur lors de la mise à jour du profil');
+        throw new Error('Erreur lors de la mise à jour du profil. Veuillez réessayer.');
       }
       
       // Mettre à jour avec les données du serveur
@@ -290,7 +338,7 @@ export const useCustomerAuth = () => {
       
       toast({
         title: "Profil mis à jour",
-        description: "Vos informations ont été sauvegardées",
+        description: "Vos informations ont été sauvegardées avec succès",
       });
 
       return customerToStore;

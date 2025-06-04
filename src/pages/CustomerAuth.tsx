@@ -14,7 +14,7 @@ import { toast } from '@/hooks/use-toast';
 const CustomerAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, signIn, signUp } = useCustomerAuth();
+  const { isAuthenticated, signIn, signUp, loading } = useCustomerAuth();
   
   // Récupérer la page d'origine depuis l'état de navigation
   const from = location.state?.from || '/account';
@@ -159,11 +159,27 @@ const CustomerAuth = () => {
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
                     placeholder="Votre mot de passe"
+                    minLength={4}
                   />
+                  <p className="text-sm text-muted-foreground">
+                    Le mot de passe doit contenir au moins 4 caractères
+                  </p>
                 </div>
 
-                <Button type="submit" className="w-full">
-                  {isSignUp ? "Créer mon compte" : "Se connecter"}
+                <Button type="submit" className="w-full relative" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <span className="opacity-0">
+                        {isSignUp ? "Créer mon compte" : "Se connecter"}
+                      </span>
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="animate-spin mr-2">⟳</span>
+                        {isSignUp ? "Création..." : "Connexion..."}
+                      </span>
+                    </>
+                  ) : (
+                    isSignUp ? "Créer mon compte" : "Se connecter"
+                  )}
                 </Button>
 
                 <div className="text-center">

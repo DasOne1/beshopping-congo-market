@@ -17,6 +17,7 @@ import { motion } from 'framer-motion';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useOrders } from '@/hooks/useOrders';
 import OrderDashboard from '@/components/OrderDashboard';
+import { toast } from '@/components/ui/use-toast';
 
 const Account = () => {
   const navigate = useNavigate();
@@ -43,7 +44,8 @@ const Account = () => {
     email: '',
     phone: '',
     address: '',
-    password: ''
+    password: '',
+    currentPassword: ''
   });
 
   // Update profile form when customer data changes
@@ -54,7 +56,8 @@ const Account = () => {
         email: currentCustomer.email || '',
         phone: currentCustomer.phone || '',
         address: typeof currentCustomer.address === 'string' ? currentCustomer.address : currentCustomer.address?.address || '',
-        password: ''
+        password: '',
+        currentPassword: ''
       });
     }
   }, [currentCustomer]);
@@ -76,10 +79,33 @@ const Account = () => {
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Vérifier si des champs ont été modifiés
+      const hasChanges = 
+        profileForm.name !== currentCustomer.name ||
+        profileForm.email !== currentCustomer.email ||
+        profileForm.phone !== currentCustomer.phone ||
+        profileForm.address !== (typeof currentCustomer.address === 'string' ? currentCustomer.address : currentCustomer.address?.address || '');
+
+      if (!hasChanges && !profileForm.password) {
+        toast({
+          title: "Aucune modification",
+          description: "Vous n'avez effectué aucune modification",
+          variant: "destructive",
+        });
+        return;
+      }
+
       await updateProfile(profileForm);
       setIsEditing(false);
+      // Réinitialiser le formulaire après la mise à jour
+      setProfileForm({
+        ...profileForm,
+        password: '',
+        currentPassword: ''
+      });
     } catch (error) {
-      // Error is handled in the hook
+      // L'erreur est déjà gérée dans le hook
+      console.error('Erreur lors de la mise à jour du profil:', error);
     }
   };
 
@@ -185,13 +211,25 @@ const Account = () => {
             <CardContent>
               {isEditing ? (
                 <form onSubmit={handleProfileSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div>
                       <Label htmlFor="edit-name">Nom complet</Label>
                       <Input
                         id="edit-name"
                         value={profileForm.name}
                         onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
+                        required
+                        placeholder="Votre nom complet"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-email">Email</Label>
+                      <Input
+                        id="edit-email"
+                        type="email"
+                        value={profileForm.email}
+                        onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                        placeholder="Votre email"
                       />
                     </div>
                     <div>
@@ -200,15 +238,19 @@ const Account = () => {
                         id="edit-phone"
                         value={profileForm.phone}
                         onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                        required
+                        placeholder="Votre numéro de téléphone"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="edit-email">Email (optionnel)</Label>
+                      <Label htmlFor="edit-current-password">Mot de passe actuel</Label>
                       <Input
-                        id="edit-email"
-                        type="email"
-                        value={profileForm.email}
-                        onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                        id="edit-current-password"
+                        type="password"
+                        value={profileForm.currentPassword}
+                        onChange={(e) => setProfileForm({...profileForm, currentPassword: e.target.value})}
+                        placeholder="Entrez votre mot de passe actuel pour confirmer les modifications"
+                        required
                       />
                     </div>
                     <div>
@@ -219,6 +261,7 @@ const Account = () => {
                         value={profileForm.password}
                         onChange={(e) => setProfileForm({...profileForm, password: e.target.value})}
                         placeholder="Laissez vide pour garder le même"
+                        minLength={4}
                       />
                     </div>
                   </div>
@@ -228,11 +271,22 @@ const Account = () => {
                       id="edit-address"
                       value={profileForm.address}
                       onChange={(e) => setProfileForm({...profileForm, address: e.target.value})}
+                      placeholder="Votre adresse complète"
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button type="submit" disabled={loading}>
-                      Sauvegarder
+                    <Button type="submit" disabled={loading} className="relative">
+                      {loading ? (
+                        <>
+                          <span className="opacity-0">Sauvegarder</span>
+                          <span className="absolute inset-0 flex items-center justify-center">
+                            <span className="animate-spin mr-2">⟳</span>
+                            Mise à jour...
+                          </span>
+                        </>
+                      ) : (
+                        "Sauvegarder"
+                      )}
                     </Button>
                     <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
                       Annuler

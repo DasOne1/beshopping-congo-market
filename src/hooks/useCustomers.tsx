@@ -1,13 +1,39 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import * as z from 'zod';
+import { PostgrestError } from '@supabase/supabase-js';
+
+// Type pour l'adresse
+type Address = {
+  street?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
+};
+
+// Schéma de validation pour les données client
+const customerSchema = z.object({
+  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
+  email: z.string().email('Email invalide').optional().or(z.literal('')),
+  phone: z.string().min(10, 'Numéro de téléphone invalide').optional().or(z.literal('')),
+  address: z.object({
+    street: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
+    postal_code: z.string().optional(),
+  }).optional(),
+  status: z.enum(['active', 'inactive']).optional(),
+});
 
 export interface Customer {
   id: string;
   name: string;
   email?: string;
   phone?: string;
-  address?: any;
+  address?: Address;
   total_spent?: number;
   orders_count?: number;
   last_order_date?: string;
@@ -40,61 +66,69 @@ export const useCustomers = () => {
 
   const createCustomer = useMutation({
     mutationFn: async (customer: Omit<Customer, 'id' | 'created_at' | 'updated_at'>) => {
-      // Vérifier d'abord si le client existe déjà par téléphone ou email
-      let existingCustomer = null;
-      
-      if (customer.phone) {
-        const { data: phoneCustomer } = await supabase
+      try {
+        // Valider les données
+        const validatedData = customerSchema.parse(customer);
+
+        // Vérifier si le client existe déjà
+        const { data: existingCustomers, error: searchError } = await supabase
           .from('customers')
           .select('*')
-          .eq('phone', customer.phone)
-          .single();
-        existingCustomer = phoneCustomer;
-      }
-      
-      if (!existingCustomer && customer.email) {
-        const { data: emailCustomer } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('email', customer.email)
-          .single();
-        existingCustomer = emailCustomer;
-      }
+          .or(`phone.eq.${validatedData.phone},email.eq.${validatedData.email}`)
+          .limit(1);
 
-      if (existingCustomer) {
-        return existingCustomer;
-      }
+        if (searchError) throw searchError;
 
-      // Créer un nouveau client
-      const { data, error } = await supabase
-        .from('customers')
-        .insert([{
-          ...customer,
+        if (existingCustomers && existingCustomers.length > 0) {
+          const existingCustomer = existingCustomers[0];
+          if (existingCustomer.phone === validatedData.phone) {
+            throw new Error('Un client avec ce numéro de téléphone existe déjà');
+          }
+          if (existingCustomer.email === validatedData.email) {
+            throw new Error('Un client avec cet email existe déjà');
+          }
+        }
+
+        // Créer le nouveau client
+        const newCustomer = {
+          name: validatedData.name,
+          email: validatedData.email,
+          phone: validatedData.phone,
+          address: validatedData.address,
           total_spent: 0,
           orders_count: 0,
-          status: 'active'
-        }])
-        .select()
-        .single();
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
 
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-      
-      // Ne pas afficher de toast si c'est un client existant
-      if (data.created_at && new Date(data.created_at).getTime() > Date.now() - 5000) {
-        toast({
-          title: "Client créé",
-          description: "Le client a été créé avec succès",
-        });
+        const { data, error } = await supabase
+          .from('customers')
+          .insert([newCustomer])
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          throw new Error(error.errors[0].message);
+        }
+        throw error;
       }
     },
-    onError: (error: any) => {
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast({
+        title: "Client créé",
+        description: "Le client a été créé avec succès",
+      });
+    },
+    onError: (error: Error | PostgrestError) => {
+      console.error('Erreur lors de la création du client:', error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: error.message || "Une erreur est survenue lors de la création du client",
         variant: "destructive",
       });
     },
@@ -133,7 +167,7 @@ export const useCustomers = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error | PostgrestError) => {
       console.error('Erreur lors de la mise à jour des statistiques client:', error);
       toast({
         title: "Erreur",
@@ -145,15 +179,62 @@ export const useCustomers = () => {
 
   const updateCustomer = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Customer> & { id: string }) => {
-      const { data, error } = await supabase
-        .from('customers')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      try {
+        // Valider les données de mise à jour
+        const validatedData = customerSchema.partial().parse(updates);
 
-      if (error) throw error;
-      return data;
+        // Vérifier si le client existe
+        const { data: existingCustomer, error: fetchError } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (fetchError) throw new Error('Client non trouvé');
+
+        // Vérifier les doublons si le téléphone ou l'email est modifié
+        if (validatedData.phone || validatedData.email) {
+          const { data: duplicates, error: searchError } = await supabase
+            .from('customers')
+            .select('*')
+            .or(`phone.eq.${validatedData.phone},email.eq.${validatedData.email}`)
+            .neq('id', id)
+            .limit(1);
+
+          if (searchError) throw searchError;
+
+          if (duplicates && duplicates.length > 0) {
+            const duplicate = duplicates[0];
+            if (duplicate.phone === validatedData.phone) {
+              throw new Error('Un autre client utilise déjà ce numéro de téléphone');
+            }
+            if (duplicate.email === validatedData.email) {
+              throw new Error('Un autre client utilise déjà cet email');
+            }
+          }
+        }
+
+        // Mettre à jour le client
+        const updateData = {
+          ...validatedData,
+          updated_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabase
+          .from('customers')
+          .update(updateData)
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          throw new Error(error.errors[0].message);
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
@@ -162,10 +243,11 @@ export const useCustomers = () => {
         description: "Le client a été mis à jour avec succès",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error | PostgrestError) => {
+      console.error('Erreur lors de la mise à jour du client:', error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: error.message || "Une erreur est survenue lors de la mise à jour du client",
         variant: "destructive",
       });
     },
@@ -187,10 +269,11 @@ export const useCustomers = () => {
         description: "Le client a été supprimé avec succès",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error | PostgrestError) => {
+      console.error('Erreur lors de la suppression du client:', error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: error.message || "Une erreur est survenue lors de la suppression du client",
         variant: "destructive",
       });
     },
