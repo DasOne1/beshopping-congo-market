@@ -1,23 +1,22 @@
-
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Trash2, ShoppingBag, ShoppingCart, Plus, Minus } from 'lucide-react';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import WhatsAppContact from '@/components/WhatsAppContact';
+import OrderForm from '@/components/OrderForm';
+import ProductSkeleton from '@/components/ProductSkeleton';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
 import { useProducts } from '@/hooks/useProducts';
-import WhatsAppContact from '@/components/WhatsAppContact';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft, MessageCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const Cart = () => {
-  const { cart, removeFromCart, updateQuantity, getTotalPrice, clearCart } = useCart();
-  const { products } = useProducts();
-
-  // Get cart products with details
+  const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { products, isLoading } = useProducts();
+  
+  // Get product details for all cart items
   const cartProducts = cart.map(cartItem => {
     const product = products.find(p => p.id === cartItem.productId);
     return {
@@ -25,56 +24,76 @@ const Cart = () => {
       product
     };
   }).filter(item => item.product);
-
-  const totalPrice = getTotalPrice(products);
-
-  // Generate WhatsApp message
-  const generateWhatsAppMessage = (cartProducts: any[], totalPrice: number): string => {
-    let message = `🛒 *Nouvelle Commande - BeShopping Congo*\n\n`;
-    message += `🛍️ *Produits commandés:*\n`;
-    
-    cartProducts.forEach((item, index) => {
-      const product = item.product;
-      const price = product.discounted_price || product.original_price;
-      const total = price * item.quantity;
-      message += `${index + 1}. ${product.name}\n`;
-      message += `   • Quantité: ${item.quantity}\n`;
-      message += `   • Prix unitaire: ${price.toLocaleString()} CDF\n`;
-      message += `   • Total: ${total.toLocaleString()} CDF\n\n`;
-    });
-    
-    message += `💰 *Total général: ${totalPrice.toLocaleString()} CDF*\n\n`;
-    message += `📅 *Date: ${new Date().toLocaleDateString('fr-FR')}*`;
-    
-    return message;
+  
+  // Calculate subtotal
+  const subtotal = cartProducts.reduce((total, item) => {
+    if (!item.product) return total;
+    const price = item.product.discounted_price || item.product.original_price;
+    return total + price * item.quantity;
+  }, 0);
+  
+  // Format price to include thousands separator
+  const formatPrice = (price: number): string => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
 
-  const whatsappMessage = generateWhatsAppMessage(cartProducts, totalPrice);
-
-  if (cart.length === 0) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="container mx-auto px-4 py-8 pt-20 md:pt-24">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
+        
+        <main className="container mx-auto px-4 py-8 pb-20 md:pb-8">
+          <motion.h1 
+            className="text-2xl md:text-3xl font-bold mb-6 flex items-center text-foreground"
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center py-12"
+            transition={{ duration: 0.3 }}
           >
-            <ShoppingCart className="w-24 h-24 text-muted-foreground mx-auto mb-6" />
-            <h1 className="text-2xl md:text-3xl font-bold mb-4">Votre panier est vide</h1>
-            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Découvrez nos produits et ajoutez-les à votre panier pour commencer vos achats.
-            </p>
-            <Button asChild size="lg">
-              <Link to="/products">
-                <ArrowLeft className="mr-2 h-5 w-5" />
-                Continuer mes achats
-              </Link>
-            </Button>
-          </motion.div>
+            <ShoppingCart className="mr-2 h-6 w-6" />
+            Votre Panier
+          </motion.h1>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+            {/* Cart Items Skeleton */}
+            <div className="lg:col-span-2">
+              <div className="bg-card rounded-lg shadow-sm border border-border">
+                <div className="p-4 border-b border-border">
+                  <div className="h-5 bg-gray-200 rounded w-48 animate-pulse"></div>
+                </div>
+                
+                <div className="divide-y divide-border">
+                  {[1, 2, 3].map((index) => (
+                    <div key={index} className="p-4 flex gap-4">
+                      <div className="w-20 h-20 bg-gray-200 rounded-md animate-pulse"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
+                          <div className="h-8 bg-gray-200 rounded w-8 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Order Form Skeleton */}
+            <div>
+              <div className="bg-card rounded-lg shadow-sm border border-border p-6 space-y-4">
+                <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((index) => (
+                    <div key={index} className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                  ))}
+                </div>
+                <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
         </main>
+        
         <Footer />
       </div>
     );
@@ -84,178 +103,167 @@ const Cart = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-20 md:pb-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+      <main className="container mx-auto px-4 py-20 pb-20 md:pb-8">
+        <motion.h1 
+          className="text-2xl md:text-3xl font-bold mb-6 flex items-center text-foreground"
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.3 }}
         >
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold flex items-center">
-              <ShoppingCart className="mr-2 h-6 w-6" />
-              Mon Panier ({cart.length})
-            </h1>
-            <Button variant="outline" onClick={clearCart}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Vider le panier
+          <ShoppingCart className="mr-2 h-6 w-6" />
+          Votre Panier
+        </motion.h1>
+        
+        {cart.length === 0 ? (
+          <motion.div 
+            className="text-center py-12 md:py-16"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-xl font-medium mb-2 text-foreground">Votre panier est vide</h2>
+            <p className="text-muted-foreground mb-6">
+              Il semble que vous n'ayez pas encore ajouté de produits à votre panier.
+            </p>
+            <Button asChild>
+              <Link to="/products">Commencer les achats</Link>
             </Button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Articles du panier */}
-            <div className="lg:col-span-2 space-y-4">
-              {cartProducts.map((item, index) => (
-                <motion.div
-                  key={item.productId}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                >
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex flex-col md:flex-row gap-4">
-                        {/* Image du produit */}
-                        <div className="w-full md:w-32 h-32 bg-gray-100 rounded-lg overflow-hidden">
-                          {item.product?.images && item.product.images.length > 0 ? (
-                            <img
-                              src={item.product.images[0]}
-                              alt={item.product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                              Pas d'image
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Détails du produit */}
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg mb-2">{item.product?.name}</h3>
-                          
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                              {/* Prix */}
-                              <div className="flex items-center gap-2">
-                                {item.product?.discounted_price ? (
-                                  <>
-                                    <span className="text-lg font-bold text-green-600">
-                                      {item.product.discounted_price.toLocaleString()} CDF
-                                    </span>
-                                    <span className="text-sm text-muted-foreground line-through">
-                                      {item.product.original_price.toLocaleString()} CDF
-                                    </span>
-                                    <Badge variant="destructive" className="text-xs">
-                                      -{item.product.discount}%
-                                    </Badge>
-                                  </>
-                                ) : (
-                                  <span className="text-lg font-bold">
-                                    {item.product?.original_price.toLocaleString()} CDF
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Contrôles de quantité */}
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center border rounded-md">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
-                                  disabled={item.quantity <= 1}
-                                >
-                                  <Minus className="h-4 w-4" />
-                                </Button>
-                                <span className="px-4 py-2 min-w-[50px] text-center">
-                                  {item.quantity}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => removeFromCart(item.productId)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* Sous-total */}
-                          <div className="mt-4 text-right">
-                            <span className="text-sm text-muted-foreground">Sous-total: </span>
-                            <span className="font-bold">
-                              {((item.product?.discounted_price || item.product?.original_price || 0) * item.quantity).toLocaleString()} CDF
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Résumé de la commande */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <Card className="sticky top-24">
-                <CardHeader>
-                  <CardTitle>Résumé de la commande</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    {cartProducts.map((item) => (
-                      <div key={item.productId} className="flex justify-between text-sm">
-                        <span>{item.product?.name} x{item.quantity}</span>
-                        <span>
-                          {((item.product?.discounted_price || item.product?.original_price || 0) * item.quantity).toLocaleString()} CDF
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="flex justify-between items-center font-bold text-lg">
-                    <span>Total</span>
-                    <span>{totalPrice.toLocaleString()} CDF</span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Button asChild className="w-full" size="lg">
-                      <Link to="/checkout">
-                        Finaliser la commande
-                      </Link>
-                    </Button>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+            {/* Cart Items */}
+            <div className="lg:col-span-2">
+              <motion.div 
+                className="bg-card rounded-lg shadow-sm border border-border"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="p-4 border-b border-border">
+                  <h2 className="font-medium text-foreground">Articles du panier ({cart.length})</h2>
+                </div>
+                
+                <div className="divide-y divide-border">
+                  {cartProducts.map((item, index) => {
+                    if (!item.product) return null;
+                    const price = item.product.discounted_price || item.product.original_price;
+                    const itemTotal = price * item.quantity;
                     
-                    <WhatsAppContact
-                      phoneNumber="243970284772"
-                      message={whatsappMessage}
-                      className="w-full bg-green-600 hover:bg-green-700"
-                    >
-                      Commander via WhatsApp
-                    </WhatsAppContact>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                    return (
+                      <motion.div 
+                        key={item.productId} 
+                        className="p-4 flex flex-col sm:flex-row gap-4"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                      >
+                        <div className="flex-shrink-0 w-20 h-20 bg-muted rounded-md overflow-hidden">
+                          <Link to={`/product/${item.product.id}`}>
+                            <img 
+                              src={item.product.images[0] || '/shopping-cart-logo.svg'} 
+                              alt={item.product.name} 
+                              className="w-full h-full object-cover transition-transform hover:scale-105"
+                            />
+                          </Link>
+                        </div>
+                        
+                        <div className="flex-1">
+                          <div className="flex flex-wrap justify-between mb-2">
+                            <Link 
+                              to={`/product/${item.product.id}`}
+                              className="font-medium hover:text-primary transition-colors text-foreground"
+                            >
+                              {item.product.name}
+                            </Link>
+                            
+                            <div className="font-medium text-primary">
+                              {formatPrice(itemTotal)} FC
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between mt-3">
+                            <div className="flex items-center border border-border rounded-md bg-background">
+                              <button
+                                className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
+                                title="Diminuer la quantité"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              <span className="px-3 py-2 border-x border-border bg-muted/50 text-foreground min-w-[50px] text-center">
+                                {item.quantity}
+                              </span>
+                              <button
+                                className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={() => updateQuantity(item.productId, Math.min(item.product.stock, item.quantity + 1))}
+                                disabled={item.quantity >= item.product.stock}
+                                title="Augmenter la quantité"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
+                            
+                            <button
+                              onClick={() => removeFromCart(item.productId)}
+                              className="text-red-500 hover:text-red-600 transition-colors p-2"
+                              title="Retirer du panier"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+                
+                <div className="p-4 border-t border-border flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={clearCart}
+                  >
+                    Vider le panier
+                  </Button>
+                  <Link to="/products">
+                    <Button variant="ghost">
+                      Continuer les achats
+                    </Button>
+                  </Link>
+                </div>
+              </motion.div>
+            </div>
+            
+            {/* Order Form */}
+            <div>
+              <motion.div 
+                className="sticky top-20"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <OrderForm 
+                  cartProducts={cartProducts}
+                  subtotal={subtotal}
+                  formatPrice={formatPrice}
+                />
+                
+                <div className="mt-4">
+                  <WhatsAppContact
+                    phoneNumber="243978100940"
+                    message="Bonjour! J'ai besoin d'aide pour finaliser ma commande."
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Besoin d'aide? Contactez-nous
+                  </WhatsAppContact>
+                </div>
+              </motion.div>
+            </div>
           </div>
-        </motion.div>
+        )}
       </main>
-
+      
       <div className="pb-16 md:pb-0">
         <Footer />
       </div>

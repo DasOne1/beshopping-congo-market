@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,15 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCustomers } from '@/hooks/useCustomers';
 import CustomerSkeleton from '@/components/CustomerSkeleton';
-import { Search, User, Phone, Mail, MapPin, Calendar, DollarSign, Eye } from 'lucide-react';
+import { Loader2, Search, User, Phone, Mail, MapPin, Calendar, DollarSign } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/Admin/AdminLayout';
-import type { Address } from '@/types';
 
 const Customers = () => {
-  const navigate = useNavigate();
   const { customers, isLoading } = useCustomers();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -109,19 +107,9 @@ const Customers = () => {
                       </CardDescription>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(customer.status)}>
-                      {customer.status || 'active'}
-                    </Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/customers/${customer.id}`)}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Voir détails
-                    </Button>
-                  </div>
+                  <Badge className={getStatusColor(customer.status)}>
+                    {customer.status || 'active'}
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -157,13 +145,14 @@ const Customers = () => {
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
                       <div className="text-sm">
-                        {typeof customer.address === 'string' ? (
-                          customer.address
-                        ) : (
+                        {typeof customer.address === 'object' ? (
                           <div>
-                            <div>{(customer.address as Address).street}</div>
-                            <div>{(customer.address as Address).city}</div>
+                            <div>{customer.address.street}</div>
+                            <div>{customer.address.city}</div>
+                            {customer.address.commune && <div>{customer.address.commune}</div>}
                           </div>
+                        ) : (
+                          customer.address
                         )}
                       </div>
                     </div>

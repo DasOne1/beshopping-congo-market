@@ -1,42 +1,56 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { MessageCircle } from 'lucide-react';
-import WhatsAppIcon from '@/components/WhatsAppIcon';
+import { WhatsAppIcon } from '@/components/WhatsAppIcon';
+import { useNavigate } from 'react-router-dom';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 
-export interface WhatsAppContactProps {
+interface WhatsAppContactProps {
   phoneNumber: string;
   message: string;
-  children: React.ReactNode;
   className?: string;
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+  children?: React.ReactNode;
   onCustomClick?: () => void;
 }
 
-const WhatsAppContact = ({ 
-  phoneNumber, 
-  message, 
-  children, 
+const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
+  phoneNumber,
+  message,
   className = '',
+  size = 'default',
+  children,
   onCustomClick
-}: WhatsAppContactProps) => {
+}) => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useCustomerAuth();
+
   const handleClick = () => {
-    if (onCustomClick) {
-      onCustomClick();
+    if (!isAuthenticated) {
+      navigate('/customer-auth', { state: { from: window.location.pathname } });
       return;
     }
-    
-    const encodedMessage = encodeURIComponent(message);
-    const url = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-    window.open(url, '_blank');
+
+    if (onCustomClick) {
+      onCustomClick();
+    } else {
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+      window.open(whatsappUrl, '_blank');
+    }
   };
 
   return (
-    <Button 
+    <Button
       onClick={handleClick}
       className={`bg-green-600 hover:bg-green-700 text-white ${className}`}
+      size={size}
     >
-      <WhatsAppIcon className="w-4 h-4 mr-2" />
-      {children}
+      {children || (
+        <>
+          <WhatsAppIcon className="mr-2 h-4 w-4" />
+          Envoyer via WhatsApp
+        </>
+      )}
     </Button>
   );
 };

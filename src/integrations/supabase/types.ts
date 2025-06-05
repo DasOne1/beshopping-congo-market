@@ -96,13 +96,27 @@ export type Database = {
           },
         ]
       }
+      BeShoppingDb: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
           description: string | null
           id: string
           image: string | null
-          is_visible: boolean
           name: string
           parent_id: string | null
           slug: string
@@ -113,7 +127,6 @@ export type Database = {
           description?: string | null
           id?: string
           image?: string | null
-          is_visible?: boolean
           name: string
           parent_id?: string | null
           slug: string
@@ -124,7 +137,6 @@ export type Database = {
           description?: string | null
           id?: string
           image?: string | null
-          is_visible?: boolean
           name?: string
           parent_id?: string | null
           slug?: string
@@ -368,7 +380,6 @@ export type Database = {
           featured: boolean | null
           id: string
           images: string[] | null
-          is_visible: boolean
           name: string
           original_price: number
           popular: number | null
@@ -389,7 +400,6 @@ export type Database = {
           featured?: boolean | null
           id?: string
           images?: string[] | null
-          is_visible?: boolean
           name: string
           original_price: number
           popular?: number | null
@@ -410,7 +420,6 @@ export type Database = {
           featured?: boolean | null
           id?: string
           images?: string[] | null
-          is_visible?: boolean
           name?: string
           original_price?: number
           popular?: number | null
@@ -430,33 +439,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      profiles: {
-        Row: {
-          address: string | null
-          created_at: string
-          id: string
-          name: string | null
-          phone: string | null
-          updated_at: string
-        }
-        Insert: {
-          address?: string | null
-          created_at?: string
-          id: string
-          name?: string | null
-          phone?: string | null
-          updated_at?: string
-        }
-        Update: {
-          address?: string | null
-          created_at?: string
-          id?: string
-          name?: string | null
-          phone?: string | null
-          updated_at?: string
-        }
-        Relationships: []
       }
       settings: {
         Row: {

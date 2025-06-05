@@ -1,77 +1,49 @@
 
-import React from 'react';
+import { Link } from 'react-router-dom';
+import WhatsAppContact from './WhatsAppContact';
 import { Separator } from '@/components/ui/separator';
-import WhatsAppContact from '@/components/WhatsAppContact';
-import { Phone, Mail, MapPin, Facebook, Instagram, Twitter } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="bg-muted/50 border-t">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Informations de contact */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Contact</h3>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                <span className="text-sm">+243 970 284 772</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                <span className="text-sm">contact@ecommerce.cd</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                <span className="text-sm">Kinshasa, RD Congo</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Liens rapides */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Liens rapides</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="/about" className="text-sm hover:underline">
-                  À propos
-                </a>
-              </li>
-              <li>
-                <a href="/contact" className="text-sm hover:underline">
-                  Contact
-                </a>
-              </li>
-              <li>
-                <a href="/products" className="text-sm hover:underline">
-                  Produits
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Réseaux sociaux */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Suivez-nous</h3>
-            <div className="flex gap-4 mb-4">
-              <Facebook className="h-5 w-5" />
-              <Instagram className="h-5 w-5" />
-              <Twitter className="h-5 w-5" />
-            </div>
-            <WhatsAppContact
-              phoneNumber="243970284772"
-              message="Bonjour, j'aimerais avoir plus d'informations."
-              className="bg-green-600 hover:bg-green-700 text-white"
+    <footer className="bg-gray-50 dark:bg-gray-900/40 py-3 ">
+      <div className="container">
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="text-center md:text-left mb-2 md:mb-0">
+            <h3 className="text-sm font-semibold">BeShopping Congo</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Votre destination de shopping en ligne de confiance
+            </p>
+            <a 
+              href="https://www.beprogress.org" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs text-primary hover:text-primary/80 transition-colors"
             >
-              Contactez-nous
-            </WhatsAppContact>
+              www.beprogress.org
+            </a>
           </div>
+          
+          <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-2 md:mb-0">
+            <Link to="/" className="hover:text-primary transition-colors">Accueil</Link>
+            <Link to="/products" className="hover:text-primary transition-colors">Produits</Link>
+            <Link to="/contact" className="hover:text-primary transition-colors">Contact</Link>
+          </div>
+          
+          <WhatsAppContact 
+            phoneNumber="243978100940" 
+            message="Bonjour ! J'aimerais en savoir plus sur vos produits."
+            variant="outline"
+            size="sm"
+            className="text-xs"
+          >
+            +243 978 100 940
+          </WhatsAppContact>
         </div>
         
-        <Separator className="my-6" />
+        <Separator className="my-2" />
         
-        <div className="text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 E-Commerce. Tous droits réservés.</p>
+        <div className="text-center text-xs text-gray-500 dark:text-gray-400">
+          <p>© {new Date().getFullYear()} BeShopping Congo</p>
         </div>
       </div>
     </footer>

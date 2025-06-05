@@ -1,7 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useProducts } from '@/hooks/useProducts';
 
 interface CartItem {
   productId: string;
@@ -16,8 +15,7 @@ interface CartContextType {
   clearCart: () => void;
   isInCart: (productId: string) => boolean;
   getCartTotal: () => number;
-  getTotalQuantity: () => number;
-  getTotalPrice: (products: any[]) => number;
+  getTotalQuantity: () => number; // Ajout de cette fonction pour compatibilité
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -169,17 +167,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return getCartTotal();
   };
 
-  const getTotalPrice = (products: any[]): number => {
-    return cart.reduce((total, cartItem) => {
-      const product = products.find(p => p.id === cartItem.productId);
-      if (product) {
-        const price = product.discounted_price || product.original_price;
-        return total + (price * cartItem.quantity);
-      }
-      return total;
-    }, 0);
-  };
-
   return (
     <CartContext.Provider
       value={{
@@ -191,7 +178,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isInCart,
         getCartTotal,
         getTotalQuantity,
-        getTotalPrice,
       }}
     >
       {children}

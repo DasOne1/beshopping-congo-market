@@ -1,57 +1,64 @@
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Lock, Mail, Phone } from 'lucide-react';
+import { User, Lock, Mail, Phone, MapPin } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { toast } from '@/hooks/use-toast';
 
 const CustomerAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, signIn, signUp, loading } = useSupabaseAuth();
+  const { isAuthenticated, signIn, signUp, loading } = useCustomerAuth();
   
+  // Récupérer la page d'origine depuis l'état de navigation
   const from = location.state?.from || '/account';
 
-  const [signInForm, setSignInForm] = useState({
-    email: '',
-    password: ''
-  });
-
-  const [signUpForm, setSignUpForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: ''
-  });
-
-  useEffect(() => {
+  // Si l'utilisateur est déjà connecté, le rediriger vers la page d'origine
+  React.useEffect(() => {
     if (isAuthenticated) {
       navigate(from);
     }
   }, [isAuthenticated, navigate, from]);
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await signIn(signInForm);
-    } catch (error) {
-      console.error('Sign in error:', error);
-    }
-  };
+  const [isSignUp, setIsSignUp] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+    password: ''
+  });
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signUp(signUpForm);
+      if (isSignUp) {
+        await signUp(formData);
+        toast({
+          title: "Compte créé avec succès",
+          description: "Vous pouvez maintenant vous connecter",
+        });
+        setIsSignUp(false);
+      } else {
+        await signIn(formData);
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue !",
+        });
+        navigate(from);
+      }
     } catch (error) {
-      console.error('Sign up error:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
+        variant: "destructive",
+      });
     }
   };
 
@@ -70,126 +77,124 @@ const CustomerAuth = () => {
             <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
               <CardTitle className="text-2xl flex items-center justify-center">
                 <User className="mr-2 h-6 w-6" />
-                Espace Client
+                {isSignUp ? "Créer un compte client" : "Connexion client"}
               </CardTitle>
               <CardDescription className="text-center">
-                Connectez-vous ou créez votre compte
+                {isSignUp 
+                  ? "Créez votre compte client pour accéder à toutes les fonctionnalités"
+                  : "Connectez-vous pour accéder à votre espace client"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
-              <Tabs defaultValue="signin" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="signin">Se connecter</TabsTrigger>
-                  <TabsTrigger value="signup">Créer un compte</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="signin" className="space-y-4">
-                  <form onSubmit={handleSignIn} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {isSignUp && (
+                  <>
                     <div className="space-y-2">
-                      <Label htmlFor="signin-email" className="flex items-center">
-                        <Mail className="mr-2 h-4 w-4" />
-                        Email
-                      </Label>
-                      <Input
-                        id="signin-email"
-                        type="email"
-                        value={signInForm.email}
-                        onChange={(e) => setSignInForm({ ...signInForm, email: e.target.value })}
-                        required
-                        placeholder="votre@email.com"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password" className="flex items-center">
-                        <Lock className="mr-2 h-4 w-4" />
-                        Mot de passe
-                      </Label>
-                      <Input
-                        id="signin-password"
-                        type="password"
-                        value={signInForm.password}
-                        onChange={(e) => setSignInForm({ ...signInForm, password: e.target.value })}
-                        required
-                        placeholder="Votre mot de passe"
-                      />
-                    </div>
-
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? 'Connexion...' : 'Se connecter'}
-                    </Button>
-                  </form>
-                </TabsContent>
-                
-                <TabsContent value="signup" className="space-y-4">
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-name" className="flex items-center">
+                      <Label htmlFor="name" className="flex items-center">
                         <User className="mr-2 h-4 w-4" />
                         Nom complet
                       </Label>
                       <Input
-                        id="signup-name"
-                        value={signUpForm.name}
-                        onChange={(e) => setSignUpForm({ ...signUpForm, name: e.target.value })}
-                        required
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required={isSignUp}
                         placeholder="Votre nom complet"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="signup-email" className="flex items-center">
+                      <Label htmlFor="email" className="flex items-center">
                         <Mail className="mr-2 h-4 w-4" />
-                        Email
+                        Email (optionnel)
                       </Label>
                       <Input
-                        id="signup-email"
+                        id="email"
                         type="email"
-                        value={signUpForm.email}
-                        onChange={(e) => setSignUpForm({ ...signUpForm, email: e.target.value })}
-                        required
-                        placeholder="votre@email.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="Votre email"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="signup-phone" className="flex items-center">
-                        <Phone className="mr-2 h-4 w-4" />
-                        Téléphone (optionnel)
+                      <Label htmlFor="address" className="flex items-center">
+                        <MapPin className="mr-2 h-4 w-4" />
+                        Adresse (optionnel)
                       </Label>
                       <Input
-                        id="signup-phone"
-                        value={signUpForm.phone}
-                        onChange={(e) => setSignUpForm({ ...signUpForm, phone: e.target.value })}
-                        placeholder="Votre numéro de téléphone"
+                        id="address"
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        placeholder="Votre adresse"
                       />
                     </div>
+                  </>
+                )}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password" className="flex items-center">
-                        <Lock className="mr-2 h-4 w-4" />
-                        Mot de passe
-                      </Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        value={signUpForm.password}
-                        onChange={(e) => setSignUpForm({ ...signUpForm, password: e.target.value })}
-                        required
-                        placeholder="Choisissez un mot de passe"
-                        minLength={6}
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        Le mot de passe doit contenir au moins 6 caractères
-                      </p>
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="flex items-center">
+                    <Phone className="mr-2 h-4 w-4" />
+                    Téléphone
+                  </Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    required
+                    placeholder="Votre numéro de téléphone"
+                  />
+                </div>
 
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? 'Création...' : 'Créer mon compte'}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="flex items-center">
+                    <Lock className="mr-2 h-4 w-4" />
+                    Mot de passe
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    placeholder="Votre mot de passe"
+                    minLength={4}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Le mot de passe doit contenir au moins 4 caractères
+                  </p>
+                </div>
+
+                <Button type="submit" className="w-full relative" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <span className="opacity-0">
+                        {isSignUp ? "Créer mon compte" : "Se connecter"}
+                      </span>
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="animate-spin mr-2">⟳</span>
+                        {isSignUp ? "Création..." : "Connexion..."}
+                      </span>
+                    </>
+                  ) : (
+                    isSignUp ? "Créer mon compte" : "Se connecter"
+                  )}
+                </Button>
+
+                <div className="text-center">
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                  >
+                    {isSignUp 
+                      ? "Déjà un compte ? Se connecter" 
+                      : "Pas encore de compte ? S'inscrire"
+                    }
+                  </Button>
+                </div>
+              </form>
             </CardContent>
           </Card>
         </motion.div>
@@ -200,4 +205,4 @@ const CustomerAuth = () => {
   );
 };
 
-export default CustomerAuth;
+export default CustomerAuth; 
