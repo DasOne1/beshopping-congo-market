@@ -7,12 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCustomers } from '@/hooks/useCustomers';
 import CustomerSkeleton from '@/components/CustomerSkeleton';
-import { Loader2, Search, User, Phone, Mail, MapPin, Calendar, DollarSign } from 'lucide-react';
+import { Search, User, Phone, Mail, MapPin, Calendar, DollarSign, Eye } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/Admin/AdminLayout';
 
 const Customers = () => {
+  const navigate = useNavigate();
   const { customers, isLoading } = useCustomers();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -107,9 +109,19 @@ const Customers = () => {
                       </CardDescription>
                     </div>
                   </div>
-                  <Badge className={getStatusColor(customer.status)}>
-                    {customer.status || 'active'}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getStatusColor(customer.status)}>
+                      {customer.status || 'active'}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/admin/customers/${customer.id}`)}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Voir détails
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
