@@ -51,7 +51,7 @@ function AppContent() {
   useRealtimeSync();
 
   if (isLoading) {
-    return <SplashScreen />;
+    return <SplashScreen onComplete={() => {}} />;
   }
 
   return (

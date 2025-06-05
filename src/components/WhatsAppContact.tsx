@@ -1,56 +1,36 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { WhatsAppIcon } from '@/components/WhatsAppIcon';
-import { useNavigate } from 'react-router-dom';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 
-interface WhatsAppContactProps {
+import React from 'react';
+import { MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+export interface WhatsAppContactProps {
+  children: React.ReactNode;
   phoneNumber: string;
   message: string;
   className?: string;
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-  children?: React.ReactNode;
-  onCustomClick?: () => void;
+  useAlternate?: boolean;
 }
 
-const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
-  phoneNumber,
-  message,
-  className = '',
-  size = 'default',
-  children,
-  onCustomClick
-}) => {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useCustomerAuth();
-
-  const handleClick = () => {
-    if (!isAuthenticated) {
-      navigate('/customer-auth', { state: { from: window.location.pathname } });
-      return;
-    }
-
-    if (onCustomClick) {
-      onCustomClick();
-    } else {
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-      window.open(whatsappUrl, '_blank');
-    }
+const WhatsAppContact = ({ 
+  children, 
+  phoneNumber, 
+  message, 
+  className = "",
+  useAlternate = false
+}: WhatsAppContactProps) => {
+  const handleWhatsAppClick = () => {
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   return (
     <Button
-      onClick={handleClick}
-      className={`bg-green-600 hover:bg-green-700 text-white ${className}`}
-      size={size}
+      onClick={handleWhatsAppClick}
+      className={`flex items-center gap-2 ${className}`}
     >
-      {children || (
-        <>
-          <WhatsAppIcon className="mr-2 h-4 w-4" />
-          Envoyer via WhatsApp
-        </>
-      )}
+      <MessageCircle className="h-4 w-4" />
+      {children}
     </Button>
   );
 };

@@ -1,66 +1,56 @@
-import React from 'react';
-import { Send, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { WhatsAppIcon } from '@/components/WhatsAppIcon';
-import { useNavigate } from 'react-router-dom';
 
-interface OrderFormButtonsProps {
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import WhatsAppContact from '@/components/WhatsAppContact';
+import { MessageCircle, ShoppingCart } from 'lucide-react';
+
+export interface OrderFormButtonsProps {
   isSubmitting: boolean;
   isFormValid: boolean;
   whatsappMessage: string;
-  onWhatsAppOrder: () => void;
+  onWhatsAppOrder: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
-const OrderFormButtons: React.FC<OrderFormButtonsProps> = ({
+const OrderFormButtons = ({
   isSubmitting,
   isFormValid,
   whatsappMessage,
   onWhatsAppOrder,
   isAuthenticated
-}) => {
-  const navigate = useNavigate();
-
-  const handleWhatsAppClick = () => {
-    if (!isAuthenticated) {
-      navigate('/customer-auth', { state: { from: '/cart' } });
-      return;
-    }
-    onWhatsAppOrder();
-  };
-
+}: OrderFormButtonsProps) => {
   return (
-    <div className="flex flex-col space-y-4">
-      <Button 
-        type="submit" 
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed" 
-        size="lg"
-        disabled={isSubmitting || !isFormValid}
+    <div className="space-y-4">
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={!isFormValid || isSubmitting}
       >
         {isSubmitting ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Envoi en cours...
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+            Traitement en cours...
           </>
         ) : (
           <>
-            <Send className="mr-2 h-4 w-4" />
+            <ShoppingCart className="mr-2 h-4 w-4" />
             Passer la commande
           </>
         )}
       </Button>
 
-      <div className="text-center text-sm text-gray-500">ou</div>
+      <div className="text-center text-sm text-muted-foreground mb-4">
+        ou
+      </div>
 
-      <Button
-        type="button"
-        onClick={handleWhatsAppClick}
-        className="w-full bg-green-600 hover:bg-green-700 text-white"
-        size="lg"
+      <WhatsAppContact
+        phoneNumber="243970284772"
+        message={whatsappMessage}
+        className="w-full bg-green-600 hover:bg-green-700"
       >
-        <WhatsAppIcon className="mr-2 h-4 w-4" />
+        <MessageCircle className="mr-2 h-4 w-4" />
         Commander via WhatsApp
-      </Button>
+      </WhatsAppContact>
     </div>
   );
 };

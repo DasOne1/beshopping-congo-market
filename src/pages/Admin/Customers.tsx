@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/Admin/AdminLayout';
+import type { Address } from '@/types';
 
 const Customers = () => {
   const navigate = useNavigate();
@@ -157,14 +157,13 @@ const Customers = () => {
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
                       <div className="text-sm">
-                        {typeof customer.address === 'object' ? (
-                          <div>
-                            <div>{customer.address.street}</div>
-                            <div>{customer.address.city}</div>
-                            {customer.address.commune && <div>{customer.address.commune}</div>}
-                          </div>
-                        ) : (
+                        {typeof customer.address === 'string' ? (
                           customer.address
+                        ) : (
+                          <div>
+                            <div>{(customer.address as Address).street}</div>
+                            <div>{(customer.address as Address).city}</div>
+                          </div>
                         )}
                       </div>
                     </div>

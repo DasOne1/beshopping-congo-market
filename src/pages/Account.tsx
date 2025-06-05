@@ -1,111 +1,56 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Calendar, Edit, LogOut, LogIn } from 'lucide-react';
+import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Edit, LogOut, LogIn } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useCart } from '@/contexts/CartContext';
-import { useProducts } from '@/hooks/useProducts';
-import ProductSkeleton from '@/components/ProductSkeleton';
 import { motion } from 'framer-motion';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
-import { useOrders } from '@/hooks/useOrders';
-import OrderDashboard from '@/components/OrderDashboard';
-import { toast } from '@/components/ui/use-toast';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 const Account = () => {
   const navigate = useNavigate();
   const { favorites } = useFavorites();
   const { cart } = useCart();
-  const { products, isLoading } = useProducts();
   const { 
-    currentCustomer, 
+    user,
+    profile, 
     isAuthenticated, 
     loading, 
     signOut, 
     updateProfile
-  } = useCustomerAuth();
-  const { orders: allOrders, isLoading: isLoadingOrders } = useOrders();
-
-  // Filtrer les commandes pour n'afficher que celles du client connecté
-  const orders = isAuthenticated && currentCustomer
-    ? allOrders.filter(order => order.customer_id === currentCustomer.id)
-    : [];
+  } = useSupabaseAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [profileForm, setProfileForm] = useState({
     name: '',
-    email: '',
     phone: '',
-    address: '',
-    password: '',
-    currentPassword: ''
+    address: ''
   });
 
-  // Update profile form when customer data changes
   useEffect(() => {
-    if (currentCustomer) {
+    if (profile) {
       setProfileForm({
-        name: currentCustomer.name || '',
-        email: currentCustomer.email || '',
-        phone: currentCustomer.phone || '',
-        address: typeof currentCustomer.address === 'string' ? currentCustomer.address : currentCustomer.address?.address || '',
-        password: '',
-        currentPassword: ''
+        name: profile.name || '',
+        phone: profile.phone || '',
+        address: profile.address || ''
       });
     }
-  }, [currentCustomer]);
-
-  // Get favorite products
-  const favoriteProducts = products.filter(product => 
-    favorites.includes(product.id)
-  );
-
-  // Get cart products
-  const cartProducts = cart.map(cartItem => {
-    const product = products.find(p => p.id === cartItem.productId);
-    return {
-      ...cartItem,
-      product
-    };
-  }).filter(item => item.product);
+  }, [profile]);
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Vérifier si des champs ont été modifiés
-      const hasChanges = 
-        profileForm.name !== currentCustomer.name ||
-        profileForm.email !== currentCustomer.email ||
-        profileForm.phone !== currentCustomer.phone ||
-        profileForm.address !== (typeof currentCustomer.address === 'string' ? currentCustomer.address : currentCustomer.address?.address || '');
-
-      if (!hasChanges && !profileForm.password) {
-        toast({
-          title: "Aucune modification",
-          description: "Vous n'avez effectué aucune modification",
-          variant: "destructive",
-        });
-        return;
-      }
-
       await updateProfile(profileForm);
       setIsEditing(false);
-      // Réinitialiser le formulaire après la mise à jour
-      setProfileForm({
-        ...profileForm,
-        password: '',
-        currentPassword: ''
-      });
     } catch (error) {
-      // L'erreur est déjà gérée dans le hook
-      console.error('Erreur lors de la mise à jour du profil:', error);
+      console.error('Error updating profile:', error);
     }
   };
 
@@ -144,10 +89,6 @@ const Account = () => {
     );
   }
 
-  if (!currentCustomer) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -158,7 +99,6 @@ const Account = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          {/* En-tête avec titre et bouton de connexion */}
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-2xl md:text-3xl font-bold flex items-center">
               <User className="mr-2 h-6 w-6" />
@@ -171,25 +111,37 @@ const Account = () => {
           </div>
 
           {/* Tableau de bord des statistiques */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Package className="mr-2 h-5 w-5" />
-                Tableau de Bord
-              </CardTitle>
-              <CardDescription>
-                Vue d'ensemble de votre activité
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <OrderDashboard 
-                orders={orders} 
-                isLoading={isLoadingOrders}
-                cartCount={cart.length}
-                favoritesCount={favorites.length}
-              />
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <Card>
+              <CardContent className="flex items-center justify-between p-6">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Favoris</p>
+                  <p className="text-2xl font-bold">{favorites.length}</p>
+                </div>
+                <Heart className="h-8 w-8 text-red-500" />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center justify-between p-6">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Panier</p>
+                  <p className="text-2xl font-bold">{cart.length}</p>
+                </div>
+                <ShoppingCart className="h-8 w-8 text-blue-500" />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center justify-between p-6">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Commandes</p>
+                  <p className="text-2xl font-bold">0</p>
+                </div>
+                <Package className="h-8 w-8 text-green-500" />
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Informations personnelles */}
           <Card className="mb-8">
@@ -211,59 +163,23 @@ const Account = () => {
             <CardContent>
               {isEditing ? (
                 <form onSubmit={handleProfileSubmit} className="space-y-4">
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="edit-name">Nom complet</Label>
-                      <Input
-                        id="edit-name"
-                        value={profileForm.name}
-                        onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
-                        required
-                        placeholder="Votre nom complet"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-email">Email</Label>
-                      <Input
-                        id="edit-email"
-                        type="email"
-                        value={profileForm.email}
-                        onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
-                        placeholder="Votre email"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-phone">Téléphone</Label>
-                      <Input
-                        id="edit-phone"
-                        value={profileForm.phone}
-                        onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
-                        required
-                        placeholder="Votre numéro de téléphone"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-current-password">Mot de passe actuel</Label>
-                      <Input
-                        id="edit-current-password"
-                        type="password"
-                        value={profileForm.currentPassword}
-                        onChange={(e) => setProfileForm({...profileForm, currentPassword: e.target.value})}
-                        placeholder="Entrez votre mot de passe actuel pour confirmer les modifications"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-password">Nouveau mot de passe (optionnel)</Label>
-                      <Input
-                        id="edit-password"
-                        type="password"
-                        value={profileForm.password}
-                        onChange={(e) => setProfileForm({...profileForm, password: e.target.value})}
-                        placeholder="Laissez vide pour garder le même"
-                        minLength={4}
-                      />
-                    </div>
+                  <div>
+                    <Label htmlFor="edit-name">Nom complet</Label>
+                    <Input
+                      id="edit-name"
+                      value={profileForm.name}
+                      onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
+                      placeholder="Votre nom complet"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-phone">Téléphone</Label>
+                    <Input
+                      id="edit-phone"
+                      value={profileForm.phone}
+                      onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                      placeholder="Votre numéro de téléphone"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="edit-address">Adresse</Label>
@@ -275,18 +191,8 @@ const Account = () => {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button type="submit" disabled={loading} className="relative">
-                      {loading ? (
-                        <>
-                          <span className="opacity-0">Sauvegarder</span>
-                          <span className="absolute inset-0 flex items-center justify-center">
-                            <span className="animate-spin mr-2">⟳</span>
-                            Mise à jour...
-                          </span>
-                        </>
-                      ) : (
-                        "Sauvegarder"
-                      )}
+                    <Button type="submit" disabled={loading}>
+                      {loading ? 'Mise à jour...' : 'Sauvegarder'}
                     </Button>
                     <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
                       Annuler
@@ -300,32 +206,28 @@ const Account = () => {
                       <User className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="text-sm text-muted-foreground">Nom complet</p>
-                        <p className="font-medium">{currentCustomer?.name || 'Non renseigné'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Téléphone</p>
-                        <p className="font-medium">{currentCustomer?.phone || 'Non renseigné'}</p>
+                        <p className="font-medium">{profile?.name || 'Non renseigné'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="text-sm text-muted-foreground">Email</p>
-                        <p className="font-medium">{currentCustomer?.email || 'Non renseigné'}</p>
+                        <p className="font-medium">{user?.email || 'Non renseigné'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Téléphone</p>
+                        <p className="font-medium">{profile?.phone || 'Non renseigné'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="text-sm text-muted-foreground">Adresse</p>
-                        <p className="font-medium">
-                          {typeof currentCustomer?.address === 'string' 
-                            ? currentCustomer.address 
-                            : currentCustomer?.address?.address || 'Non renseigné'}
-                        </p>
+                        <p className="font-medium">{profile?.address || 'Non renseigné'}</p>
                       </div>
                     </div>
                   </div>
