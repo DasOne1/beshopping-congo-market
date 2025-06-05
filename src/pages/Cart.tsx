@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
 import { useProducts } from '@/hooks/useProducts';
-import { generateWhatsAppMessage } from '@/utils/whatsappMessageGenerator';
 import WhatsAppContact from '@/components/WhatsAppContact';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -28,14 +28,28 @@ const Cart = () => {
 
   const totalPrice = getTotalPrice(products);
 
-  const whatsappMessage = generateWhatsAppMessage(
-    cartProducts.map(item => ({
-      name: item.product?.name || '',
-      quantity: item.quantity,
-      price: item.product?.discounted_price || item.product?.original_price || 0
-    })),
-    totalPrice
-  );
+  // Generate WhatsApp message
+  const generateWhatsAppMessage = (cartProducts: any[], totalPrice: number): string => {
+    let message = `🛒 *Nouvelle Commande - BeShopping Congo*\n\n`;
+    message += `🛍️ *Produits commandés:*\n`;
+    
+    cartProducts.forEach((item, index) => {
+      const product = item.product;
+      const price = product.discounted_price || product.original_price;
+      const total = price * item.quantity;
+      message += `${index + 1}. ${product.name}\n`;
+      message += `   • Quantité: ${item.quantity}\n`;
+      message += `   • Prix unitaire: ${price.toLocaleString()} CDF\n`;
+      message += `   • Total: ${total.toLocaleString()} CDF\n\n`;
+    });
+    
+    message += `💰 *Total général: ${totalPrice.toLocaleString()} CDF*\n\n`;
+    message += `📅 *Date: ${new Date().toLocaleDateString('fr-FR')}*`;
+    
+    return message;
+  };
+
+  const whatsappMessage = generateWhatsAppMessage(cartProducts, totalPrice);
 
   if (cart.length === 0) {
     return (
@@ -222,7 +236,7 @@ const Cart = () => {
 
                   <div className="space-y-2">
                     <Button asChild className="w-full" size="lg">
-                      <Link to="/cart">
+                      <Link to="/checkout">
                         Finaliser la commande
                       </Link>
                     </Button>

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { MobileNavBar } from './MobileNavBar';
-import { ScrollToTop } from './ScrollToTop';
+import ScrollToTop from './ScrollToTop';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 interface UserLayoutProps {

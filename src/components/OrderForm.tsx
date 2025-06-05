@@ -9,7 +9,7 @@ import { useCart } from '@/contexts/CartContext';
 
 const OrderForm = () => {
   const { isAuthenticated, user } = useSupabaseAuth();
-  const { items: cartItems, clearCart } = useCart();
+  const { cart: cartItems, clearCart } = useCart();
   
   const {
     form,
