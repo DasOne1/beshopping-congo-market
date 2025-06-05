@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useOrders } from '@/hooks/useOrders';
-import { User, Package, Phone, Mail, MapPin, Calendar, DollarSign, Edit, Trash2, Plus, Eye, ArrowLeft } from 'lucide-react';
+import { User, Package, Phone, Mail, MapPin, Calendar, DollarSign, Edit, Trash2, Eye, ArrowLeft } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import AdminLayout from '@/components/Admin/AdminLayout';
@@ -63,7 +64,7 @@ const CustomerDetails = () => {
 
   const handleSave = async () => {
     try {
-      await updateCustomer(customer.id, editForm);
+      await updateCustomer.mutateAsync({ id: customer.id, ...editForm });
       setIsEditing(false);
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error);
@@ -72,7 +73,7 @@ const CustomerDetails = () => {
 
   const handleDelete = async () => {
     try {
-      await deleteCustomer(customer.id);
+      await deleteCustomer.mutateAsync(customer.id);
       navigate('/admin/customers');
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
@@ -81,7 +82,7 @@ const CustomerDetails = () => {
 
   const handleOrderStatusUpdate = async (orderId: string, newStatus: string) => {
     try {
-      await updateOrderStatus(orderId, newStatus);
+      await updateOrderStatus.mutateAsync({ id: orderId, status: newStatus });
     } catch (error) {
       console.error('Erreur lors de la mise à jour du statut:', error);
     }
@@ -382,7 +383,7 @@ const CustomerDetails = () => {
                         </div>
                         <div>
                           <p className="text-muted-foreground">Articles</p>
-                          <p className="font-medium">{order.items?.length || 0}</p>
+                          <p className="font-medium">N/A</p>
                         </div>
                       </div>
                     </CardContent>

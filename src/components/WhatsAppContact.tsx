@@ -1,40 +1,41 @@
 
 import React from 'react';
-import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MessageCircle } from 'lucide-react';
+import WhatsAppIcon from '@/components/WhatsAppIcon';
 
 export interface WhatsAppContactProps {
-  children: React.ReactNode;
   phoneNumber: string;
   message: string;
+  children: React.ReactNode;
   className?: string;
-  useAlternate?: boolean;
   onCustomClick?: () => void;
 }
 
 const WhatsAppContact = ({ 
-  children, 
   phoneNumber, 
   message, 
-  className = "",
-  useAlternate = false,
+  children, 
+  className = '',
   onCustomClick
 }: WhatsAppContactProps) => {
-  const handleWhatsAppClick = () => {
+  const handleClick = () => {
     if (onCustomClick) {
       onCustomClick();
+      return;
     }
+    
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+    const url = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    window.open(url, '_blank');
   };
 
   return (
-    <Button
-      onClick={handleWhatsAppClick}
-      className={`flex items-center gap-2 ${className}`}
+    <Button 
+      onClick={handleClick}
+      className={`bg-green-600 hover:bg-green-700 text-white ${className}`}
     >
-      <MessageCircle className="h-4 w-4" />
+      <WhatsAppIcon className="w-4 h-4 mr-2" />
       {children}
     </Button>
   );
