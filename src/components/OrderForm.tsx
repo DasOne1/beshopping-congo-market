@@ -1,21 +1,37 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useOrderForm } from '@/hooks/useOrderForm';
 import OrderFormFields from '@/components/OrderFormFields';
 import OrderFormButtons from '@/components/OrderFormButtons';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useCart } from '@/contexts/CartContext';
 
 const OrderForm = () => {
-  const { isAuthenticated } = useSupabaseAuth();
+  const { isAuthenticated, user } = useSupabaseAuth();
+  const { items: cartItems, clearCart } = useCart();
+  
   const {
-    formData,
-    setFormData,
+    form,
     isSubmitting,
-    isFormValid,
-    whatsappMessage,
     handleSubmit,
-    handleWhatsAppOrder
-  } = useOrderForm();
+    handleWhatsAppOrder,
+  } = useOrderForm({
+    onOrderComplete: () => {
+      clearCart();
+    },
+    cartProducts: cartItems,
+    subtotal: 0, // This should be calculated based on cart items
+    formatPrice: (price: number) => `${price.toLocaleString()} FC`,
+    currentCustomer: user
+  });
+
+  // Calculate if form is valid
+  const formValues = form.watch();
+  const isFormValid = formValues.customerName && formValues.customerPhone && formValues.customerAddress;
+
+  // Generate WhatsApp message
+  const whatsappMessage = `Nouvelle commande de ${formValues.customerName || 'Client'}`;
 
   return (
     <Card>
@@ -26,20 +42,18 @@ const OrderForm = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <OrderFormFields
-            formData={formData}
-            setFormData={setFormData}
-          />
-          
+        <OrderFormFields
+          form={form}
+          onSubmit={handleSubmit}
+        >
           <OrderFormButtons
             isSubmitting={isSubmitting}
-            isFormValid={isFormValid}
+            isFormValid={!!isFormValid}
             whatsappMessage={whatsappMessage}
             onWhatsAppOrder={handleWhatsAppOrder}
             isAuthenticated={isAuthenticated}
           />
-        </form>
+        </OrderFormFields>
       </CardContent>
     </Card>
   );

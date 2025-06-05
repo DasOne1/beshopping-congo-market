@@ -9,6 +9,7 @@ export interface WhatsAppContactProps {
   message: string;
   className?: string;
   useAlternate?: boolean;
+  onCustomClick?: () => void;
 }
 
 const WhatsAppContact = ({ 
@@ -16,9 +17,13 @@ const WhatsAppContact = ({
   phoneNumber, 
   message, 
   className = "",
-  useAlternate = false
+  useAlternate = false,
+  onCustomClick
 }: WhatsAppContactProps) => {
   const handleWhatsAppClick = () => {
+    if (onCustomClick) {
+      onCustomClick();
+    }
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
