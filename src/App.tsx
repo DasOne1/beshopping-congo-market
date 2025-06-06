@@ -33,10 +33,10 @@ import Analytics from "./pages/Admin/Analytics";
 import Reports from "./pages/Admin/Reports";
 import Settings from "./pages/Admin/Settings";
 import AdminAccounts from "./pages/Admin/AdminAccounts";
-import ProductForm from "./pages/Admin/ProductForm";
-import CategoryForm from "./pages/Admin/CategoryForm";
 import CustomerForm from "./pages/Admin/CustomerForm";
 import Catalog from "./pages/Admin/Catalog";
+import ProductFormWrapper from '@/pages/Admin/ProductFormWrapper';
+import CategoryFormWrapper from '@/pages/Admin/CategoryFormWrapper';
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -87,6 +87,10 @@ function App() {
                       <Route path="/dasgabriel@adminaccess/settings" element={<Settings />} />
                       <Route path="/dasgabriel@adminaccess/accounts" element={<AdminAccounts />} />
                       <Route path="/dasgabriel@adminaccess/catalog" element={<Catalog />} />
+                      <Route path="/dasgabriel@adminaccess/products/new" element={<ProductFormWrapper />} />
+                      <Route path="/dasgabriel@adminaccess/products/:id" element={<ProductFormWrapper />} />
+                      <Route path="/dasgabriel@adminaccess/categories/new" element={<CategoryFormWrapper />} />
+                      <Route path="/dasgabriel@adminaccess/categories/:id" element={<CategoryFormWrapper />} />
 
                       {/* 404 route */}
                       <Route path="*" element={<NotFound />} />

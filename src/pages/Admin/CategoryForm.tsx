@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { toast } from '@/components/ui/use-toast';
 import { Category } from '@/types';
+import ImageUpload from '@/components/Admin/ImageUpload';
 
 interface CategoryFormProps {
   category?: Category | null;
@@ -22,7 +22,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, categories, onSav
     slug: category?.slug || '',
     description: category?.description || '',
     image: category?.image || '',
-    parent_id: category?.parent_id || '',
+    parent_id: category?.parent_id || 'none',
     is_visible: category?.is_visible ?? true
   });
 
@@ -33,7 +33,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, categories, onSav
         slug: category.slug,
         description: category.description || '',
         image: category.image || '',
-        parent_id: category.parent_id || '',
+        parent_id: category.parent_id || 'none',
         is_visible: category.is_visible
       });
     } else {
@@ -43,7 +43,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, categories, onSav
         slug: '',
         description: '',
         image: '',
-        parent_id: '',
+        parent_id: 'none',
         is_visible: true
       });
     }
@@ -81,12 +81,12 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, categories, onSav
 
     onSave({
       ...formData,
-      parent_id: formData.parent_id || undefined
+      parent_id: formData.parent_id === 'none' ? undefined : formData.parent_id
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <Label htmlFor="name">Nom *</Label>
         <Input
@@ -118,23 +118,23 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, categories, onSav
       </div>
 
       <div>
-        <Label htmlFor="image">Image URL</Label>
-        <Input
-          type="text"
-          id="image"
-          value={formData.image}
-          onChange={handleChange}
+        <Label>Image de la catégorie</Label>
+        <ImageUpload
+          label=""
+          images={formData.image ? [formData.image] : []}
+          onImagesChange={(images) => setFormData(prev => ({ ...prev, image: images[0] || '' }))}
+          maxImages={1}
         />
       </div>
 
       <div>
         <Label htmlFor="parent_id">Catégorie parente</Label>
-        <Select onValueChange={handleParentCategoryChange} defaultValue={formData.parent_id}>
+        <Select onValueChange={handleParentCategoryChange} value={formData.parent_id}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Sélectionner une catégorie parente" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Aucune catégorie parente</SelectItem>
+            <SelectItem value="none">Aucune catégorie parente</SelectItem>
             {categories.map(cat => (
               <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
             ))}

@@ -276,7 +276,7 @@ export default function Catalog() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/categories/edit/${category.id}`)}>
+                                    <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/categories/${category.id}`)}>
                                       <Edit className="mr-2 h-4 w-4" />
                                       Modifier
                                     </DropdownMenuItem>
@@ -396,7 +396,7 @@ export default function Catalog() {
                                             </Button>
                                           </DropdownMenuTrigger>
                                           <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/products/edit/${product.id}`)}>
+                                            <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/products/${product.id}`)}>
                                               <Edit className="mr-2 h-4 w-4" />
                                               Modifier
                                             </DropdownMenuItem>
@@ -479,7 +479,7 @@ export default function Catalog() {
                                           </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                          <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/products/edit/${product.id}`)}>
+                                          <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/products/${product.id}`)}>
                                             <Edit className="mr-2 h-4 w-4" />
                                             Modifier
                                           </DropdownMenuItem>
@@ -591,7 +591,7 @@ export default function Catalog() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/products/edit/${product.id}`)}>
+                                    <DropdownMenuItem onClick={() => navigate(`/dasgabriel@adminaccess/products/${product.id}`)}>
                                       <Edit className="mr-2 h-4 w-4" />
                                       Modifier
                                     </DropdownMenuItem>

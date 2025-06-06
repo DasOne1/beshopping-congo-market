@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from '@/components/ui/use-toast';
 import { Product, Category } from '@/types';
+import ImageUpload from '@/components/Admin/ImageUpload';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
 
 interface ProductFormProps {
   product?: Product | null;
@@ -23,13 +25,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
     original_price: product?.original_price || 0,
     discounted_price: product?.discounted_price || undefined,
     stock: product?.stock || 0,
-    category_id: product?.category_id || '',
+    category_id: product?.category_id || 'none',
     images: product?.images || [],
     tags: product?.tags || [],
     featured: product?.featured || false,
     is_visible: product?.is_visible ?? true,
     status: product?.status || 'active' as const
   });
+
+  const [tagInput, setTagInput] = useState('');
 
   useEffect(() => {
     if (product) {
@@ -53,7 +57,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
         original_price: 0,
         discounted_price: undefined,
         stock: 0,
-        category_id: '',
+        category_id: 'none',
         images: [],
         tags: [],
         featured: false,
@@ -71,6 +75,26 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
     }));
   };
 
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      if (!formData.tags.includes(tagInput.trim())) {
+        setFormData(prev => ({
+          ...prev,
+          tags: [...prev.tags, tagInput.trim()]
+        }));
+      }
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
@@ -82,16 +106,19 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
       return;
     }
 
-    onSave({
+    const dataToSave = {
       ...formData,
+      category_id: formData.category_id === 'none' ? '' : formData.category_id,
       discount: formData.discounted_price ? 
         Math.round(((formData.original_price - formData.discounted_price) / formData.original_price) * 100) : 0,
       popular: formData.featured ? 1 : 0
-    });
+    };
+
+    onSave(dataToSave);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <Label htmlFor="name">Nom *</Label>
         <Input
@@ -155,18 +182,55 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
           <Label htmlFor="category_id">Catégorie</Label>
           <Select 
             onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
-            defaultValue={formData.category_id}
+            value={formData.category_id || 'none'}
           >
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Aucune catégorie</SelectItem>
+              <SelectItem value="none">Aucune catégorie</SelectItem>
               {categories.map(cat => (
                 <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      <div>
+        <Label>Images du produit</Label>
+        <ImageUpload
+          label=""
+          images={formData.images}
+          onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
+          maxImages={5}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="tags">Tags</Label>
+        <div className="space-y-2">
+          <Input
+            id="tags"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleTagInputKeyDown}
+            placeholder="Appuyez sur Entrée pour ajouter un tag"
+          />
+          <div className="flex flex-wrap gap-2">
+            {formData.tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => removeTag(tag)}
+                  className="ml-1 hover:text-destructive"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
         </div>
       </div>
 
