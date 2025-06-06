@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,7 @@ const OrderFormButtons: React.FC<OrderFormButtonsProps> = ({
 
   const handleWhatsAppClick = () => {
     if (!isAuthenticated) {
-      navigate('/customer-auth', { state: { from: '/cart' } });
+      navigate('/email-auth', { state: { from: '/cart' } });
       return;
     }
     onWhatsAppOrder();

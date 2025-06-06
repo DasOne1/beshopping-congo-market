@@ -1,14 +1,16 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { WhatsAppIcon } from '@/components/WhatsAppIcon';
 import { useNavigate } from 'react-router-dom';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { useEmailAuth } from '@/hooks/useEmailAuth';
 
 interface WhatsAppContactProps {
   phoneNumber: string;
   message: string;
   className?: string;
   size?: 'default' | 'sm' | 'lg' | 'icon';
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   children?: React.ReactNode;
   onCustomClick?: () => void;
 }
@@ -18,15 +20,16 @@ const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
   message,
   className = '',
   size = 'default',
+  variant = 'default',
   children,
   onCustomClick
 }) => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useCustomerAuth();
+  const { isAuthenticated } = useEmailAuth();
 
   const handleClick = () => {
     if (!isAuthenticated) {
-      navigate('/customer-auth', { state: { from: window.location.pathname } });
+      navigate('/email-auth', { state: { from: window.location.pathname } });
       return;
     }
 
@@ -44,6 +47,7 @@ const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
       onClick={handleClick}
       className={`bg-green-600 hover:bg-green-700 text-white ${className}`}
       size={size}
+      variant={variant}
     >
       {children || (
         <>
