@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +8,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Phone, Mail, MapPin, Lock, Eye, EyeOff } from 'lucide-react';
 import { useEmailAuth } from '@/hooks/useEmailAuth';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 
 interface EmailAuthFormProps {
   onSuccess?: () => void;
+}
+
+interface AuthError {
+  message: string;
 }
 
 const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
@@ -32,6 +37,7 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
   const { signUp, signIn, loading, isAuthenticated, currentCustomer } = useEmailAuth();
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Réinitialiser les formulaires et rediriger après une connexion réussie
   useEffect(() => {
@@ -44,6 +50,7 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
         address: '',
         password: ''
       });
+      setErrors({});
       if (onSuccess) {
         onSuccess();
       } else {
@@ -52,35 +59,81 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
     }
   }, [isAuthenticated, currentCustomer, onSuccess, navigate]);
 
+  const validateSignUpForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!signUpForm.name.trim()) {
+      newErrors.name = 'Le nom est requis';
+    }
+
+    if (!signUpForm.email.trim()) {
+      newErrors.email = 'L\'email est requis';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signUpForm.email)) {
+      newErrors.email = 'Format d\'email invalide';
+    }
+
+    if (!signUpForm.password) {
+      newErrors.password = 'Le mot de passe est requis';
+    } else if (signUpForm.password.length < 6) {
+      newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateSignInForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!signInForm.email.trim()) {
+      newErrors.email = 'L\'email est requis';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signInForm.email)) {
+      newErrors.email = 'Format d\'email invalide';
+    }
+
+    if (!signInForm.password) {
+      newErrors.password = 'Le mot de passe est requis';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!signUpForm.email || !signUpForm.password || !signUpForm.name) {
-      return;
-    }
-
-    if (signUpForm.password.length < 6) {
+    if (!validateSignUpForm()) {
       return;
     }
 
     try {
       await signUp(signUpForm);
     } catch (error) {
-      // Error handled in hook
+      const authError = error as AuthError;
+      toast({
+        title: "Erreur d'inscription",
+        description: authError.message || "Une erreur est survenue lors de la création du compte",
+        variant: "destructive",
+      });
     }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!signInForm.email || !signInForm.password) {
+    if (!validateSignInForm()) {
       return;
     }
 
     try {
       await signIn(signInForm.email, signInForm.password);
     } catch (error) {
-      // Error handled in hook
+      const authError = error as AuthError;
+      toast({
+        title: "Erreur de connexion",
+        description: authError.message || "Une erreur est survenue lors de la connexion",
+        variant: "destructive",
+      });
     }
   };
 
@@ -118,11 +171,19 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                     type="email"
                     placeholder="votre@email.com"
                     value={signInForm.email}
-                    onChange={(e) => setSignInForm({...signInForm, email: e.target.value})}
-                    className="pl-10"
+                    onChange={(e) => {
+                      setSignInForm({...signInForm, email: e.target.value});
+                      if (errors.email) {
+                        setErrors({...errors, email: ''});
+                      }
+                    }}
+                    className={cn("pl-10", errors.email && "border-red-500")}
                     required
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+                )}
               </div>
               
               <div>
@@ -134,8 +195,13 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                     type={showSignInPassword ? "text" : "password"}
                     placeholder="Votre mot de passe"
                     value={signInForm.password}
-                    onChange={(e) => setSignInForm({...signInForm, password: e.target.value})}
-                    className="pl-10 pr-10"
+                    onChange={(e) => {
+                      setSignInForm({...signInForm, password: e.target.value});
+                      if (errors.password) {
+                        setErrors({...errors, password: ''});
+                      }
+                    }}
+                    className={cn("pl-10 pr-10", errors.password && "border-red-500")}
                     required
                   />
                   <button
@@ -146,6 +212,9 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                     {showSignInPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+                )}
               </div>
               
               <Button type="submit" className="w-full" disabled={loading}>
@@ -165,11 +234,19 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                     type="text"
                     placeholder="Votre nom complet"
                     value={signUpForm.name}
-                    onChange={(e) => setSignUpForm({...signUpForm, name: e.target.value})}
-                    className="pl-10"
+                    onChange={(e) => {
+                      setSignUpForm({...signUpForm, name: e.target.value});
+                      if (errors.name) {
+                        setErrors({...errors, name: ''});
+                      }
+                    }}
+                    className={cn("pl-10", errors.name && "border-red-500")}
                     required
                   />
                 </div>
+                {errors.name && (
+                  <p className="text-sm text-red-500 mt-1">{errors.name}</p>
+                )}
               </div>
 
               <div>
@@ -181,11 +258,19 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                     type="email"
                     placeholder="votre@email.com"
                     value={signUpForm.email}
-                    onChange={(e) => setSignUpForm({...signUpForm, email: e.target.value})}
-                    className="pl-10"
+                    onChange={(e) => {
+                      setSignUpForm({...signUpForm, email: e.target.value});
+                      if (errors.email) {
+                        setErrors({...errors, email: ''});
+                      }
+                    }}
+                    className={cn("pl-10", errors.email && "border-red-500")}
                     required
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+                )}
               </div>
               
               <div>
@@ -202,17 +287,17 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <Label htmlFor="signup-address">Adresse de livraison</Label>
+                <Label htmlFor="signup-address">Adresse</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Textarea
                     id="signup-address"
-                    placeholder="Votre adresse de livraison"
+                    placeholder="Votre adresse"
                     value={signUpForm.address}
                     onChange={(e) => setSignUpForm({...signUpForm, address: e.target.value})}
-                    className="pl-10 pt-3"
+                    className="pl-10"
                   />
                 </div>
               </div>
@@ -224,12 +309,16 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                   <Input
                     id="signup-password"
                     type={showSignUpPassword ? "text" : "password"}
-                    placeholder="Minimum 6 caractères"
+                    placeholder="Votre mot de passe"
                     value={signUpForm.password}
-                    onChange={(e) => setSignUpForm({...signUpForm, password: e.target.value})}
-                    className="pl-10 pr-10"
+                    onChange={(e) => {
+                      setSignUpForm({...signUpForm, password: e.target.value});
+                      if (errors.password) {
+                        setErrors({...errors, password: ''});
+                      }
+                    }}
+                    className={cn("pl-10 pr-10", errors.password && "border-red-500")}
                     required
-                    minLength={6}
                   />
                   <button
                     type="button"
@@ -239,13 +328,13 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                     {showSignUpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Le mot de passe doit contenir au moins 6 caractères
-                </p>
+                {errors.password && (
+                  <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+                )}
               </div>
               
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Création...' : 'Créer mon compte'}
+                {loading ? 'Création du compte...' : 'Créer un compte'}
               </Button>
             </form>
           </TabsContent>

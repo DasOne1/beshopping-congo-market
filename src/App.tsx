@@ -8,6 +8,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import SplashScreen from "@/components/SplashScreen";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { MobileNavBar } from "@/components/MobileNavBar";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import Categories from "./pages/Categories";
@@ -70,7 +71,7 @@ function App() {
                       <Route path="/about" element={<AboutUs />} />
                       <Route path="/account" element={<Account />} />
                       <Route path="/custom-order" element={<CustomOrder />} />
-                      <Route path="/email-auth" element={<EmailCustomerAuth />} />
+                      <Route path="/customer-auth" element={<EmailCustomerAuth />} />
 
                       {/* Admin routes */}
                       <Route path="/dasgabriel@adminaccess" element={<AdminAuth />} />
@@ -90,6 +91,7 @@ function App() {
                       {/* 404 route */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    <MobileNavBar />
                   </>
                 )}
               </ThemeProvider>

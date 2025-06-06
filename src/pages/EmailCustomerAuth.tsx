@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -14,13 +13,13 @@ const EmailCustomerAuth = () => {
   const location = useLocation();
   const { isAuthenticated } = useEmailAuth();
   
-  // Récupérer la page d'origine depuis l'état de navigation
-  const from = location.state?.from || '/account';
+  // Récupérer la page d'origine depuis l'état de navigation ou l'URL
+  const from = location.state?.from || new URLSearchParams(location.search).get('from') || '/account';
 
   // Si l'utilisateur est déjà connecté, le rediriger vers la page d'origine
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate(from);
+      navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, from]);
 
@@ -46,7 +45,7 @@ const EmailCustomerAuth = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
-              <EmailAuthForm onSuccess={() => navigate(from)} />
+              <EmailAuthForm onSuccess={() => navigate(from, { replace: true })} />
             </CardContent>
           </Card>
         </motion.div>

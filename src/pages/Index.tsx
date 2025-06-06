@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Truck, Shield, ArrowRight, Star, TrendingUp, Palette } from 'lucide-react';
@@ -12,6 +11,7 @@ import ProductSkeleton from '@/components/ProductSkeleton';
 import CategoryCarousel from '@/components/CategoryCarousel';
 import { FeaturedGallery } from '@/components/FeaturedGallery';
 import WhatsAppContact from '@/components/WhatsAppContact';
+import { MobileNavBar } from '@/components/MobileNavBar';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -201,12 +201,16 @@ const Index = () => {
             </section>
           ))
         )}
-
-        {/* Footer avec padding pour éviter que le contenu soit caché par la navbar mobile */}
-        <div className="pb-16 md:pb-0">
-          <Footer />
-        </div>
       </main>
+
+      {/* Footer */}
+      <Footer />
+
+      {/* Mobile Navigation Bar */}
+      <MobileNavBar />
+
+      {/* WhatsApp Contact Button */}
+      <WhatsAppContact />
     </div>
   );
 };
