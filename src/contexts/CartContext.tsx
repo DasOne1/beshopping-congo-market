@@ -15,10 +15,10 @@ interface CartContextType {
   clearCart: () => void;
   isInCart: (productId: string) => boolean;
   getCartTotal: () => number;
-  getTotalQuantity: () => number; // Ajout de cette fonction pour compatibilité
+  getTotalQuantity: () => number;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+export const CartContext = createContext<CartContextType | undefined>(undefined);
 
 // Cache local pour le panier avec persistance optimisée
 const CART_STORAGE_KEY = 'beshopping-cart';

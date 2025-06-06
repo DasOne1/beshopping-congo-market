@@ -1,15 +1,46 @@
+
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { CartContext } from '@/contexts/CartContext';
-import { UserLayout } from '@/layouts/UserLayout';
+import { useCart } from '@/contexts/CartContext';
+import UserLayout from '@/components/UserLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShoppingCart } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
+import { useProducts } from '@/hooks/useProducts';
 import OrderSummary from '@/components/OrderSummary';
 
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR'
+  }).format(price);
+};
+
 const Cart = () => {
-  const { cartProducts, removeFromCart, updateQuantity } = useContext(CartContext);
+  const { cart, removeFromCart, updateQuantity } = useCart();
+  const { products } = useProducts();
+
+  // Get cart products with full product data
+  const cartProducts = cart.map(cartItem => {
+    const product = products.find(p => p.id === cartItem.productId);
+    return {
+      productId: cartItem.productId,
+      quantity: cartItem.quantity,
+      product: product || {
+        id: cartItem.productId,
+        name: 'Produit non trouvé',
+        description: '',
+        original_price: 0,
+        discounted_price: null,
+        images: [],
+        stock: 0,
+        is_visible: true,
+        status: 'active' as const,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    };
+  });
 
   const subtotal = cartProducts.reduce((acc, item) => {
     return acc + (item.product.discounted_price || item.product.original_price) * item.quantity;
