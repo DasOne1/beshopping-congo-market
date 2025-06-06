@@ -25,7 +25,7 @@ const Categories = () => {
     try {
       await updateCategory.mutateAsync({
         id,
-        is_visible: isVisible
+        data: { is_visible: isVisible }
       });
       toast({
         title: "Visibilité mise à jour",

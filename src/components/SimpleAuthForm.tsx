@@ -16,7 +16,7 @@ const SimpleAuthForm = () => {
     address: ''
   });
   
-  const { login, loading } = useAuth();
+  const { signIn: login, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +31,7 @@ const SimpleAuthForm = () => {
     }
 
     try {
-      await login(formData.name, formData.phone, formData.address);
+      await login('', '', formData.name);
       toast({
         title: "Connexion réussie",
         description: "Vous êtes maintenant connecté !",

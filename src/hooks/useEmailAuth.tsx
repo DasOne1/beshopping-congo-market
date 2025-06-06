@@ -14,16 +14,6 @@ export interface Customer {
   updated_at?: string;
 }
 
-interface CustomerAuthData {
-  id: string;
-  customer_id: string;
-  email: string;
-  password_hash: string;
-  email_verified: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
 interface SignUpData {
   name: string;
   email: string;
@@ -49,31 +39,38 @@ export const useEmailAuth = () => {
         return;
       }
 
-      // Vérifier le token via notre fonction personnalisée
-      const { data, error } = await supabase.rpc('verify_session_token', {
-        token: sessionToken
-      });
+      // Vérifier le token directement
+      const { data: sessionData, error } = await supabase
+        .from('customer_sessions')
+        .select('customer_id, expires_at')
+        .eq('session_token', sessionToken)
+        .single();
 
-      if (error) {
-        console.error('Erreur lors de la vérification de session:', error);
+      if (error || !sessionData) {
         localStorage.removeItem('customer_session_token');
         return;
       }
 
-      if (data) {
-        // Récupérer les données du client
-        const { data: customerData, error: customerError } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('id', data)
-          .single();
+      // Vérifier si la session n'est pas expirée
+      if (new Date(sessionData.expires_at) <= new Date()) {
+        localStorage.removeItem('customer_session_token');
+        await supabase
+          .from('customer_sessions')
+          .delete()
+          .eq('session_token', sessionToken);
+        return;
+      }
 
-        if (!customerError && customerData) {
-          setCurrentCustomer(customerData);
-          setIsAuthenticated(true);
-        } else {
-          localStorage.removeItem('customer_session_token');
-        }
+      // Récupérer les données du client
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', sessionData.customer_id)
+        .single();
+
+      if (!customerError && customerData) {
+        setCurrentCustomer(customerData);
+        setIsAuthenticated(true);
       } else {
         localStorage.removeItem('customer_session_token');
       }
@@ -95,7 +92,7 @@ export const useEmailAuth = () => {
         .from('customer_auth')
         .select('email')
         .eq('email', data.email)
-        .single();
+        .maybeSingle();
 
       if (existingAuth) {
         throw new Error('Un compte avec cet email existe déjà');
@@ -125,7 +122,7 @@ export const useEmailAuth = () => {
           customer_id: customer.id,
           email: data.email,
           password_hash: hashedPassword,
-          email_verified: true // Pour simplifier, on marque comme vérifié
+          email_verified: true
         }])
         .select()
         .single();
@@ -138,11 +135,14 @@ export const useEmailAuth = () => {
 
       // Créer une session
       const sessionToken = generateSessionToken();
-      const { error: sessionError } = await supabase.rpc('create_customer_session', {
-        p_customer_id: customer.id,
-        p_session_token: sessionToken,
-        p_user_agent: navigator.userAgent || null
-      });
+      const { error: sessionError } = await supabase
+        .from('customer_sessions')
+        .insert([{
+          customer_id: customer.id,
+          session_token: sessionToken,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          user_agent: navigator.userAgent || null
+        }]);
 
       if (sessionError) throw sessionError;
 
@@ -202,11 +202,14 @@ export const useEmailAuth = () => {
 
       // Créer une session
       const sessionToken = generateSessionToken();
-      const { error: sessionError } = await supabase.rpc('create_customer_session', {
-        p_customer_id: customer.id,
-        p_session_token: sessionToken,
-        p_user_agent: navigator.userAgent || null
-      });
+      const { error: sessionError } = await supabase
+        .from('customer_sessions')
+        .insert([{
+          customer_id: customer.id,
+          session_token: sessionToken,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          user_agent: navigator.userAgent || null
+        }]);
 
       if (sessionError) throw sessionError;
 
@@ -257,6 +260,38 @@ export const useEmailAuth = () => {
     }
   };
 
+  const updateProfile = async (data: Partial<Customer>) => {
+    if (!currentCustomer) return;
+    
+    setLoading(true);
+    try {
+      const { data: updatedCustomer, error } = await supabase
+        .from('customers')
+        .update(data)
+        .eq('id', currentCustomer.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCurrentCustomer(updatedCustomer);
+      toast({
+        title: "Profil mis à jour",
+        description: "Vos informations ont été mises à jour avec succès.",
+      });
+    } catch (error: any) {
+      console.error('Erreur lors de la mise à jour du profil:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le profil.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     currentCustomer,
     loading,
@@ -264,6 +299,7 @@ export const useEmailAuth = () => {
     signUp,
     signIn,
     signOut,
+    updateProfile,
     checkSession
   };
 };

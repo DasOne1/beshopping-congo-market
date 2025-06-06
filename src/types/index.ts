@@ -1,33 +1,35 @@
-
 export interface Product {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   original_price: number;
   discounted_price?: number;
-  discount?: number;
-  images: string[];
   stock: number;
   category_id?: string;
-  tags: string[];
+  images: string[];
+  tags?: string[];
   featured?: boolean;
   popular?: number;
-  sku?: string;
   weight?: number;
   dimensions?: any;
+  sku?: string;
   status?: string;
-  created_at?: string;
-  updated_at?: string;
+  discount?: number;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Category {
   id: string;
   name: string;
   description?: string;
+  slug: string;
   image?: string;
-  slug?: string;
-  created_at?: string;
-  updated_at?: string;
+  parent_id?: string;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Customer {

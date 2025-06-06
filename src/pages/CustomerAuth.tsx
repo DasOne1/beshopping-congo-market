@@ -8,10 +8,10 @@ import { useAuth } from '@/hooks/useAuth';
 
 const CustomerAuth = () => {
   const location = useLocation();
-  const { customer } = useAuth();
+  const { user } = useAuth();
   
   // Si l'utilisateur est déjà connecté, rediriger vers la destination ou la page d'accueil
-  if (customer) {
+  if (user) {
     const from = location.state?.from || '/';
     return <Navigate to={from} replace />;
   }

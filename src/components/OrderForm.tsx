@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import OrderFormFields from '@/components/OrderFormFields';
 import OrderFormButtons from '@/components/OrderFormButtons';
@@ -9,17 +9,16 @@ import { useEmailAuth } from '@/hooks/useEmailAuth';
 const OrderForm = () => {
   const { isAuthenticated } = useEmailAuth();
   const {
-    orderData,
-    updateOrderData,
+    form,
     isSubmitting,
-    isFormValid,
-    submitOrder,
+    showConfirmation,
+    orderDetails,
+    setShowConfirmation,
+    handleSubmit,
+    handleWhatsAppOrder,
+    validateForm,
     whatsappMessage
   } = useOrderForm();
-
-  const handleWhatsAppOrder = async () => {
-    await submitOrder(true);
-  };
 
   return (
     <Card>
@@ -27,17 +26,18 @@ const OrderForm = () => {
         <CardTitle>Informations de commande</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <OrderFormFields
-          orderData={orderData}
-          updateOrderData={updateOrderData}
-        />
+        <OrderFormFields form={form} />
         
         <OrderFormButtons
           isSubmitting={isSubmitting}
-          isFormValid={isFormValid}
+          isFormValid={validateForm()}
           whatsappMessage={whatsappMessage}
           onWhatsAppOrder={handleWhatsAppOrder}
           isAuthenticated={isAuthenticated}
+          showConfirmation={showConfirmation}
+          orderDetails={orderDetails}
+          setShowConfirmation={setShowConfirmation}
+          handleSubmit={handleSubmit}
         />
       </CardContent>
     </Card>

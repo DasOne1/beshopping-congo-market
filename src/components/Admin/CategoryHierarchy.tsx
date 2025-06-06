@@ -1,13 +1,22 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { ChevronDown, ChevronRight, Edit, Trash2, Plus, Eye, EyeOff } from 'lucide-react';
-import { useCategories, Category } from '@/hooks/useCategories';
+import { Edit2, Trash2, Eye, EyeOff, FolderOpen, Folder } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  slug: string;
+  image?: string;
+  parent_id?: string;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 interface CategoryHierarchyProps {
   categories: Category[];
@@ -21,167 +30,147 @@ const CategoryHierarchy: React.FC<CategoryHierarchyProps> = ({
   onToggleVisibility
 }) => {
   const navigate = useNavigate();
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   // Organiser les catégories en hiérarchie
-  const rootCategories = categories.filter(cat => !cat.parent_id);
-  const getSubCategories = (parentId: string) => 
-    categories.filter(cat => cat.parent_id === parentId);
+  const organizeCategories = (categories: Category[]) => {
+    const categoryMap = new Map();
+    const rootCategories: Category[] = [];
 
-  const toggleExpanded = (categoryId: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
-    }
-    setExpandedCategories(newExpanded);
+    // Créer une map de toutes les catégories
+    categories.forEach(category => {
+      categoryMap.set(category.id, { ...category, children: [] });
+    });
+
+    // Organiser en hiérarchie
+    categories.forEach(category => {
+      if (category.parent_id) {
+        const parent = categoryMap.get(category.parent_id);
+        if (parent) {
+          parent.children.push(categoryMap.get(category.id));
+        }
+      } else {
+        rootCategories.push(categoryMap.get(category.id));
+      }
+    });
+
+    return rootCategories;
   };
 
-  const CategoryRow: React.FC<{ 
-    category: Category; 
-    level: number; 
-    hasChildren: boolean;
-  }> = ({ category, level, hasChildren }) => {
-    const isExpanded = expandedCategories.has(category.id);
-    const subCategories = getSubCategories(category.id);
+  const renderCategory = (category: any, level: number = 0) => {
+    const hasChildren = category.children && category.children.length > 0;
+    const paddingLeft = level * 20;
 
     return (
-      <>
-        <div 
-          className={`flex items-center justify-between p-3 border-b hover:bg-muted/50 transition-colors`}
-          style={{ paddingLeft: `${12 + level * 24}px` }}
-        >
-          <div className="flex items-center gap-3 flex-1">
-            {hasChildren ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleExpanded(category.id)}
-                className="h-6 w-6 p-0"
-              >
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
+      <div key={category.id} className="mb-2">
+        <Card className={`border ${!category.is_visible ? 'opacity-60 border-dashed' : ''}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between" style={{ paddingLeft: `${paddingLeft}px` }}>
+              <div className="flex items-center space-x-3 flex-1">
+                {hasChildren ? (
+                  <FolderOpen className="h-5 w-5 text-blue-600" />
                 ) : (
-                  <ChevronRight className="h-4 w-4" />
+                  <Folder className="h-5 w-5 text-gray-500" />
                 )}
-              </Button>
-            ) : (
-              <div className="w-6" />
-            )}
-
-            {category.image ? (
-              <img 
-                src={category.image} 
-                alt={category.name}
-                className="w-8 h-8 object-cover rounded"
-              />
-            ) : (
-              <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
-                <span className="text-xs text-muted-foreground">
-                  {category.name.charAt(0).toUpperCase()}
-                </span>
+                
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <h3 className="font-medium">{category.name}</h3>
+                    <Badge variant={category.is_visible ? "default" : "secondary"}>
+                      {category.is_visible ? "Visible" : "Masqué"}
+                    </Badge>
+                    {hasChildren && (
+                      <Badge variant="outline">
+                        {category.children.length} sous-catégorie{category.children.length > 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                  </div>
+                  {category.description && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {category.description}
+                    </p>
+                  )}
+                </div>
               </div>
-            )}
 
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium">{category.name}</h3>
-                {level > 0 && (
-                  <Badge variant="outline" className="text-xs">
-                    Sous-catégorie
-                  </Badge>
-                )}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onToggleVisibility(category.id, !category.is_visible)}
+                >
+                  {category.is_visible ? (
+                    <Eye className="h-4 w-4" />
+                  ) : (
+                    <EyeOff className="h-4 w-4" />
+                  )}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(`/dasgabriel@adminaccess/categories/edit/${category.id}`)}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDeleteCategory(category.id)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
-              {category.description && (
-                <p className="text-sm text-muted-foreground line-clamp-1">
-                  {category.description}
-                </p>
-              )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Afficher les sous-catégories */}
+        {hasChildren && (
+          <div className="ml-4 mt-2">
+            {category.children.map((child: any) => renderCategory(child, level + 1))}
           </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Label htmlFor={`visibility-${category.id}`} className="text-sm">
-                {category.is_visible ? 'Visible' : 'Masqué'}
-              </Label>
-              <Switch
-                id={`visibility-${category.id}`}
-                checked={category.is_visible}
-                onCheckedChange={(checked) => onToggleVisibility(category.id, checked)}
-              />
-              {category.is_visible ? (
-                <Eye className="h-4 w-4 text-green-600" />
-              ) : (
-                <EyeOff className="h-4 w-4 text-red-600" />
-              )}
-            </div>
-
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(`/dasgabriel@adminaccess/categories/new?parent=${category.id}`)}
-                title="Ajouter une sous-catégorie"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(`/dasgabriel@adminaccess/categories/edit/${category.id}`)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDeleteCategory(category.id)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {isExpanded && subCategories.map(subCat => (
-          <CategoryRow
-            key={subCat.id}
-            category={subCat}
-            level={level + 1}
-            hasChildren={getSubCategories(subCat.id).length > 0}
-          />
-        ))}
-      </>
+        )}
+      </div>
     );
   };
 
+  const organizedCategories = organizeCategories(categories);
+
+  if (categories.length === 0) {
+    return (
+      <Card>
+        <CardContent className="text-center py-12">
+          <FolderOpen className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
+          <p className="text-lg font-medium mb-2">Aucune catégorie trouvée</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            Commencez par créer votre première catégorie
+          </p>
+          <Button 
+            onClick={() => navigate('/dasgabriel@adminaccess/categories/new')} 
+            variant="outline"
+          >
+            Créer une catégorie
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Hiérarchie des catégories</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        {rootCategories.length > 0 ? (
-          <div className="divide-y">
-            {rootCategories.map(category => (
-              <CategoryRow
-                key={category.id}
-                category={category}
-                level={0}
-                hasChildren={getSubCategories(category.id).length > 0}
-              />
-            ))}
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Hiérarchie des catégories</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {organizedCategories.map(category => renderCategory(category))}
           </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>Aucune catégorie trouvée</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
