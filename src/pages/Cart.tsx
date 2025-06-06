@@ -1,18 +1,25 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
-import UserLayout from '@/components/UserLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, MessageCircle } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import OrderSummary from '@/components/OrderSummary';
 import { formatPrice } from '@/lib/utils';
+import { useOrderForm } from '@/hooks/useOrderForm';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { toast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity } = useCart();
   const { products } = useProducts();
+  const { currentCustomer, isAuthenticated } = useCustomerAuth();
+  const navigate = useNavigate();
 
   // Get cart products with full product data
   const cartProducts = cart.map(cartItem => {
@@ -43,9 +50,68 @@ const Cart = () => {
     return acc + (item.product.discounted_price || item.product.original_price) * item.quantity;
   }, 0);
 
+  const {
+    form,
+    isSubmitting,
+    showConfirmation,
+    orderDetails,
+    setShowConfirmation,
+    handleSubmit,
+    handleWhatsAppOrder,
+    validateForm,
+    whatsappMessage
+  } = useOrderForm({
+    cartProducts,
+    subtotal,
+    formatPrice,
+    currentCustomer
+  });
+
+  const handleDirectOrder = async () => {
+    if (!isAuthenticated) {
+      navigate('/customer-auth', { state: { from: '/cart' } });
+      return;
+    }
+
+    try {
+      const formData = form.getValues();
+      await handleSubmit(formData);
+      setShowConfirmation(true);
+      toast({
+        title: "Commande enregistrée",
+        description: "Votre commande a été enregistrée avec succès.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'enregistrement de la commande.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleWhatsAppOrderClick = async () => {
+    if (!isAuthenticated) {
+      navigate('/customer-auth', { state: { from: '/cart' } });
+      return;
+    }
+
+    try {
+      await handleWhatsAppOrder();
+      setShowConfirmation(true);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création de la commande WhatsApp.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <UserLayout>
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="container mx-auto px-4 py-8 pt-20 md:pt-24">
         <h1 className="text-3xl font-bold mb-8">Mon Panier</h1>
         
         {cartProducts.length === 0 ? (
@@ -121,12 +187,26 @@ const Cart = () => {
               />
               
               <div className="space-y-4">
-                <Link to="/custom-order" className="block">
-                  <Button className="w-full" size="lg">
-                    Passer la commande
-                  </Button>
-                </Link>
-                
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  onClick={handleDirectOrder}
+                  disabled={isSubmitting}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  {isSubmitting ? 'Commande en cours...' : 'Passer la commande'}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                  onClick={handleWhatsAppOrderClick}
+                  disabled={isSubmitting}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Commander via WhatsApp
+                </Button>
+
                 <Link to="/products" className="block">
                   <Button variant="outline" className="w-full">
                     Continuer mes achats
@@ -136,8 +216,15 @@ const Cart = () => {
             </div>
           </div>
         )}
-      </div>
-    </UserLayout>
+
+        <OrderConfirmationDialog
+          isOpen={showConfirmation}
+          onClose={() => setShowConfirmation(false)}
+          orderDetails={orderDetails}
+        />
+      </main>
+      <Footer />
+    </div>
   );
 };
 

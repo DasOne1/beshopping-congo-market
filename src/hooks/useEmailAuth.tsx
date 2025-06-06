@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -72,7 +72,9 @@ export const useEmailAuth = () => {
   };
 
   const generateSessionToken = () => {
-    return crypto.randomUUID() + '-' + Date.now().toString();
+    const timestamp = Date.now().toString(36);
+    const randomStr = Math.random().toString(36).substring(2, 15);
+    return `${timestamp}-${randomStr}`;
   };
 
   const signUp = async (data: SignUpData) => {
