@@ -1,19 +1,20 @@
+
 export interface Product {
   id: string;
   name: string;
-  description?: string;
+  description: string;
   original_price: number;
   discounted_price?: number;
   stock: number;
-  category_id?: string;
+  category_id: string;
   images: string[];
-  tags?: string[];
-  featured?: boolean;
+  tags: string[];
+  featured: boolean;
   popular?: number;
   weight?: number;
   dimensions?: any;
   sku?: string;
-  status?: string;
+  status: 'active' | 'inactive' | 'draft';
   discount?: number;
   is_visible: boolean;
   created_at: string;

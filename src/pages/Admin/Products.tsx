@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Card,
@@ -20,10 +21,9 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Package, Edit, Trash2, Eye, EyeOff, Star, Plus } from 'lucide-react';
-import AdminLayout from "@/layouts/AdminLayout";
-import { useProducts } from '@/hooks/useProducts';
+import AdminLayout from "@/components/Admin/AdminLayout";
+import { useProducts, Product } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
-import { Product, Category } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import ProductForm from './ProductForm';

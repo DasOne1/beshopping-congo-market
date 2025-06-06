@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -17,6 +18,7 @@ export interface Product {
   status: 'active' | 'inactive' | 'draft';
   category_id: string;
   stock: number;
+  is_visible: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -74,6 +76,7 @@ export const useProducts = () => {
         stock: product.stock || 0,
         discount: product.discount || 0,
         popular: product.popular || 0,
+        is_visible: product.is_visible ?? true,
         status: (product.status as 'active' | 'inactive' | 'draft') || 'active',
         created_at: product.created_at || new Date().toISOString(),
         updated_at: product.updated_at || new Date().toISOString()
@@ -117,6 +120,7 @@ export const useProducts = () => {
           stock: newProduct.stock || 0,
           discount: newProduct.discount || 0,
           popular: newProduct.popular || 0,
+          is_visible: newProduct.is_visible ?? true,
           status: (newProduct.status as 'active' | 'inactive' | 'draft') || 'active',
           created_at: newProduct.created_at || new Date().toISOString(),
           updated_at: newProduct.updated_at || new Date().toISOString()
@@ -166,6 +170,7 @@ export const useProducts = () => {
           stock: updatedProduct.stock || 0,
           discount: updatedProduct.discount || 0,
           popular: updatedProduct.popular || 0,
+          is_visible: updatedProduct.is_visible ?? true,
           status: (updatedProduct.status as 'active' | 'inactive' | 'draft') || 'active',
           created_at: updatedProduct.created_at || new Date().toISOString(),
           updated_at: updatedProduct.updated_at || new Date().toISOString()
@@ -274,6 +279,7 @@ export const useProduct = (id: string) => {
         stock: data.stock || 0,
         discount: data.discount || 0,
         popular: data.popular || 0,
+        is_visible: data.is_visible ?? true,
         status: (data.status as 'active' | 'inactive' | 'draft') || 'active',
         created_at: data.created_at || new Date().toISOString(),
         updated_at: data.updated_at || new Date().toISOString()

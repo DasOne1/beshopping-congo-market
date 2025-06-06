@@ -77,11 +77,7 @@ function App() {
                       <Route path="/dasgabriel@adminaccess" element={<AdminAuth />} />
                       <Route path="/dasgabriel@adminaccess/dashboard" element={<Dashboard />} />
                       <Route path="/dasgabriel@adminaccess/products" element={<AdminProducts />} />
-                      <Route path="/dasgabriel@adminaccess/products/new" element={<ProductForm />} />
-                      <Route path="/dasgabriel@adminaccess/products/edit/:id" element={<ProductForm />} />
                       <Route path="/dasgabriel@adminaccess/categories" element={<AdminCategories />} />
-                      <Route path="/dasgabriel@adminaccess/categories/new" element={<CategoryForm />} />
-                      <Route path="/dasgabriel@adminaccess/categories/edit/:id" element={<CategoryForm />} />
                       <Route path="/dasgabriel@adminaccess/customers" element={<Customers />} />
                       <Route path="/dasgabriel@adminaccess/customers/new" element={<CustomerForm />} />
                       <Route path="/dasgabriel@adminaccess/customers/edit/:id" element={<CustomerForm />} />

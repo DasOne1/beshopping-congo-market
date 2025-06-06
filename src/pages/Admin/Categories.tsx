@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { AdminLayout } from '@/components/Admin/AdminLayout';
+import AdminLayout from '@/components/Admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -22,81 +22,60 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 
 interface CategoryHierarchyProps {
   categories: Category[];
-  allCategories: Category[];
   onEdit: (category: Category) => void;
   onDelete: (id: string) => void;
   onToggleVisibility: (category: Category) => void;
+  level?: number;
 }
 
-const CategoryHierarchy: React.FC<CategoryHierarchyProps> = ({
-  categories,
-  allCategories,
-  onEdit,
-  onDelete,
-  onToggleVisibility
+const CategoryHierarchy: React.FC<CategoryHierarchyProps> = ({ 
+  categories, 
+  onEdit, 
+  onDelete, 
+  onToggleVisibility, 
+  level = 0 
 }) => {
+  const rootCategories = categories.filter(cat => !cat.parent_id);
+  
+  const getSubcategories = (parentId: string) => {
+    return categories.filter(cat => cat.parent_id === parentId);
+  };
+
+  const renderCategory = (category: Category, depth: number = 0) => (
+    <React.Fragment key={category.id}>
+      <TableRow>
+        <TableCell style={{ paddingLeft: `${depth * 20 + 16}px` }}>
+          {category.name}
+        </TableCell>
+        <TableCell>{category.slug}</TableCell>
+        <TableCell>{category.description || '-'}</TableCell>
+        <TableCell>
+          <Switch 
+            checked={category.is_visible} 
+            onCheckedChange={() => onToggleVisibility(category)}
+          />
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => onEdit(category)}>
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onDelete(category.id)}>
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+      {getSubcategories(category.id).map(subcategory => 
+        renderCategory(subcategory, depth + 1)
+      )}
+    </React.Fragment>
+  );
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Nom</TableHead>
-          <TableHead>Slug</TableHead>
-          <TableHead>Visibilité</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {categories.map((category) => (
-          <React.Fragment key={category.id}>
-            <TableRow>
-              <TableCell className="font-medium">{category.name}</TableCell>
-              <TableCell>{category.slug}</TableCell>
-              <TableCell>
-                <Switch
-                  id={`visibility-${category.id}`}
-                  checked={category.is_visible}
-                  onCheckedChange={() => onToggleVisibility(category)}
-                />
-                <Label htmlFor={`visibility-${category.id}`} className="sr-only">
-                  {category.is_visible ? 'Visible' : 'Invisible'}
-                </Label>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(category)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onDelete(category.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-            {allCategories.filter(cat => cat.parent_id === category.id).length > 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="pl-8">
-                  <CategoryHierarchy
-                    categories={allCategories.filter(cat => cat.parent_id === category.id)}
-                    allCategories={allCategories}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onToggleVisibility={onToggleVisibility}
-                  />
-                </TableCell>
-              </TableRow>
-            )}
-          </React.Fragment>
-        ))}
-      </TableBody>
-    </Table>
+    <>
+      {rootCategories.map(category => renderCategory(category))}
+    </>
   );
 };
 
@@ -153,15 +132,13 @@ const Categories = () => {
     }
   };
 
-  const topLevelCategories = categories.filter(cat => !cat.parent_id);
-
   if (isLoading) {
     return (
       <AdminLayout>
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold">Gestion des Catégories</h1>
-            <p className="text-muted-foreground">Gérez vos catégories et sous-catégories de produits</p>
+            <p className="text-muted-foreground">Organisez vos produits par catégories</p>
           </div>
           <div className="text-center py-8">Chargement...</div>
         </div>
@@ -175,7 +152,7 @@ const Categories = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">Gestion des Catégories</h1>
-            <p className="text-muted-foreground">Gérez vos catégories et sous-catégories de produits</p>
+            <p className="text-muted-foreground">Organisez vos produits par catégories</p>
           </div>
           <Button onClick={handleCreate}>
             <Plus className="w-4 h-4 mr-2" />
@@ -185,13 +162,25 @@ const Categories = () => {
 
         <Card>
           <CardContent className="p-6">
-            <CategoryHierarchy
-              categories={topLevelCategories}
-              allCategories={categories}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onToggleVisibility={handleToggleVisibility}
-            />
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Slug</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Visible</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <CategoryHierarchy 
+                  categories={categories}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onToggleVisibility={handleToggleVisibility}
+                />
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 
