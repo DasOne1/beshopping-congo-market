@@ -55,7 +55,9 @@ const Account = () => {
         name: currentCustomer.name || '',
         email: currentCustomer.email || '',
         phone: currentCustomer.phone || '',
-        address: typeof currentCustomer.address === 'string' ? currentCustomer.address : currentCustomer.address?.address || '',
+        address: typeof currentCustomer.address === 'string' 
+          ? currentCustomer.address 
+          : currentCustomer.address?.address || '',
         password: '',
         currentPassword: ''
       });
@@ -79,12 +81,13 @@ const Account = () => {
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Vérifier si des champs ont été modifiés
       const hasChanges = 
         profileForm.name !== currentCustomer.name ||
         profileForm.email !== currentCustomer.email ||
         profileForm.phone !== currentCustomer.phone ||
-        profileForm.address !== (typeof currentCustomer.address === 'string' ? currentCustomer.address : currentCustomer.address?.address || '');
+        profileForm.address !== (typeof currentCustomer.address === 'string' 
+          ? currentCustomer.address 
+          : currentCustomer.address?.address || '');
 
       if (!hasChanges && !profileForm.password) {
         toast({
@@ -95,16 +98,17 @@ const Account = () => {
         return;
       }
 
-      await updateProfile(profileForm);
+      // Ne pas envoyer les champs password et currentPassword à updateProfile
+      const { password, currentPassword, ...profileData } = profileForm;
+      await updateProfile(profileData);
+      
       setIsEditing(false);
-      // Réinitialiser le formulaire après la mise à jour
       setProfileForm({
         ...profileForm,
         password: '',
         currentPassword: ''
       });
     } catch (error) {
-      // L'erreur est déjà gérée dans le hook
       console.error('Erreur lors de la mise à jour du profil:', error);
     }
   };

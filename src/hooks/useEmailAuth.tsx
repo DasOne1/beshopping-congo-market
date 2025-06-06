@@ -12,6 +12,11 @@ export interface Customer {
   address?: any;
   created_at?: string;
   updated_at?: string;
+  last_order_date?: string;
+  orders_count?: number;
+  total_spent?: number;
+  status?: string;
+  password_hash?: string;
 }
 
 interface SignUpData {
@@ -101,7 +106,7 @@ export const useEmailAuth = () => {
           name: data.name,
           email: data.email,
           phone: data.phone || null,
-          address: data.address ? { street: data.address } : null
+          address: data.address ? { address: data.address } : null
         }])
         .select()
         .single();
@@ -228,9 +233,12 @@ export const useEmailAuth = () => {
     
     setLoading(true);
     try {
+      // Ne pas inclure les champs sensibles ou calculés
+      const { password_hash, orders_count, total_spent, last_order_date, ...updateData } = data;
+
       const { data: updatedCustomer, error } = await supabase
         .from('customers')
-        .update(data)
+        .update(updateData)
         .eq('id', currentCustomer.id)
         .select()
         .single();
@@ -246,7 +254,7 @@ export const useEmailAuth = () => {
       console.error('Erreur lors de la mise à jour du profil:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de mettre à jour le profil.",
+        description: error.message || "Impossible de mettre à jour le profil.",
         variant: "destructive",
       });
       throw error;

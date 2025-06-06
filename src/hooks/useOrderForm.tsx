@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -137,10 +137,14 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     try {
       // Créer la commande avec des données par défaut ou celles remplies
       const formValues = form.getValues();
+      const customerAddress = typeof currentCustomer?.address === 'string' 
+        ? currentCustomer.address 
+        : currentCustomer?.address?.address || formValues.customerAddress || 'Non spécifiée';
+
       const defaultData: OrderFormData = {
-        customerName: formValues.customerName || 'Anonyme',
-        customerPhone: formValues.customerPhone || 'Non spécifié',
-        customerAddress: formValues.customerAddress || 'Non spécifiée',
+        customerName: currentCustomer?.name || formValues.customerName || 'Anonyme',
+        customerPhone: currentCustomer?.phone || formValues.customerPhone || 'Non spécifié',
+        customerAddress: customerAddress
       };
 
       // Créer la commande en base avec les données par défaut
@@ -196,6 +200,7 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     handleWhatsAppOrder,
     validateForm,
     whatsappMessage,
+    setOrderDetails
   };
 };
 

@@ -59,7 +59,8 @@ const Cart = () => {
     handleSubmit,
     handleWhatsAppOrder,
     validateForm,
-    whatsappMessage
+    whatsappMessage,
+    setOrderDetails
   } = useOrderForm({
     cartProducts,
     subtotal,
@@ -97,7 +98,23 @@ const Cart = () => {
     }
 
     try {
+      const formData = form.getValues();
+      const customerAddress = typeof currentCustomer?.address === 'string' 
+        ? currentCustomer.address 
+        : currentCustomer?.address?.address || formData.customerAddress || 'Non spécifiée';
+
+      const orderData = {
+        customerName: currentCustomer?.name || formData.customerName || 'Anonyme',
+        customerPhone: currentCustomer?.phone || formData.customerPhone || 'Non spécifié',
+        customerAddress: customerAddress
+      };
+
       await handleWhatsAppOrder();
+      setOrderDetails({
+        ...orderData,
+        total: formatPrice(subtotal),
+        orderType: 'whatsapp'
+      });
       setShowConfirmation(true);
     } catch (error) {
       toast({
