@@ -51,19 +51,22 @@ const Header = () => {
 
   // Générer des suggestions basées sur la requête de recherche
   useEffect(() => {
-    if (searchQuery.trim() && searchQuery.length > 1) {
-      const filtered = products.filter(product => 
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      ).slice(0, 6); // Limiter à 6 suggestions
-
-      setSuggestions(filtered);
-      setShowSuggestions(true);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
+    if (!searchQuery.trim() || searchQuery.length <= 1) {
+      if (suggestions.length !== 0) setSuggestions([]);
+      if (showSuggestions !== false) setShowSuggestions(false);
+      return;
     }
+
+    const filtered = products.filter(product => 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    ).slice(0, 6);
+
+    if (JSON.stringify(filtered) !== JSON.stringify(suggestions)) {
+      setSuggestions(filtered);
+    }
+    if (!showSuggestions) setShowSuggestions(true);
   }, [searchQuery, products]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
