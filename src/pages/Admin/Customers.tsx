@@ -7,13 +7,15 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCustomers } from '@/hooks/useCustomers';
 import CustomerSkeleton from '@/components/CustomerSkeleton';
-import { Loader2, Search, User, Phone, Mail, MapPin, Calendar, DollarSign } from 'lucide-react';
+import { Loader2, Search, User, Phone, Mail, MapPin, Calendar, DollarSign, Plus, Edit, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import AdminLayout from '@/components/Admin/AdminLayout';
+import { useNavigate } from 'react-router-dom';
 
 const Customers = () => {
-  const { customers, isLoading } = useCustomers();
+  const navigate = useNavigate();
+  const { customers, isLoading, deleteCustomer } = useCustomers();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -29,6 +31,12 @@ const Customers = () => {
       case 'active': return 'bg-green-100 text-green-800';
       case 'inactive': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleDeleteCustomer = (id: string) => {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
+      deleteCustomer.mutate(id);
     }
   };
 
@@ -66,6 +74,10 @@ const Customers = () => {
             <h1 className="text-3xl font-bold">Clients</h1>
             <p className="text-muted-foreground">Gérez votre base de clients</p>
           </div>
+          <Button onClick={() => navigate('/dasgabriel@adminaccess/customers/new')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nouveau client
+          </Button>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4">
@@ -107,9 +119,29 @@ const Customers = () => {
                       </CardDescription>
                     </div>
                   </div>
-                  <Badge className={getStatusColor(customer.status)}>
-                    {customer.status || 'active'}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getStatusColor(customer.status)}>
+                      {customer.status || 'active'}
+                    </Badge>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/dasgabriel@adminaccess/customers/edit/${customer.id}`)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteCustomer(customer.id)}
+                        disabled={deleteCustomer.isPending}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -147,9 +179,9 @@ const Customers = () => {
                       <div className="text-sm">
                         {typeof customer.address === 'object' ? (
                           <div>
-                            <div>{customer.address.street}</div>
-                            <div>{customer.address.city}</div>
-                            {customer.address.commune && <div>{customer.address.commune}</div>}
+                            {customer.address.street && <div>{customer.address.street}</div>}
+                            {customer.address.city && <div>{customer.address.city}</div>}
+                            {customer.address.state && <div>{customer.address.state}</div>}
                           </div>
                         ) : (
                           customer.address

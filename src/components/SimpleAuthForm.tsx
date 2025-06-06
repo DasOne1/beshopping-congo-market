@@ -1,240 +1,110 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Phone, Mail, MapPin, Lock, X, Eye, EyeOff } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
-import { toast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { User, Phone } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/components/ui/use-toast';
 
-interface SimpleAuthFormProps {
-  onSuccess?: () => void;
-}
-
-const SimpleAuthForm = ({ onSuccess }: SimpleAuthFormProps) => {
-  const navigate = useNavigate();
-  const [signUpForm, setSignUpForm] = useState({
+const SimpleAuthForm = () => {
+  const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    email: '',
-    address: '',
-    password: ''
-  });
-
-  const [signInForm, setSignInForm] = useState({
-    phone: '',
-    password: ''
+    address: ''
   });
   
-  const { signUp, signIn, loading, isAuthenticated, currentCustomer } = useCustomerAuth();
-  const [showSignInPassword, setShowSignInPassword] = useState(false);
-  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const { login, loading } = useAuth();
 
-  // Réinitialiser les formulaires et rediriger après une connexion réussie
-  useEffect(() => {
-    if (isAuthenticated && currentCustomer) {
-      setSignInForm({ phone: '', password: '' });
-      setSignUpForm({
-        name: '',
-        phone: '',
-        email: '',
-        address: '',
-        password: ''
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.phone) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires.",
+        variant: "destructive",
       });
-      if (onSuccess) {
-        onSuccess();
-      }
-      // Rediriger vers la page d'accueil
-      navigate('/');
+      return;
     }
-  }, [isAuthenticated, currentCustomer, onSuccess, navigate]);
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
     try {
-      await signUp(signUpForm);
-      // La redirection sera gérée par le useEffect
+      await login(formData.name, formData.phone, formData.address);
+      toast({
+        title: "Connexion réussie",
+        description: "Vous êtes maintenant connecté !",
+      });
     } catch (error) {
-      // Error is handled in the hook
+      console.error('Erreur de connexion:', error);
+      toast({
+        title: "Erreur de connexion",
+        description: "Impossible de vous connecter. Veuillez réessayer.",
+        variant: "destructive",
+      });
     }
   };
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await signIn(signInForm);
-      // La redirection sera gérée par le useEffect
-    } catch (error) {
-      // Error is handled in the hook
-    }
-  };
-
-  // Si l'utilisateur est authentifié, ne pas afficher le formulaire
-  if (isAuthenticated && currentCustomer) {
-    return null;
-  }
 
   return (
     <Card className="border-0 shadow-none">
       <CardHeader>
         <CardTitle className="flex items-center">
           <User className="mr-2 h-5 w-5" />
-          Mon Compte
+          Mes informations
         </CardTitle>
         <CardDescription>
-          Créez un compte ou connectez-vous
+          Renseignez vos informations pour passer commande
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Se connecter</TabsTrigger>
-            <TabsTrigger value="signup">Créer un compte</TabsTrigger>
-          </TabsList>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Nom complet *</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="name"
+                type="text"
+                placeholder="Votre nom complet"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="phone">Numéro de téléphone *</Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="Votre numéro de téléphone"
+                value={formData.phone}
+                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
           
-          <TabsContent value="signin" className="space-y-4">
-            <form onSubmit={handleSignIn} className="space-y-4">
-              <div>
-                <Label htmlFor="signin-phone">Numéro de téléphone</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signin-phone"
-                    type="tel"
-                    placeholder="Votre numéro de téléphone"
-                    value={signInForm.phone}
-                    onChange={(e) => setSignInForm({...signInForm, phone: e.target.value})}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="signin-password">Mot de passe</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signin-password"
-                    type={showSignInPassword ? "text" : "password"}
-                    placeholder="Votre mot de passe"
-                    value={signInForm.password}
-                    onChange={(e) => setSignInForm({...signInForm, password: e.target.value})}
-                    className="pl-10 pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowSignInPassword(!showSignInPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                  >
-                    {showSignInPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-              
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Connexion...' : 'Se connecter'}
-              </Button>
-            </form>
-          </TabsContent>
+          <div>
+            <Label htmlFor="address">Adresse de livraison</Label>
+            <Textarea
+              id="address"
+              placeholder="Votre adresse de livraison"
+              value={formData.address}
+              onChange={(e) => setFormData({...formData, address: e.target.value})}
+            />
+          </div>
           
-          <TabsContent value="signup" className="space-y-4">
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div>
-                <Label htmlFor="signup-name">Nom complet</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="Votre nom complet"
-                    value={signUpForm.name}
-                    onChange={(e) => setSignUpForm({...signUpForm, name: e.target.value})}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="signup-phone">Numéro de téléphone</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signup-phone"
-                    type="tel"
-                    placeholder="Votre numéro de téléphone"
-                    value={signUpForm.phone}
-                    onChange={(e) => setSignUpForm({...signUpForm, phone: e.target.value})}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="signup-email">Email (optionnel)</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="Votre adresse email"
-                    value={signUpForm.email}
-                    onChange={(e) => setSignUpForm({...signUpForm, email: e.target.value})}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="signup-address">Adresse</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Textarea
-                    id="signup-address"
-                    placeholder="Votre adresse de livraison"
-                    value={signUpForm.address}
-                    onChange={(e) => setSignUpForm({...signUpForm, address: e.target.value})}
-                    className="pl-10 pt-3"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="signup-password">Mot de passe</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signup-password"
-                    type={showSignUpPassword ? "text" : "password"}
-                    placeholder="Choisissez un mot de passe"
-                    value={signUpForm.password}
-                    onChange={(e) => setSignUpForm({...signUpForm, password: e.target.value})}
-                    className="pl-10 pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowSignUpPassword(!showSignUpPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                  >
-                    {showSignUpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-              
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Création...' : 'Créer mon compte'}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Connexion...' : 'Continuer'}
+          </Button>
+        </form>
       </CardContent>
     </Card>
   );

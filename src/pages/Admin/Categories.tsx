@@ -1,30 +1,46 @@
 
-import React from 'react';
-import { Plus, Edit, Trash2, Upload, FolderOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Search, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Input } from '@/components/ui/input';
 import { useCategories } from '@/hooks/useCategories';
+import CategoryHierarchy from '@/components/Admin/CategoryHierarchy';
 import AdminLayout from '@/components/Admin/AdminLayout';
+import { toast } from '@/components/ui/use-toast';
 
 const Categories = () => {
   const navigate = useNavigate();
-  const { categories, isLoading, deleteCategory } = useCategories();
+  const { categories, isLoading, deleteCategory, updateCategory } = useCategories();
+  const [searchTerm, setSearchTerm] = useState('');
   
   const handleDeleteCategory = (id: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ? Cela supprimera aussi toutes ses sous-catégories.')) {
       deleteCategory.mutate(id);
     }
   };
-  
+
+  const handleToggleVisibility = async (id: string, isVisible: boolean) => {
+    try {
+      await updateCategory.mutateAsync({
+        id,
+        is_visible: isVisible
+      });
+      toast({
+        title: "Visibilité mise à jour",
+        description: `La catégorie est maintenant ${isVisible ? 'visible' : 'masquée'}.`,
+      });
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour de la visibilité:', error);
+    }
+  };
+
+  const filteredCategories = categories.filter(category =>
+    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    category.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (isLoading) {
     return (
       <AdminLayout>
@@ -48,7 +64,7 @@ const Categories = () => {
               Gestion des Catégories
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Organisez vos produits par catégories
+              Organisez vos produits par catégories et sous-catégories
             </p>
           </div>
           <Button 
@@ -59,89 +75,52 @@ const Categories = () => {
             Ajouter une catégorie
           </Button>
         </div>
-        
-        <Card className="shadow-sm">
-          <CardHeader className="bg-gray-50 dark:bg-gray-800/50">
-            <CardTitle className="text-lg">Liste des Catégories ({categories.length})</CardTitle>
-            <CardDescription>Gérez toutes vos catégories depuis cette interface</CardDescription>
+
+        {/* Barre de recherche */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recherche et filtres</CardTitle>
+            <CardDescription>
+              Recherchez dans vos catégories ({filteredCategories.length} sur {categories.length})
+            </CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50 dark:bg-gray-800/50">
-                    <TableHead className="w-[100px]">Image</TableHead>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Slug</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {categories.map((category) => (
-                    <TableRow key={category.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <TableCell>
-                        {category.image ? (
-                          <img 
-                            src={category.image} 
-                            alt={category.name} 
-                            className="w-16 h-12 object-cover rounded" 
-                          />
-                        ) : (
-                          <div className="w-16 h-12 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                            <Upload className="h-4 w-4 text-gray-400" />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-medium">{category.name}</TableCell>
-                      <TableCell>{category.description || 'Aucune description'}</TableCell>
-                      <TableCell>
-                        <code className="text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                          {category.slug}
-                        </code>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/dasgabriel@adminaccess/categories/edit/${category.id}`)}
-                          >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Modifier
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteCategory(category.id)}
-                            disabled={deleteCategory.isPending}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Supprimer
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              
-              {categories.length === 0 && (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                  <FolderOpen className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
-                  <p className="text-lg font-medium mb-2">Aucune catégorie trouvée</p>
-                  <p className="text-sm mb-4">Commencez par créer votre première catégorie</p>
-                  <Button 
-                    onClick={() => navigate('/dasgabriel@adminaccess/categories/new')} 
-                    variant="outline"
-                  >
-                    Créer une catégorie
-                  </Button>
-                </div>
-              )}
+          <CardContent>
+            <div className="flex gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher par nom ou description..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Hiérarchie des catégories */}
+        <CategoryHierarchy
+          categories={filteredCategories}
+          onDeleteCategory={handleDeleteCategory}
+          onToggleVisibility={handleToggleVisibility}
+        />
+
+        {categories.length === 0 && (
+          <Card>
+            <CardContent className="text-center py-12">
+              <FolderOpen className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
+              <p className="text-lg font-medium mb-2">Aucune catégorie trouvée</p>
+              <p className="text-sm mb-4">Commencez par créer votre première catégorie</p>
+              <Button 
+                onClick={() => navigate('/dasgabriel@adminaccess/categories/new')} 
+                variant="outline"
+              >
+                Créer une catégorie
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AdminLayout>
   );
