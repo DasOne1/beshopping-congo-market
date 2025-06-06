@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -12,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { useProducts, Product } from '@/hooks/useProducts';
-import { useCategories, Category } from '@/hooks/useCategories';
+import { useCategories } from '@/hooks/useCategories';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
 const Products = () => {

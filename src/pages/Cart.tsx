@@ -1,5 +1,5 @@
 
-import React, { useContext } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import UserLayout from '@/components/UserLayout';
@@ -8,13 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShoppingCart } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import OrderSummary from '@/components/OrderSummary';
-
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(price);
-};
+import { formatPrice } from '@/lib/utils';
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity } = useCart();
@@ -34,6 +28,9 @@ const Cart = () => {
         discounted_price: null,
         images: [],
         stock: 0,
+        category_id: '',
+        tags: [],
+        featured: false,
         is_visible: true,
         status: 'active' as const,
         created_at: new Date().toISOString(),

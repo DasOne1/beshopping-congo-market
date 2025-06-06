@@ -64,6 +64,7 @@ export const mockProducts: Product[] = [
     featured: true,
     popular: 95,
     is_visible: true,
+    status: 'active',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -81,6 +82,7 @@ export const mockProducts: Product[] = [
     featured: false,
     popular: 78,
     is_visible: true,
+    status: 'active',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -98,6 +100,7 @@ export const mockProducts: Product[] = [
     featured: true,
     popular: 88,
     is_visible: true,
+    status: 'active',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -115,6 +118,7 @@ export const mockProducts: Product[] = [
     featured: true,
     popular: 72,
     is_visible: true,
+    status: 'active',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -132,6 +136,7 @@ export const mockProducts: Product[] = [
     featured: false,
     popular: 65,
     is_visible: true,
+    status: 'active',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -149,6 +154,7 @@ export const mockProducts: Product[] = [
     featured: true,
     popular: 82,
     is_visible: true,
+    status: 'active',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }
