@@ -1,10 +1,9 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import SplashScreen from "@/components/SplashScreen";
@@ -46,13 +45,13 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <TooltipProvider>
-          <CartProvider>
-            <FavoritesProvider>
-              <Toaster />
-              <SonnerToaster />
-              <BrowserRouter>
+      <TooltipProvider>
+        <CartProvider>
+          <FavoritesProvider>
+            <Toaster />
+            <SonnerToaster />
+            <BrowserRouter>
+              <ThemeProvider>
                 {!splashComplete && (
                   <SplashScreen onComplete={() => setSplashComplete(true)} />
                 )}
@@ -93,11 +92,11 @@ function App() {
                     </Routes>
                   </>
                 )}
-              </BrowserRouter>
-            </FavoritesProvider>
-          </CartProvider>
-        </TooltipProvider>
-      </ThemeProvider>
+              </ThemeProvider>
+            </BrowserRouter>
+          </FavoritesProvider>
+        </CartProvider>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
