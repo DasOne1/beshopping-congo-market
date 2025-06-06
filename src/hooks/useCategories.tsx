@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Category } from '@/types';
 
+export { Category } from '@/types';
+
 export const useCategories = () => {
   const queryClient = useQueryClient();
 

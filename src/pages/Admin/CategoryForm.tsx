@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { toast } from '@/components/ui/use-toast';
-import type { Category } from '@/hooks/useCategories';
+import { Category } from '@/types';
 
 interface CategoryFormProps {
   category?: Category | null;
@@ -81,7 +81,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, categories, onSav
 
     onSave({
       ...formData,
-      parent_id: formData.parent_id || null
+      parent_id: formData.parent_id || undefined
     });
   };
 

@@ -21,7 +21,9 @@ interface CartContextType {
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   getCartItemCount: () => number;
+  getTotalQuantity: () => number;
   getCartTotal: () => number;
+  isInCart: (productId: string) => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -93,10 +95,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
+  const getTotalQuantity = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
   const getCartTotal = () => {
     // Cette fonction nécessiterait l'accès aux produits pour calculer le total
     // Pour l'instant, on retourne 0
     return 0;
+  };
+
+  const isInCart = (productId: string) => {
+    return cart.some(item => item.productId === productId);
   };
 
   // Pour cartProducts, on retourne un tableau vide car on n'a pas accès aux produits ici
@@ -112,7 +122,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateQuantity,
       clearCart,
       getCartItemCount,
+      getTotalQuantity,
       getCartTotal,
+      isInCart,
     }}>
       {children}
     </CartContext.Provider>

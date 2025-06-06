@@ -4,8 +4,7 @@ import AdminLayout from '@/components/Admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { useCategories } from '@/hooks/useCategories';
-import type { Category } from '@/hooks/useCategories';
+import { useCategories, Category } from '@/hooks/useCategories';
 import {
   Table,
   TableHeader,
@@ -15,7 +14,6 @@ import {
   TableCell,
 } from "@/components/ui/table"
 import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { Edit, Trash2 } from 'lucide-react';
 import CategoryForm from './CategoryForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

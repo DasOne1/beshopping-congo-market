@@ -7,8 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from '@/components/ui/use-toast';
-import type { Product } from '@/hooks/useProducts';
-import type { Category } from '@/hooks/useCategories';
+import { Product, Category } from '@/types';
 
 interface ProductFormProps {
   product?: Product | null;
