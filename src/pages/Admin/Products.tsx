@@ -1,72 +1,107 @@
-
 import React, { useState } from 'react';
-import { Plus, Search, Package, Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Package, Edit, Trash2, Eye, EyeOff, Star, Plus } from 'lucide-react';
+import AdminLayout from "@/layouts/AdminLayout";
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
-import AdminLayout from '@/components/Admin/AdminLayout';
+import { Product, Category } from '@/types';
 import { toast } from '@/components/ui/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import ProductForm from './ProductForm';
 
 const Products = () => {
-  const navigate = useNavigate();
-  const { products, isLoading, deleteProduct, updateProduct } = useProducts();
+  const { products, isLoading, createProduct, updateProduct, deleteProduct } = useProducts();
   const { categories } = useCategories();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [visibilityFilter, setVisibilityFilter] = useState('all');
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
 
-  const handleDeleteProduct = (id: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
-      deleteProduct.mutate(id);
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setShowDialog(true);
+  };
+
+  const handleCreate = () => {
+    setEditingProduct(null);
+    setShowDialog(true);
+  };
+
+  const handleSave = async (productData: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      if (editingProduct) {
+        await updateProduct.mutateAsync({
+          id: editingProduct.id,
+          ...productData
+        });
+      } else {
+        await createProduct.mutateAsync(productData);
+      }
+      setShowDialog(false);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
     }
   };
 
-  const handleToggleVisibility = async (id: string, isVisible: boolean) => {
+  const handleDelete = async (id: string) => {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
+      try {
+        await deleteProduct.mutateAsync(id);
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+      }
+    }
+  };
+
+  const handleToggleVisibility = async (product: Product) => {
     try {
       await updateProduct.mutateAsync({
-        id,
-        data: { is_visible: isVisible }
-      });
-      toast({
-        title: "Visibilité mise à jour",
-        description: `Le produit est maintenant ${isVisible ? 'visible' : 'masqué'}.`,
+        id: product.id,
+        is_visible: !product.is_visible
       });
     } catch (error) {
-      console.error('Erreur lors de la mise à jour de la visibilité:', error);
+      console.error('Erreur lors du changement de visibilité:', error);
     }
   };
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || product.category_id === selectedCategory;
-    const matchesVisibility = visibilityFilter === 'all' || 
-                             (visibilityFilter === 'visible' && product.is_visible) ||
-                             (visibilityFilter === 'hidden' && !product.is_visible);
-    
-    return matchesSearch && matchesCategory && matchesVisibility;
-  });
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-CD', {
-      style: 'currency',
-      currency: 'CDF'
-    }).format(price);
+  const handleToggleFeatured = async (product: Product) => {
+    try {
+      await updateProduct.mutateAsync({
+        id: product.id,
+        featured: !product.featured
+      });
+    } catch (error) {
+      console.error('Erreur lors du changement de mise en avant:', error);
+    }
   };
 
   if (isLoading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-96">
-          <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <p className="text-gray-600 dark:text-gray-300">Chargement des produits...</p>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold">Gestion des Produits</h1>
+            <p className="text-muted-foreground">Gérez vos produits et leurs détails</p>
           </div>
+          <div className="text-center py-8">Chargement...</div>
         </div>
       </AdminLayout>
     );
@@ -75,184 +110,135 @@ const Products = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-              <Package className="mr-3 h-6 w-6 text-blue-600" />
-              Gestion des Produits
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Gérez votre catalogue de produits
-            </p>
+            <h1 className="text-3xl font-bold">Gestion des Produits</h1>
+            <p className="text-muted-foreground">Gérez vos produits et leurs détails</p>
           </div>
-          <Button 
-            onClick={() => navigate('/dasgabriel@adminaccess/products/new')}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter un produit
+          <Button onClick={handleCreate}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouveau Produit
           </Button>
         </div>
 
-        {/* Filtres et recherche */}
         <Card>
-          <CardHeader>
-            <CardTitle>Recherche et filtres</CardTitle>
-            <CardDescription>
-              Filtrez et recherchez dans vos produits ({filteredProducts.length} sur {products.length})
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher par nom ou description..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Toutes les catégories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Toutes les catégories</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous les produits" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les produits</SelectItem>
-                  <SelectItem value="visible">Produits visibles</SelectItem>
-                  <SelectItem value="hidden">Produits masqués</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Liste des produits */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((product) => {
-            const category = categories.find(c => c.id === product.category_id);
-            
-            return (
-              <Card key={product.id} className={`${!product.is_visible ? 'opacity-60 border-dashed' : ''}`}>
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    {/* Image du produit */}
-                    <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+          <CardContent className="p-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Image</TableHead>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Catégorie</TableHead>
+                  <TableHead>Prix</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
                       {product.images && product.images.length > 0 ? (
                         <img
                           src={product.images[0]}
                           alt={product.name}
-                          className="w-full h-full object-cover"
+                          className="w-12 h-12 object-cover rounded"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="h-12 w-12 text-gray-400" />
+                        <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                          <Package className="w-6 h-6 text-gray-400" />
                         </div>
                       )}
-                    </div>
-
-                    {/* Informations du produit */}
-                    <div>
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-medium line-clamp-2">{product.name}</h3>
-                        <div className="flex items-center space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleToggleVisibility(product.id, !product.is_visible)}
-                          >
-                            {product.is_visible ? (
-                              <Eye className="h-4 w-4" />
-                            ) : (
-                              <EyeOff className="h-4 w-4" />
-                            )}
-                          </Button>
+                    </TableCell>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>
+                      {categories.find(cat => cat.id === product.category_id)?.name || 'Sans catégorie'}
+                    </TableCell>
+                    <TableCell>
+                      {product.discounted_price ? (
+                        <div>
+                          <span className="line-through text-gray-500">
+                            {product.original_price.toLocaleString()} FCFA
+                          </span>
+                          <br />
+                          <span className="font-semibold text-green-600">
+                            {product.discounted_price.toLocaleString()} FCFA
+                          </span>
                         </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Badge variant={product.is_visible ? "default" : "secondary"}>
+                      ) : (
+                        <span>{product.original_price.toLocaleString()} FCFA</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={product.stock > 0 ? "secondary" : "destructive"}>
+                        {product.stock} unités
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <Badge variant={product.is_visible ? "secondary" : "outline"}>
                           {product.is_visible ? "Visible" : "Masqué"}
                         </Badge>
-                        {category && (
-                          <Badge variant="outline">{category.name}</Badge>
+                        {product.featured && (
+                          <Badge variant="default">Mis en avant</Badge>
                         )}
                       </div>
-
-                      <div className="space-y-1">
-                        <p className="text-lg font-bold text-blue-600">
-                          {formatPrice(product.discounted_price || product.original_price)}
-                        </p>
-                        {product.discounted_price && (
-                          <p className="text-sm text-gray-500 line-through">
-                            {formatPrice(product.original_price)}
-                          </p>
-                        )}
-                        <p className="text-sm text-gray-500">Stock: {product.stock}</p>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleVisibility(product)}
+                        >
+                          {product.is_visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleFeatured(product)}
+                        >
+                          <Star className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(product)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(product.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
-                    </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-                    {/* Actions */}
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/dasgabriel@adminaccess/products/edit/${product.id}`)}
-                        className="flex-1"
-                      >
-                        Modifier
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteProduct(product.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        Supprimer
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {filteredProducts.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Package className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
-              <p className="text-lg font-medium mb-2">Aucun produit trouvé</p>
-              <p className="text-sm mb-4">
-                {searchTerm || selectedCategory ? 
-                  'Aucun produit ne correspond à vos critères de recherche.' :
-                  'Commencez par créer votre premier produit'
-                }
-              </p>
-              <Button 
-                onClick={() => navigate('/dasgabriel@adminaccess/products/new')} 
-                variant="outline"
-              >
-                Créer un produit
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>
+                {editingProduct ? 'Modifier le produit' : 'Nouveau produit'}
+              </DialogTitle>
+            </DialogHeader>
+            <ProductForm
+              product={editingProduct}
+              categories={categories}
+              onSave={handleSave}
+              onCancel={() => setShowDialog(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

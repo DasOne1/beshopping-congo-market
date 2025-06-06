@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -9,6 +10,7 @@ export interface Category {
   description?: string;
   image?: string;
   parent_id?: string;
+  is_visible: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -32,9 +34,9 @@ export const useCategories = () => {
     retry: 1,
     retryDelay: 500,
     refetchOnWindowFocus: false,
-    staleTime: 2 * 60 * 1000, // 2 minutes - catégories changent moins souvent
-    gcTime: 15 * 60 * 1000, // 15 minutes
-    refetchInterval: false, // Désactiver l'actualisation automatique
+    staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchInterval: false,
   });
 
   const createCategory = useMutation({
@@ -52,7 +54,6 @@ export const useCategories = () => {
     onSuccess: (newCategory) => {
       console.log('Catégorie créée avec succès, mise à jour du cache...');
       
-      // Mise à jour optimiste du cache
       queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
         return [newCategory, ...oldData];
       });
@@ -90,7 +91,6 @@ export const useCategories = () => {
     onSuccess: (updatedCategory) => {
       console.log('Catégorie mise à jour avec succès, mise à jour du cache...');
       
-      // Mise à jour optimiste du cache
       queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
         return oldData.map(category => 
           category.id === updatedCategory.id ? updatedCategory : category
@@ -128,7 +128,6 @@ export const useCategories = () => {
     onSuccess: (deletedId) => {
       console.log('Catégorie supprimée avec succès, mise à jour du cache...');
       
-      // Mise à jour optimiste du cache
       queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
         return oldData.filter(category => category.id !== deletedId);
       });

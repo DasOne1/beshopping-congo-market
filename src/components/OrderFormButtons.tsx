@@ -1,16 +1,17 @@
 
 import React from 'react';
-import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { WhatsAppIcon } from '@/components/WhatsAppIcon';
-import { useNavigate } from 'react-router-dom';
+import { MessageCircle, ShoppingCart } from 'lucide-react';
 
 interface OrderFormButtonsProps {
   isSubmitting: boolean;
   isFormValid: boolean;
   whatsappMessage: string;
-  onWhatsAppOrder: () => void;
+  onWhatsAppOrder: () => Promise<void>;
   isAuthenticated: boolean;
+  orderDetails: any;
+  setShowConfirmation: (show: boolean) => void;
+  handleSubmit: (data: any) => Promise<void>;
 }
 
 const OrderFormButtons: React.FC<OrderFormButtonsProps> = ({
@@ -18,50 +19,34 @@ const OrderFormButtons: React.FC<OrderFormButtonsProps> = ({
   isFormValid,
   whatsappMessage,
   onWhatsAppOrder,
-  isAuthenticated
+  isAuthenticated,
+  orderDetails,
+  setShowConfirmation,
+  handleSubmit
 }) => {
-  const navigate = useNavigate();
-
-  const handleWhatsAppClick = () => {
-    if (!isAuthenticated) {
-      navigate('/email-auth', { state: { from: '/cart' } });
-      return;
-    }
-    onWhatsAppOrder();
-  };
-
   return (
-    <div className="flex flex-col space-y-4">
-      <Button 
-        type="submit" 
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed" 
-        size="lg"
-        disabled={isSubmitting || !isFormValid}
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Envoi en cours...
-          </>
-        ) : (
-          <>
-            <Send className="mr-2 h-4 w-4" />
-            Passer la commande
-          </>
-        )}
-      </Button>
-
-      <div className="text-center text-sm text-gray-500">ou</div>
-
+    <div className="flex flex-col sm:flex-row gap-3">
       <Button
         type="button"
-        onClick={handleWhatsAppClick}
-        className="w-full bg-green-600 hover:bg-green-700 text-white"
-        size="lg"
+        variant="outline"
+        onClick={onWhatsAppOrder}
+        disabled={!isFormValid || isSubmitting}
+        className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
       >
-        <WhatsAppIcon className="mr-2 h-4 w-4" />
+        <MessageCircle className="w-4 h-4 mr-2" />
         Commander via WhatsApp
       </Button>
+      
+      {isAuthenticated && (
+        <Button
+          type="submit"
+          disabled={!isFormValid || isSubmitting}
+          className="flex-1"
+        >
+          <ShoppingCart className="w-4 h-4 mr-2" />
+          {isSubmitting ? 'Commande en cours...' : 'Passer la commande'}
+        </Button>
+      )}
     </div>
   );
 };
