@@ -39,25 +39,14 @@ export const useEmailAuth = () => {
         return;
       }
 
-      // Vérifier le token directement
-      const { data: sessionData, error } = await supabase
-        .from('customer_sessions')
-        .select('customer_id, expires_at')
-        .eq('session_token', sessionToken)
-        .single();
-
-      if (error || !sessionData) {
+      // Pour l'instant, on simule une vérification de session
+      // En attendant que la table customer_sessions soit créée
+      console.log('Session token trouvé:', sessionToken);
+      
+      // Récupérer l'ID du client depuis le token stocké
+      const customerId = localStorage.getItem('customer_id');
+      if (!customerId) {
         localStorage.removeItem('customer_session_token');
-        return;
-      }
-
-      // Vérifier si la session n'est pas expirée
-      if (new Date(sessionData.expires_at) <= new Date()) {
-        localStorage.removeItem('customer_session_token');
-        await supabase
-          .from('customer_sessions')
-          .delete()
-          .eq('session_token', sessionToken);
         return;
       }
 
@@ -65,7 +54,7 @@ export const useEmailAuth = () => {
       const { data: customerData, error: customerError } = await supabase
         .from('customers')
         .select('*')
-        .eq('id', sessionData.customer_id)
+        .eq('id', customerId)
         .single();
 
       if (!customerError && customerData) {
@@ -73,10 +62,12 @@ export const useEmailAuth = () => {
         setIsAuthenticated(true);
       } else {
         localStorage.removeItem('customer_session_token');
+        localStorage.removeItem('customer_id');
       }
     } catch (error) {
       console.error('Erreur lors de la vérification de session:', error);
       localStorage.removeItem('customer_session_token');
+      localStorage.removeItem('customer_id');
     }
   };
 
@@ -133,21 +124,10 @@ export const useEmailAuth = () => {
         throw authError;
       }
 
-      // Créer une session
+      // Créer une session (temporairement en localStorage)
       const sessionToken = generateSessionToken();
-      const { error: sessionError } = await supabase
-        .from('customer_sessions')
-        .insert([{
-          customer_id: customer.id,
-          session_token: sessionToken,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          user_agent: navigator.userAgent || null
-        }]);
-
-      if (sessionError) throw sessionError;
-
-      // Sauvegarder la session
       localStorage.setItem('customer_session_token', sessionToken);
+      localStorage.setItem('customer_id', customer.id);
       setCurrentCustomer(customer);
       setIsAuthenticated(true);
 
@@ -200,21 +180,10 @@ export const useEmailAuth = () => {
         throw new Error('Données client introuvables');
       }
 
-      // Créer une session
+      // Créer une session (temporairement en localStorage)
       const sessionToken = generateSessionToken();
-      const { error: sessionError } = await supabase
-        .from('customer_sessions')
-        .insert([{
-          customer_id: customer.id,
-          session_token: sessionToken,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          user_agent: navigator.userAgent || null
-        }]);
-
-      if (sessionError) throw sessionError;
-
-      // Sauvegarder la session
       localStorage.setItem('customer_session_token', sessionToken);
+      localStorage.setItem('customer_id', customer.id);
       setCurrentCustomer(customer);
       setIsAuthenticated(true);
 
@@ -238,16 +207,8 @@ export const useEmailAuth = () => {
 
   const signOut = async () => {
     try {
-      const sessionToken = localStorage.getItem('customer_session_token');
-      if (sessionToken) {
-        // Supprimer la session de la base de données
-        await supabase
-          .from('customer_sessions')
-          .delete()
-          .eq('session_token', sessionToken);
-      }
-
       localStorage.removeItem('customer_session_token');
+      localStorage.removeItem('customer_id');
       setCurrentCustomer(null);
       setIsAuthenticated(false);
 

@@ -26,19 +26,21 @@ const OrderForm = () => {
         <CardTitle>Informations de commande</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <OrderFormFields form={form} />
-        
-        <OrderFormButtons
-          isSubmitting={isSubmitting}
-          isFormValid={validateForm()}
-          whatsappMessage={whatsappMessage}
-          onWhatsAppOrder={handleWhatsAppOrder}
-          isAuthenticated={isAuthenticated}
-          showConfirmation={showConfirmation}
-          orderDetails={orderDetails}
-          setShowConfirmation={setShowConfirmation}
-          handleSubmit={handleSubmit}
-        />
+        <OrderFormFields 
+          form={form} 
+          onSubmit={handleSubmit}
+        >
+          <OrderFormButtons
+            isSubmitting={isSubmitting}
+            isFormValid={validateForm()}
+            whatsappMessage={whatsappMessage}
+            onWhatsAppOrder={handleWhatsAppOrder}
+            isAuthenticated={isAuthenticated}
+            orderDetails={orderDetails}
+            setShowConfirmation={setShowConfirmation}
+            handleSubmit={handleSubmit}
+          />
+        </OrderFormFields>
       </CardContent>
     </Card>
   );

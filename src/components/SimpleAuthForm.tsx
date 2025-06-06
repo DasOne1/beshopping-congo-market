@@ -31,7 +31,7 @@ const SimpleAuthForm = () => {
     }
 
     try {
-      await login('', '', formData.name);
+      await login('', '');
       toast({
         title: "Connexion réussie",
         description: "Vous êtes maintenant connecté !",

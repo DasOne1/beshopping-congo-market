@@ -30,7 +30,7 @@ interface UseOrderFormProps {
   currentCustomer?: any;
 }
 
-export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice, currentCustomer }: UseOrderFormProps) => {
+export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPrice, currentCustomer }: UseOrderFormProps = {}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
@@ -58,7 +58,7 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     }
   }, [currentCustomer, form]);
 
-  const validateFormBeforeAction = (): boolean => {
+  const validateForm = (): boolean => {
     const values = form.getValues();
     const validation = strictOrderFormSchema.safeParse(values);
     
@@ -68,12 +68,6 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
         form.setError(error.path[0] as keyof OrderFormData, {
           message: error.message
         });
-      });
-      
-      toast({
-        title: "Formulaire incomplet",
-        description: "Veuillez remplir tous les champs requis du formulaire.",
-        variant: "destructive",
       });
       
       return false;
@@ -109,7 +103,7 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
 
   const handleSubmit = async (data: OrderFormData) => {
     // Validation stricte pour la commande classique
-    if (!validateFormBeforeAction()) return;
+    if (!validateForm()) return;
     
     setIsSubmitting(true);
     
@@ -182,6 +176,16 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     }
   };
 
+  const whatsappMessage = (() => {
+    const formValues = form.getValues();
+    const data: OrderFormData = {
+      customerName: formValues.customerName || 'Anonyme',
+      customerPhone: formValues.customerPhone || 'Non spécifié',
+      customerAddress: formValues.customerAddress || 'Non spécifiée',
+    };
+    return generateWhatsAppMessage(data, cartProducts, subtotal, formatPrice);
+  })();
+
   return {
     form,
     isSubmitting,
@@ -190,7 +194,8 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     setShowConfirmation,
     handleSubmit,
     handleWhatsAppOrder,
-    validateFormBeforeAction,
+    validateForm,
+    whatsappMessage,
   };
 };
 
