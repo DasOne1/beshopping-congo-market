@@ -32,8 +32,9 @@ export const useEmailAuth = () => {
     // Initialiser l'état avec les données du localStorage si disponibles
     const customerId = localStorage.getItem('customer_id');
     const sessionToken = localStorage.getItem('customer_session_token');
-    if (customerId && sessionToken) {
-      return JSON.parse(localStorage.getItem('customer_data') || 'null');
+    const customerData = localStorage.getItem('customer_data');
+    if (customerId && sessionToken && customerData) {
+      return JSON.parse(customerData);
     }
     return null;
   });
@@ -43,7 +44,7 @@ export const useEmailAuth = () => {
     return !!localStorage.getItem('customer_session_token');
   });
 
-  // Vérifier la session au chargement
+  // Vérifier la session au chargement et lors du retour en ligne
   useEffect(() => {
     const verifySession = async () => {
       const sessionToken = localStorage.getItem('customer_session_token');
@@ -54,6 +55,17 @@ export const useEmailAuth = () => {
       }
 
       try {
+        // Si on est hors ligne, utiliser les données en cache
+        if (!navigator.onLine) {
+          const cachedData = localStorage.getItem('customer_data');
+          if (cachedData) {
+            setCurrentCustomer(JSON.parse(cachedData));
+            setIsAuthenticated(true);
+            return;
+          }
+        }
+
+        // Si on est en ligne, vérifier avec le serveur
         const { data: customerData, error: customerError } = await supabase
           .from('customers')
           .select('*')
@@ -75,10 +87,27 @@ export const useEmailAuth = () => {
         }
       } catch (error) {
         console.error('Erreur lors de la vérification de session:', error);
+        // En cas d'erreur de connexion, utiliser les données en cache
+        const cachedData = localStorage.getItem('customer_data');
+        if (cachedData) {
+          setCurrentCustomer(JSON.parse(cachedData));
+          setIsAuthenticated(true);
+        }
       }
     };
 
     verifySession();
+
+    // Écouter les changements d'état de connexion
+    const handleOnline = () => {
+      verifySession();
+    };
+
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
   }, []);
 
   const generateSessionToken = useCallback(() => {

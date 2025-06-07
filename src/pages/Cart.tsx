@@ -98,8 +98,12 @@ const Cart = () => {
       return;
     }
 
+    // Construire l'URL WhatsApp correctement
+    const encodedMessage = encodeURIComponent(whatsappMessage);
+    const whatsappUrl = `https://wa.me/243978100940?text=${encodedMessage}`;
+    
     // Ouvrir WhatsApp immédiatement
-    window.open(whatsappMessage, '_blank');
+    window.open(whatsappUrl, '_blank');
 
     // Mettre à jour l'interface après l'ouverture de WhatsApp
     const formData = form.getValues();
@@ -110,18 +114,17 @@ const Cart = () => {
     const orderData = {
       customerName: currentCustomer?.name || formData.customerName || 'Anonyme',
       customerPhone: currentCustomer?.phone || formData.customerPhone || 'Non spécifié',
-      customerAddress: customerAddress
-    };
-
-    setOrderDetails({
-      ...orderData,
+      customerAddress: customerAddress,
       total: formatPrice(subtotal),
       orderType: 'whatsapp'
-    });
+    };
+
+    setOrderDetails(orderData);
     setShowConfirmation(true);
 
     // Enregistrer la commande en arrière-plan
     handleWhatsAppOrder().catch(error => {
+      console.error('Erreur lors de la création de la commande WhatsApp:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création de la commande WhatsApp.",

@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useOrders } from '@/hooks/useOrders';
 import { toast } from '@/hooks/use-toast';
+import React from 'react';
 
 // Schema sans validation stricte pour permettre les champs optionnels
 const orderFormSchema = z.object({
@@ -178,15 +179,17 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
     }
   };
 
-  const whatsappMessage = (() => {
+  const whatsappMessage = React.useMemo(() => {
     const formValues = form.getValues();
     const data: OrderFormData = {
-      customerName: formValues.customerName || 'Anonyme',
-      customerPhone: formValues.customerPhone || 'Non spécifié',
-      customerAddress: formValues.customerAddress || 'Non spécifiée',
+      customerName: currentCustomer?.name || formValues.customerName || 'Anonyme',
+      customerPhone: currentCustomer?.phone || formValues.customerPhone || 'Non spécifié',
+      customerAddress: typeof currentCustomer?.address === 'string' 
+        ? currentCustomer.address 
+        : currentCustomer?.address?.address || formValues.customerAddress || 'Non spécifiée',
     };
     return generateWhatsAppMessage(data, cartProducts, subtotal, formatPrice);
-  })();
+  }, [form, currentCustomer, cartProducts, subtotal, formatPrice]);
 
   return {
     form,
