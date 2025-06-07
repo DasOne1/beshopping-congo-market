@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
+import { WhatsAppIcon } from '@/components/WhatsAppIcon';
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity } = useCart();
@@ -110,12 +111,9 @@ const Cart = () => {
       };
 
       await handleWhatsAppOrder();
-      setOrderDetails({
-        ...orderData,
-        total: formatPrice(subtotal),
-        orderType: 'whatsapp'
-      });
-      setShowConfirmation(true);
+      
+      // Rediriger immédiatement vers WhatsApp
+      window.location.href = whatsappMessage;
     } catch (error) {
       toast({
         title: "Erreur",
@@ -220,7 +218,7 @@ const Cart = () => {
                   onClick={handleWhatsAppOrderClick}
                   disabled={isSubmitting}
                 >
-                  <MessageCircle className="w-4 h-4 mr-2" />
+                  <WhatsAppIcon className="w-4 h-4 mr-2" />
                   Commander via WhatsApp
                 </Button>
 
@@ -240,7 +238,9 @@ const Cart = () => {
           orderDetails={orderDetails}
         />
       </main>
-      <Footer />
+      <div className="pb-16 md:pb-0">
+        <Footer />
+      </div>
     </div>
   );
 };
