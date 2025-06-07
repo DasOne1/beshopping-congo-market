@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { useEmailAuth } from '@/hooks/useEmailAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import { z } from 'zod';
 
 interface EmailAuthFormProps {
   onSuccess?: () => void;
@@ -18,6 +19,20 @@ interface EmailAuthFormProps {
 interface AuthError {
   message: string;
 }
+
+// Schémas de validation
+const signUpSchema = z.object({
+  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
+  email: z.string().email('Format d\'email invalide'),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères')
+});
+
+const signInSchema = z.object({
+  email: z.string().email('Format d\'email invalide'),
+  password: z.string().min(1, 'Le mot de passe est requis')
+});
 
 const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
   const navigate = useNavigate();
@@ -59,45 +74,43 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
     }
   }, [isAuthenticated, currentCustomer, onSuccess, navigate]);
 
-  const validateSignUpForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!signUpForm.name.trim()) {
-      newErrors.name = 'Le nom est requis';
+  const validateSignUpForm = useCallback(() => {
+    try {
+      signUpSchema.parse(signUpForm);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0].toString()] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      }
+      return false;
     }
+  }, [signUpForm]);
 
-    if (!signUpForm.email.trim()) {
-      newErrors.email = 'L\'email est requis';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signUpForm.email)) {
-      newErrors.email = 'Format d\'email invalide';
+  const validateSignInForm = useCallback(() => {
+    try {
+      signInSchema.parse(signInForm);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0].toString()] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      }
+      return false;
     }
-
-    if (!signUpForm.password) {
-      newErrors.password = 'Le mot de passe est requis';
-    } else if (signUpForm.password.length < 6) {
-      newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateSignInForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!signInForm.email.trim()) {
-      newErrors.email = 'L\'email est requis';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signInForm.email)) {
-      newErrors.email = 'Format d\'email invalide';
-    }
-
-    if (!signInForm.password) {
-      newErrors.password = 'Le mot de passe est requis';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  }, [signInForm]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,7 +214,7 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                         setErrors({...errors, password: ''});
                       }
                     }}
-                    className={cn("pl-10 pr-10", errors.password && "border-red-500")}
+                    className={cn("pl-10", errors.password && "border-red-500")}
                     required
                   />
                   <button
@@ -209,16 +222,20 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                     onClick={() => setShowSignInPassword(!showSignInPassword)}
                     className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
                   >
-                    {showSignInPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showSignInPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
                 {errors.password && (
                   <p className="text-sm text-red-500 mt-1">{errors.password}</p>
                 )}
               </div>
-              
+
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Connexion...' : 'Se connecter'}
+                {loading ? 'Connexion en cours...' : 'Se connecter'}
               </Button>
             </form>
           </TabsContent>
@@ -294,14 +311,14 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Textarea
                     id="signup-address"
-                    placeholder="Votre adresse"
+                    placeholder="Votre adresse complète"
                     value={signUpForm.address}
                     onChange={(e) => setSignUpForm({...signUpForm, address: e.target.value})}
                     className="pl-10"
                   />
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="signup-password">Mot de passe *</Label>
                 <div className="relative">
@@ -317,7 +334,7 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                         setErrors({...errors, password: ''});
                       }
                     }}
-                    className={cn("pl-10 pr-10", errors.password && "border-red-500")}
+                    className={cn("pl-10", errors.password && "border-red-500")}
                     required
                   />
                   <button
@@ -325,16 +342,20 @@ const EmailAuthForm = ({ onSuccess }: EmailAuthFormProps) => {
                     onClick={() => setShowSignUpPassword(!showSignUpPassword)}
                     className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
                   >
-                    {showSignUpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showSignUpPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
                 {errors.password && (
                   <p className="text-sm text-red-500 mt-1">{errors.password}</p>
                 )}
               </div>
-              
+
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Création du compte...' : 'Créer un compte'}
+                {loading ? 'Création en cours...' : 'Créer un compte'}
               </Button>
             </form>
           </TabsContent>

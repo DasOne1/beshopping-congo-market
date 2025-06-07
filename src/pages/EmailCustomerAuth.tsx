@@ -51,7 +51,9 @@ const EmailCustomerAuth = () => {
         </motion.div>
       </main>
       
-      <Footer />
+      <div className="pb-16 md:pb-0">
+        <Footer />
+      </div>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import bcrypt from 'bcryptjs';
@@ -28,114 +28,117 @@ interface SignUpData {
 }
 
 export const useEmailAuth = () => {
-  const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
+  const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(() => {
+    // Initialiser l'état avec les données du localStorage si disponibles
+    const customerId = localStorage.getItem('customer_id');
+    const sessionToken = localStorage.getItem('customer_session_token');
+    if (customerId && sessionToken) {
+      return JSON.parse(localStorage.getItem('customer_data') || 'null');
+    }
+    return null;
+  });
   const [loading, setLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Initialiser l'état d'authentification avec les données du localStorage
+    return !!localStorage.getItem('customer_session_token');
+  });
 
   // Vérifier la session au chargement
   useEffect(() => {
-    checkSession();
+    const verifySession = async () => {
+      const sessionToken = localStorage.getItem('customer_session_token');
+      const customerId = localStorage.getItem('customer_id');
+      
+      if (!sessionToken || !customerId) {
+        return;
+      }
+
+      try {
+        const { data: customerData, error: customerError } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('id', customerId)
+          .single();
+
+        if (!customerError && customerData) {
+          setCurrentCustomer(customerData);
+          setIsAuthenticated(true);
+          // Mettre à jour les données en cache
+          localStorage.setItem('customer_data', JSON.stringify(customerData));
+        } else {
+          // Si les données ne sont pas valides, nettoyer le localStorage
+          localStorage.removeItem('customer_session_token');
+          localStorage.removeItem('customer_id');
+          localStorage.removeItem('customer_data');
+          setCurrentCustomer(null);
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification de session:', error);
+      }
+    };
+
+    verifySession();
   }, []);
 
-  const checkSession = async () => {
-    try {
-      const sessionToken = localStorage.getItem('customer_session_token');
-      if (!sessionToken) {
-        return;
-      }
-
-      // Pour l'instant, on simule une vérification de session
-      // En attendant que la table customer_sessions soit créée
-      console.log('Session token trouvé:', sessionToken);
-      
-      // Récupérer l'ID du client depuis le token stocké
-      const customerId = localStorage.getItem('customer_id');
-      if (!customerId) {
-        localStorage.removeItem('customer_session_token');
-        return;
-      }
-
-      // Récupérer les données du client
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('id', customerId)
-        .single();
-
-      if (!customerError && customerData) {
-        setCurrentCustomer(customerData);
-        setIsAuthenticated(true);
-      } else {
-        localStorage.removeItem('customer_session_token');
-        localStorage.removeItem('customer_id');
-      }
-    } catch (error) {
-      console.error('Erreur lors de la vérification de session:', error);
-      localStorage.removeItem('customer_session_token');
-      localStorage.removeItem('customer_id');
-    }
-  };
-
-  const generateSessionToken = () => {
+  const generateSessionToken = useCallback(() => {
     const timestamp = Date.now().toString(36);
     const randomStr = Math.random().toString(36).substring(2, 15);
     return `${timestamp}-${randomStr}`;
-  };
+  }, []);
 
   const signUp = async (data: SignUpData) => {
     setLoading(true);
     try {
-      // Vérifier si l'email existe déjà
-      const { data: existingAuth, error: checkError } = await supabase
-        .from('customer_auth')
-        .select('email')
-        .eq('email', data.email)
-        .maybeSingle();
+      const [existingAuthResult, hashedPassword] = await Promise.all([
+        supabase
+          .from('customer_auth')
+          .select('email')
+          .eq('email', data.email)
+          .maybeSingle(),
+        bcrypt.hash(data.password, 12)
+      ]);
 
-      if (existingAuth) {
+      if (existingAuthResult.data) {
         throw new Error('Un compte avec cet email existe déjà');
       }
 
-      // Hacher le mot de passe
-      const hashedPassword = await bcrypt.hash(data.password, 12);
+      const [customerResult, authResult] = await Promise.all([
+        supabase
+          .from('customers')
+          .insert([{
+            name: data.name,
+            email: data.email,
+            phone: data.phone || null,
+            address: data.address ? { address: data.address } : null
+          }])
+          .select()
+          .single(),
+        supabase
+          .from('customer_auth')
+          .insert([{
+            customer_id: null,
+            email: data.email,
+            password_hash: hashedPassword,
+            email_verified: true
+          }])
+          .select()
+          .single()
+      ]);
 
-      // Créer le client
-      const { data: customer, error: customerError } = await supabase
-        .from('customers')
-        .insert([{
-          name: data.name,
-          email: data.email,
-          phone: data.phone || null,
-          address: data.address ? { address: data.address } : null
-        }])
-        .select()
-        .single();
+      if (customerResult.error) throw customerResult.error;
+      if (authResult.error) throw authResult.error;
 
-      if (customerError) throw customerError;
-
-      // Créer l'authentification
-      const { data: authData, error: authError } = await supabase
+      await supabase
         .from('customer_auth')
-        .insert([{
-          customer_id: customer.id,
-          email: data.email,
-          password_hash: hashedPassword,
-          email_verified: true
-        }])
-        .select()
-        .single();
+        .update({ customer_id: customerResult.data.id })
+        .eq('id', authResult.data.id);
 
-      if (authError) {
-        // Supprimer le client si l'auth échoue
-        await supabase.from('customers').delete().eq('id', customer.id);
-        throw authError;
-      }
-
-      // Créer une session (temporairement en localStorage)
       const sessionToken = generateSessionToken();
       localStorage.setItem('customer_session_token', sessionToken);
-      localStorage.setItem('customer_id', customer.id);
-      setCurrentCustomer(customer);
+      localStorage.setItem('customer_id', customerResult.data.id);
+      localStorage.setItem('customer_data', JSON.stringify(customerResult.data));
+      setCurrentCustomer(customerResult.data);
       setIsAuthenticated(true);
 
       toast({
@@ -159,39 +162,37 @@ export const useEmailAuth = () => {
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Récupérer les données d'authentification
-      const { data: authData, error: authError } = await supabase
-        .from('customer_auth')
-        .select('*')
-        .eq('email', email)
-        .single();
+      const [authResult, customerResult] = await Promise.all([
+        supabase
+          .from('customer_auth')
+          .select('*')
+          .eq('email', email)
+          .single(),
+        supabase
+          .from('customers')
+          .select('*')
+          .eq('email', email)
+          .single()
+      ]);
 
-      if (authError || !authData) {
+      if (authResult.error || !authResult.data) {
         throw new Error('Email ou mot de passe incorrect');
       }
 
-      // Vérifier le mot de passe
-      const isPasswordValid = await bcrypt.compare(password, authData.password_hash);
+      const isPasswordValid = await bcrypt.compare(password, authResult.data.password_hash);
       if (!isPasswordValid) {
         throw new Error('Email ou mot de passe incorrect');
       }
 
-      // Récupérer les données du client
-      const { data: customer, error: customerError } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('id', authData.customer_id)
-        .single();
-
-      if (customerError || !customer) {
+      if (customerResult.error || !customerResult.data) {
         throw new Error('Données client introuvables');
       }
 
-      // Créer une session (temporairement en localStorage)
       const sessionToken = generateSessionToken();
       localStorage.setItem('customer_session_token', sessionToken);
-      localStorage.setItem('customer_id', customer.id);
-      setCurrentCustomer(customer);
+      localStorage.setItem('customer_id', customerResult.data.id);
+      localStorage.setItem('customer_data', JSON.stringify(customerResult.data));
+      setCurrentCustomer(customerResult.data);
       setIsAuthenticated(true);
 
       toast({
@@ -212,10 +213,11 @@ export const useEmailAuth = () => {
     }
   };
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       localStorage.removeItem('customer_session_token');
       localStorage.removeItem('customer_id');
+      localStorage.removeItem('customer_data');
       setCurrentCustomer(null);
       setIsAuthenticated(false);
 
@@ -226,14 +228,13 @@ export const useEmailAuth = () => {
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     }
-  };
+  }, []);
 
   const updateProfile = async (data: Partial<Customer>) => {
     if (!currentCustomer) return;
     
     setLoading(true);
     try {
-      // Ne pas inclure les champs sensibles ou calculés
       const { password_hash, orders_count, total_spent, last_order_date, ...updateData } = data;
 
       const { data: updatedCustomer, error } = await supabase
@@ -246,6 +247,8 @@ export const useEmailAuth = () => {
       if (error) throw error;
 
       setCurrentCustomer(updatedCustomer);
+      localStorage.setItem('customer_data', JSON.stringify(updatedCustomer));
+      
       toast({
         title: "Profil mis à jour",
         description: "Vos informations ont été mises à jour avec succès.",
@@ -270,7 +273,6 @@ export const useEmailAuth = () => {
     signUp,
     signIn,
     signOut,
-    updateProfile,
-    checkSession
+    updateProfile
   };
 };

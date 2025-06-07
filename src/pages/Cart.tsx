@@ -112,8 +112,16 @@ const Cart = () => {
 
       await handleWhatsAppOrder();
       
-      // Rediriger immédiatement vers WhatsApp
-      window.location.href = whatsappMessage;
+      // Ouvrir WhatsApp dans un nouvel onglet
+      window.open(whatsappMessage, '_blank');
+      
+      // Afficher la confirmation après avoir ouvert WhatsApp
+      setOrderDetails({
+        ...orderData,
+        total: formatPrice(subtotal),
+        orderType: 'whatsapp'
+      });
+      setShowConfirmation(true);
     } catch (error) {
       toast({
         title: "Erreur",

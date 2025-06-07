@@ -29,7 +29,7 @@ const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
 
   const handleClick = () => {
     if (!isAuthenticated) {
-      navigate('/email-auth', { state: { from: window.location.pathname } });
+      navigate('/customer-auth', { state: { from: window.location.pathname } });
       return;
     }
 
