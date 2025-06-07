@@ -135,7 +135,7 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
 
   const handleWhatsAppOrder = async () => {
     try {
-      // Créer la commande avec des données par défaut ou celles remplies
+      // Générer le message WhatsApp immédiatement
       const formValues = form.getValues();
       const customerAddress = typeof currentCustomer?.address === 'string' 
         ? currentCustomer.address 
@@ -147,14 +147,12 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
         customerAddress: customerAddress
       };
 
-      // Créer la commande en base avec les données par défaut
-      await createOrderInDB(defaultData);
-
-      // Générer le message WhatsApp
+      // Générer et ouvrir WhatsApp immédiatement
       const message = generateWhatsAppMessage(defaultData, cartProducts, subtotal, formatPrice);
       const whatsappUrl = `https://wa.me/243978100940?text=${encodeURIComponent(message)}`;
-      
-      // Afficher le popup de confirmation
+      window.open(whatsappUrl, '_blank');
+
+      // Mettre à jour l'interface
       setOrderDetails({
         customerName: defaultData.customerName,
         customerPhone: defaultData.customerPhone,
@@ -163,9 +161,9 @@ export const useOrderForm = ({ onOrderComplete, cartProducts, subtotal, formatPr
         orderType: 'whatsapp'
       });
       setShowConfirmation(true);
-      
-      // Rediriger vers WhatsApp
-      window.open(whatsappUrl, '_blank');
+
+      // Créer la commande en arrière-plan
+      await createOrderInDB(defaultData);
       
       if (onOrderComplete) {
         onOrderComplete();

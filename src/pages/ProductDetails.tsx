@@ -54,7 +54,7 @@ const ProductDetails = () => {
         metadata: { product_name: product.name, price: product.discounted_price || product.original_price }
       });
     }
-  }, [product]);
+  }, [product, trackEvent]);
 
   if (isLoading) {
     return (

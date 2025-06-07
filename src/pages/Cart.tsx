@@ -92,43 +92,42 @@ const Cart = () => {
     }
   };
 
-  const handleWhatsAppOrderClick = async () => {
+  const handleWhatsAppOrderClick = () => {
     if (!isAuthenticated) {
       navigate('/customer-auth', { state: { from: '/cart' } });
       return;
     }
 
-    try {
-      const formData = form.getValues();
-      const customerAddress = typeof currentCustomer?.address === 'string' 
-        ? currentCustomer.address 
-        : currentCustomer?.address?.address || formData.customerAddress || 'Non spécifiée';
+    // Ouvrir WhatsApp immédiatement
+    window.open(whatsappMessage, '_blank');
 
-      const orderData = {
-        customerName: currentCustomer?.name || formData.customerName || 'Anonyme',
-        customerPhone: currentCustomer?.phone || formData.customerPhone || 'Non spécifié',
-        customerAddress: customerAddress
-      };
+    // Mettre à jour l'interface après l'ouverture de WhatsApp
+    const formData = form.getValues();
+    const customerAddress = typeof currentCustomer?.address === 'string' 
+      ? currentCustomer.address 
+      : currentCustomer?.address?.address || formData.customerAddress || 'Non spécifiée';
 
-      await handleWhatsAppOrder();
-      
-      // Ouvrir WhatsApp dans un nouvel onglet
-      window.open(whatsappMessage, '_blank');
-      
-      // Afficher la confirmation après avoir ouvert WhatsApp
-      setOrderDetails({
-        ...orderData,
-        total: formatPrice(subtotal),
-        orderType: 'whatsapp'
-      });
-      setShowConfirmation(true);
-    } catch (error) {
+    const orderData = {
+      customerName: currentCustomer?.name || formData.customerName || 'Anonyme',
+      customerPhone: currentCustomer?.phone || formData.customerPhone || 'Non spécifié',
+      customerAddress: customerAddress
+    };
+
+    setOrderDetails({
+      ...orderData,
+      total: formatPrice(subtotal),
+      orderType: 'whatsapp'
+    });
+    setShowConfirmation(true);
+
+    // Enregistrer la commande en arrière-plan
+    handleWhatsAppOrder().catch(error => {
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création de la commande WhatsApp.",
         variant: "destructive",
       });
-    }
+    });
   };
 
   return (
