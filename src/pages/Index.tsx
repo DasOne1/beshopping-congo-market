@@ -210,7 +210,7 @@ const Index = () => {
       <MobileNavBar />
 
       {/* WhatsApp Contact Button */}
-      <WhatsAppContact />
+      <WhatsAppContact phoneNumber="+243 978 100 940" message="Bonjour, je souhaite passer une commande" />
     </div>
   );
 };

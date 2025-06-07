@@ -1,9 +1,7 @@
-
 import React from 'react';
 import { useLocation, Navigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SimpleAuthForm from '@/components/SimpleAuthForm';
 import { useAuth } from '@/hooks/useAuth';
 
 const CustomerAuth = () => {
@@ -28,8 +26,6 @@ const CustomerAuth = () => {
               Connectez-vous pour passer votre commande
             </p>
           </div>
-          
-          <SimpleAuthForm />
         </div>
       </div>
 
