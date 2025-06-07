@@ -21,6 +21,22 @@ import Account from "./pages/Account";
 import CustomOrder from "./pages/CustomOrder";
 import NotFound from "./pages/NotFound";
 import EmailCustomerAuth from "./pages/EmailCustomerAuth";
+
+// Admin pages
+import AdminAuth from "./pages/Admin/AdminAuth";
+import Dashboard from "./pages/Admin/Dashboard";
+import AdminProducts from "./pages/Admin/Products";
+import AdminCategories from "./pages/Admin/Categories";
+import Customers from "./pages/Admin/Customers";
+import Orders from "./pages/Admin/Orders";
+import Analytics from "./pages/Admin/Analytics";
+import Reports from "./pages/Admin/Reports";
+import Settings from "./pages/Admin/Settings";
+import AdminAccounts from "./pages/Admin/AdminAccounts";
+import CustomerForm from "./pages/Admin/CustomerForm";
+import Catalog from "./pages/Admin/Catalog";
+import ProductFormWrapper from '@/pages/Admin/ProductFormWrapper';
+import CategoryFormWrapper from '@/pages/Admin/CategoryFormWrapper';
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -56,6 +72,25 @@ function App() {
                       <Route path="/account" element={<Account />} />
                       <Route path="/custom-order" element={<CustomOrder />} />
                       <Route path="/customer-auth" element={<EmailCustomerAuth />} />
+
+                      {/* Admin routes */}
+                      <Route path="/dasgabriel@adminaccess" element={<AdminAuth />} />
+                      <Route path="/dasgabriel@adminaccess/dashboard" element={<Dashboard />} />
+                      <Route path="/dasgabriel@adminaccess/products" element={<AdminProducts />} />
+                      <Route path="/dasgabriel@adminaccess/categories" element={<AdminCategories />} />
+                      <Route path="/dasgabriel@adminaccess/customers" element={<Customers />} />
+                      <Route path="/dasgabriel@adminaccess/customers/new" element={<CustomerForm />} />
+                      <Route path="/dasgabriel@adminaccess/customers/edit/:id" element={<CustomerForm />} />
+                      <Route path="/dasgabriel@adminaccess/orders" element={<Orders />} />
+                      <Route path="/dasgabriel@adminaccess/analytics" element={<Analytics />} />
+                      <Route path="/dasgabriel@adminaccess/reports" element={<Reports />} />
+                      <Route path="/dasgabriel@adminaccess/settings" element={<Settings />} />
+                      <Route path="/dasgabriel@adminaccess/accounts" element={<AdminAccounts />} />
+                      <Route path="/dasgabriel@adminaccess/catalog" element={<Catalog />} />
+                      <Route path="/dasgabriel@adminaccess/products/new" element={<ProductFormWrapper />} />
+                      <Route path="/dasgabriel@adminaccess/products/:id" element={<ProductFormWrapper />} />
+                      <Route path="/dasgabriel@adminaccess/categories/new" element={<CategoryFormWrapper />} />
+                      <Route path="/dasgabriel@adminaccess/categories/:id" element={<CategoryFormWrapper />} />
 
                       {/* 404 route */}
                       <Route path="*" element={<NotFound />} />
