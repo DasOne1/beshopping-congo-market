@@ -51,23 +51,39 @@ export const useAdminAuth = () => {
 
   const checkAdminProfile = async (userId: string) => {
     try {
+      // Utiliser une requête directe sans RLS pour éviter la récursion
       const { data, error } = await supabase
-        .from('admin_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .single();
+        .rpc('is_admin', { user_id: userId });
 
       if (error) {
-        console.error('Error checking admin profile:', error);
+        console.error('Error checking admin status:', error);
         setAdminProfile(null);
-      } else {
-        setAdminProfile(data);
-        // Update last login
-        await supabase
+        setLoading(false);
+        return;
+      }
+
+      if (data) {
+        // Si l'utilisateur est admin, récupérer son profil
+        const { data: profile, error: profileError } = await supabase
           .from('admin_profiles')
-          .update({ last_login: new Date().toISOString() })
-          .eq('id', data.id);
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_active', true)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching admin profile:', profileError);
+          setAdminProfile(null);
+        } else {
+          setAdminProfile(profile);
+          // Update last login
+          await supabase
+            .from('admin_profiles')
+            .update({ last_login: new Date().toISOString() })
+            .eq('id', profile.id);
+        }
+      } else {
+        setAdminProfile(null);
       }
     } catch (error) {
       console.error('Error in checkAdminProfile:', error);
@@ -111,7 +127,9 @@ export const useAdminAuth = () => {
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      console.log('Creating admin account for:', email);
+      
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -123,11 +141,31 @@ export const useAdminAuth = () => {
 
       if (error) throw error;
 
+      // Créer le profil admin manuellement
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('admin_profiles')
+          .insert({
+            user_id: data.user.id,
+            email: email,
+            full_name: fullName,
+            role: 'admin',
+            is_active: true
+          });
+
+        if (profileError) {
+          console.error('Error creating admin profile:', profileError);
+        } else {
+          console.log('Admin profile created successfully');
+        }
+      }
+
       toast({
         title: "Compte admin créé",
         description: "Votre compte administrateur a été créé avec succès",
       });
     } catch (error: any) {
+      console.error('Admin sign up error:', error);
       toast({
         title: "Erreur lors de la création",
         description: error.message,

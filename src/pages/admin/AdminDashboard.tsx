@@ -6,7 +6,7 @@ import { useDashboard } from '@/hooks/useDashboard';
 import { useOrders } from '@/hooks/useOrders';
 import { useProducts } from '@/hooks/useProducts';
 import { useCustomers } from '@/hooks/useCustomers';
-import { ShoppingBag, Package, Users, TrendingUp, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { ShoppingBag, Package, Users, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const AdminDashboard = () => {
@@ -18,9 +18,9 @@ const AdminDashboard = () => {
   // Calculer les statistiques en temps réel depuis les données
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
-  const completedOrders = orders.filter(order => order.status === 'completed').length;
+  const deliveredOrders = orders.filter(order => order.status === 'delivered').length;
   const totalRevenue = orders
-    .filter(order => order.status === 'completed')
+    .filter(order => order.status === 'delivered')
     .reduce((sum, order) => sum + (order.total_amount || 0), 0);
 
   // Récentes commandes (5 dernières)
@@ -45,7 +45,7 @@ const AdminDashboard = () => {
     {
       title: "Revenus totaux",
       value: `${totalRevenue.toFixed(2)} €`,
-      description: "Commandes terminées",
+      description: "Commandes livrées",
       icon: TrendingUp,
       color: "text-green-600",
       bgColor: "bg-green-50",
@@ -77,8 +77,8 @@ const AdminDashboard = () => {
       bgColor: "bg-yellow-50",
     },
     {
-      title: "Terminées",
-      value: completedOrders,
+      title: "Livrées",
+      value: deliveredOrders,
       icon: CheckCircle,
       color: "text-green-600",
       bgColor: "bg-green-50",
@@ -88,8 +88,10 @@ const AdminDashboard = () => {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { label: 'En attente', variant: 'outline' as const },
+      confirmed: { label: 'Confirmée', variant: 'default' as const },
       processing: { label: 'En cours', variant: 'default' as const },
-      completed: { label: 'Terminée', variant: 'default' as const },
+      shipped: { label: 'Expédiée', variant: 'default' as const },
+      delivered: { label: 'Livrée', variant: 'default' as const },
       cancelled: { label: 'Annulée', variant: 'destructive' as const },
     };
 
