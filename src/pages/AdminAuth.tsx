@@ -24,7 +24,7 @@ const AdminAuth = () => {
   // Si déjà connecté, rediriger vers le dashboard admin
   React.useEffect(() => {
     if (isAuthenticated) {
-      const from = location.state?.from || '/admin';
+      const from = location.state?.from?.pathname || '/admin';
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
@@ -33,6 +33,9 @@ const AdminAuth = () => {
     e.preventDefault();
     try {
       await signIn(formData.email, formData.password);
+      // Redirection explicite après connexion réussie
+      const from = location.state?.from?.pathname || '/admin';
+      navigate(from, { replace: true });
     } catch (error) {
       console.error('Sign in error:', error);
     }
@@ -42,6 +45,8 @@ const AdminAuth = () => {
     e.preventDefault();
     try {
       await signUp(formData.email, formData.password, formData.fullName);
+      // Après création du compte, rediriger vers le dashboard
+      navigate('/admin', { replace: true });
     } catch (error) {
       console.error('Sign up error:', error);
     }
