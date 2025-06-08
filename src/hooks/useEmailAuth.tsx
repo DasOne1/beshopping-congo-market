@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +35,11 @@ export const useEmailAuth = () => {
     const sessionToken = localStorage.getItem('customer_session_token');
     const customerData = localStorage.getItem('customer_data');
     if (customerId && sessionToken && customerData) {
-      return JSON.parse(customerData);
+      try {
+        return JSON.parse(customerData);
+      } catch {
+        return null;
+      }
     }
     return null;
   });
@@ -90,8 +95,17 @@ export const useEmailAuth = () => {
         // En cas d'erreur de connexion, utiliser les données en cache
         const cachedData = localStorage.getItem('customer_data');
         if (cachedData) {
-          setCurrentCustomer(JSON.parse(cachedData));
-          setIsAuthenticated(true);
+          try {
+            setCurrentCustomer(JSON.parse(cachedData));
+            setIsAuthenticated(true);
+          } catch {
+            // Si les données en cache sont corrompues, nettoyer
+            localStorage.removeItem('customer_session_token');
+            localStorage.removeItem('customer_id');
+            localStorage.removeItem('customer_data');
+            setCurrentCustomer(null);
+            setIsAuthenticated(false);
+          }
         }
       }
     };
@@ -119,55 +133,77 @@ export const useEmailAuth = () => {
   const signUp = async (data: SignUpData) => {
     setLoading(true);
     try {
-      const [existingAuthResult, hashedPassword] = await Promise.all([
-        supabase
-          .from('customer_auth')
-          .select('email')
-          .eq('email', data.email)
-          .maybeSingle(),
-        bcrypt.hash(data.password, 12)
-      ]);
+      console.log('Début inscription client:', data.email);
 
-      if (existingAuthResult.data) {
+      // Vérifier si l'email existe déjà
+      const { data: existingAuth, error: checkError } = await supabase
+        .from('customer_auth')
+        .select('email')
+        .eq('email', data.email)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Erreur lors de la vérification email:', checkError);
+        throw new Error('Erreur lors de la vérification de l\'email');
+      }
+
+      if (existingAuth) {
         throw new Error('Un compte avec cet email existe déjà');
       }
 
-      const [customerResult, authResult] = await Promise.all([
-        supabase
-          .from('customers')
-          .insert([{
-            name: data.name,
-            email: data.email,
-            phone: data.phone || null,
-            address: data.address ? { address: data.address } : null
-          }])
-          .select()
-          .single(),
-        supabase
-          .from('customer_auth')
-          .insert([{
-            customer_id: null,
-            email: data.email,
-            password_hash: hashedPassword,
-            email_verified: true
-          }])
-          .select()
-          .single()
-      ]);
+      // Hasher le mot de passe
+      const hashedPassword = await bcrypt.hash(data.password, 12);
+      console.log('Mot de passe hashé');
 
-      if (customerResult.error) throw customerResult.error;
-      if (authResult.error) throw authResult.error;
+      // Créer le client
+      const { data: customerResult, error: customerError } = await supabase
+        .from('customers')
+        .insert([{
+          name: data.name,
+          email: data.email,
+          phone: data.phone || null,
+          address: data.address ? { address: data.address } : null,
+          status: 'active',
+          orders_count: 0,
+          total_spent: 0
+        }])
+        .select()
+        .single();
 
-      await supabase
+      if (customerError) {
+        console.error('Erreur création client:', customerError);
+        throw new Error('Erreur lors de la création du profil client');
+      }
+
+      console.log('Client créé:', customerResult.id);
+
+      // Créer l'authentification
+      const { data: authResult, error: authError } = await supabase
         .from('customer_auth')
-        .update({ customer_id: customerResult.data.id })
-        .eq('id', authResult.data.id);
+        .insert([{
+          customer_id: customerResult.id,
+          email: data.email,
+          password_hash: hashedPassword,
+          email_verified: true
+        }])
+        .select()
+        .single();
 
+      if (authError) {
+        console.error('Erreur création auth:', authError);
+        // Nettoyer le client créé en cas d'erreur
+        await supabase.from('customers').delete().eq('id', customerResult.id);
+        throw new Error('Erreur lors de la création de l\'authentification');
+      }
+
+      console.log('Authentification créée');
+
+      // Créer la session
       const sessionToken = generateSessionToken();
       localStorage.setItem('customer_session_token', sessionToken);
-      localStorage.setItem('customer_id', customerResult.data.id);
-      localStorage.setItem('customer_data', JSON.stringify(customerResult.data));
-      setCurrentCustomer(customerResult.data);
+      localStorage.setItem('customer_id', customerResult.id);
+      localStorage.setItem('customer_data', JSON.stringify(customerResult));
+      setCurrentCustomer(customerResult);
       setIsAuthenticated(true);
 
       toast({
@@ -191,37 +227,48 @@ export const useEmailAuth = () => {
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const [authResult, customerResult] = await Promise.all([
-        supabase
-          .from('customer_auth')
-          .select('*')
-          .eq('email', email)
-          .single(),
-        supabase
-          .from('customers')
-          .select('*')
-          .eq('email', email)
-          .single()
-      ]);
+      console.log('Début connexion client:', email);
 
-      if (authResult.error || !authResult.data) {
+      // Récupérer l'authentification
+      const { data: authResult, error: authError } = await supabase
+        .from('customer_auth')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (authError || !authResult) {
+        console.error('Erreur auth lookup:', authError);
         throw new Error('Email ou mot de passe incorrect');
       }
 
-      const isPasswordValid = await bcrypt.compare(password, authResult.data.password_hash);
+      // Vérifier le mot de passe
+      const isPasswordValid = await bcrypt.compare(password, authResult.password_hash);
       if (!isPasswordValid) {
         throw new Error('Email ou mot de passe incorrect');
       }
 
-      if (customerResult.error || !customerResult.data) {
+      console.log('Mot de passe validé');
+
+      // Récupérer les données client
+      const { data: customerResult, error: customerError } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', authResult.customer_id)
+        .single();
+
+      if (customerError || !customerResult) {
+        console.error('Erreur customer lookup:', customerError);
         throw new Error('Données client introuvables');
       }
 
+      console.log('Client trouvé:', customerResult.id);
+
+      // Créer la session
       const sessionToken = generateSessionToken();
       localStorage.setItem('customer_session_token', sessionToken);
-      localStorage.setItem('customer_id', customerResult.data.id);
-      localStorage.setItem('customer_data', JSON.stringify(customerResult.data));
-      setCurrentCustomer(customerResult.data);
+      localStorage.setItem('customer_id', customerResult.id);
+      localStorage.setItem('customer_data', JSON.stringify(customerResult));
+      setCurrentCustomer(customerResult);
       setIsAuthenticated(true);
 
       toast({
