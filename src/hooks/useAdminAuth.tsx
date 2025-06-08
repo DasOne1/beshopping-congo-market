@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,23 +25,25 @@ export const useAdminAuth = () => {
     // Get initial session
     const getInitialSession = async () => {
       try {
+        console.log('🔍 [AdminAuth] Checking initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('Error getting session:', error);
+          console.error('❌ [AdminAuth] Error getting session:', error);
           setLoading(false);
           return;
         }
 
         if (session?.user) {
-          console.log('Initial session found for user:', session.user.email);
+          console.log('✅ [AdminAuth] Initial session found for user:', session.user.email);
+          console.log('📝 [AdminAuth] User ID:', session.user.id);
           setUser(session.user);
           await checkAdminProfile(session.user.id);
         } else {
-          console.log('No initial session found');
+          console.log('⚠️ [AdminAuth] No initial session found');
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error in getInitialSession:', error);
+        console.error('❌ [AdminAuth] Error in getInitialSession:', error);
         setLoading(false);
       }
     };
@@ -51,12 +53,15 @@ export const useAdminAuth = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Admin auth state changed:', event, session?.user?.email);
+        console.log('🔄 [AdminAuth] Auth state changed:', event);
+        console.log('👤 [AdminAuth] Session user:', session?.user?.email);
         
         if (session?.user) {
+          console.log('✅ [AdminAuth] Setting user and checking admin profile');
           setUser(session.user);
           await checkAdminProfile(session.user.id);
         } else {
+          console.log('⚠️ [AdminAuth] No session user, clearing state');
           setUser(null);
           setAdminProfile(null);
           setLoading(false);
@@ -69,7 +74,7 @@ export const useAdminAuth = () => {
 
   const checkAdminProfile = async (userId: string) => {
     try {
-      console.log('Checking admin profile for user:', userId);
+      console.log('🔍 [AdminAuth] Checking admin profile for user:', userId);
       setLoading(true);
 
       // Utiliser une requête directe sans RLS pour éviter la récursion
@@ -77,16 +82,17 @@ export const useAdminAuth = () => {
         .rpc('is_admin', { user_id: userId });
 
       if (error) {
-        console.error('Error checking admin status:', error);
+        console.error('❌ [AdminAuth] Error checking admin status:', error);
         setAdminProfile(null);
         setLoading(false);
         return;
       }
 
-      console.log('Admin check result:', data);
+      console.log('📝 [AdminAuth] Admin check result:', data);
 
       if (data) {
         // Si l'utilisateur est admin, récupérer son profil
+        console.log('🔍 [AdminAuth] User is admin, fetching profile...');
         const { data: profile, error: profileError } = await supabase
           .from('admin_profiles')
           .select('*')
@@ -95,33 +101,45 @@ export const useAdminAuth = () => {
           .single();
 
         if (profileError) {
-          console.error('Error fetching admin profile:', profileError);
+          console.error('❌ [AdminAuth] Error fetching admin profile:', profileError);
           setAdminProfile(null);
         } else {
-          console.log('Admin profile found:', profile);
+          console.log('✅ [AdminAuth] Admin profile found:', profile);
           setAdminProfile(profile);
           // Update last login
-          await supabase
+          console.log('📝 [AdminAuth] Updating last login...');
+          const { error: updateError } = await supabase
             .from('admin_profiles')
             .update({ last_login: new Date().toISOString() })
             .eq('id', profile.id);
+          
+          if (updateError) {
+            console.error('⚠️ [AdminAuth] Error updating last login:', updateError);
+          } else {
+            console.log('✅ [AdminAuth] Last login updated successfully');
+          }
         }
       } else {
-        console.log('User is not an admin');
+        console.log('⚠️ [AdminAuth] User is not an admin');
         setAdminProfile(null);
       }
     } catch (error) {
-      console.error('Error in checkAdminProfile:', error);
+      console.error('❌ [AdminAuth] Error in checkAdminProfile:', error);
       setAdminProfile(null);
     } finally {
       setLoading(false);
+      console.log('📊 [AdminAuth] Final state:', {
+        user: !!user,
+        adminProfile: !!adminProfile,
+        isAuthenticated: !!user && !!adminProfile
+      });
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      console.log('Attempting admin sign in with:', email);
+      console.log('🔑 [AdminAuth] Attempting admin sign in with:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -129,12 +147,13 @@ export const useAdminAuth = () => {
       });
 
       if (error) {
-        console.error('Sign in error:', error);
+        console.error('❌ [AdminAuth] Sign in error:', error);
         throw error;
       }
 
       if (data.user) {
-        console.log('Admin sign in successful:', data.user.email);
+        console.log('✅ [AdminAuth] Admin sign in successful:', data.user.email);
+        console.log('📝 [AdminAuth] User ID:', data.user.id);
         // Ne pas faire checkAdminProfile ici car onAuthStateChange va le faire
         
         toast({
@@ -145,7 +164,7 @@ export const useAdminAuth = () => {
         return data;
       }
     } catch (error: any) {
-      console.error('Admin sign in error:', error);
+      console.error('❌ [AdminAuth] Admin sign in error:', error);
       toast({
         title: "Erreur de connexion",
         description: error.message,

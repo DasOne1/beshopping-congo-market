@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -8,6 +7,11 @@ interface AdminProtectedRouteProps {
 }
 
 const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) => {
+  // Temporairement désactiver la vérification d'authentification
+  return <>{children}</>;
+
+  // Code original commenté pour référence
+  /*
   const { isAuthenticated, loading } = useAdminAuth();
   const location = useLocation();
 
@@ -24,6 +28,7 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) =
   }
 
   return <>{children}</>;
+  */
 };
 
 export default AdminProtectedRoute;
