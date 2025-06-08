@@ -24,6 +24,7 @@ const AdminAuth = () => {
   // Si déjà connecté, rediriger vers le dashboard admin
   React.useEffect(() => {
     if (isAuthenticated) {
+      console.log('User is authenticated, redirecting to admin dashboard...');
       const from = location.state?.from?.pathname || '/admin';
       navigate(from, { replace: true });
     }
@@ -32,10 +33,17 @@ const AdminAuth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signIn(formData.email, formData.password);
-      // Redirection explicite après connexion réussie
-      const from = location.state?.from?.pathname || '/admin';
-      navigate(from, { replace: true });
+      console.log('Starting sign in process...');
+      const result = await signIn(formData.email, formData.password);
+      
+      if (result?.user) {
+        console.log('Sign in successful, waiting for auth state change...');
+        // Attendre un peu pour que l'auth state change se propage
+        setTimeout(() => {
+          const from = location.state?.from?.pathname || '/admin';
+          navigate(from, { replace: true });
+        }, 100);
+      }
     } catch (error) {
       console.error('Sign in error:', error);
     }
@@ -44,9 +52,16 @@ const AdminAuth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signUp(formData.email, formData.password, formData.fullName);
-      // Après création du compte, rediriger vers le dashboard
-      navigate('/admin', { replace: true });
+      console.log('Starting sign up process...');
+      const result = await signUp(formData.email, formData.password, formData.fullName);
+      
+      if (result?.user) {
+        console.log('Sign up successful, waiting for auth state change...');
+        // Attendre un peu pour que l'auth state change se propage
+        setTimeout(() => {
+          navigate('/admin', { replace: true });
+        }, 100);
+      }
     } catch (error) {
       console.error('Sign up error:', error);
     }

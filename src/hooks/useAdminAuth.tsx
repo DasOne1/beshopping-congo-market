@@ -23,23 +23,41 @@ export const useAdminAuth = () => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminProfile(session.user.id);
-      } else {
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+          setLoading(false);
+          return;
+        }
+
+        if (session?.user) {
+          console.log('Initial session found for user:', session.user.email);
+          setUser(session.user);
+          await checkAdminProfile(session.user.id);
+        } else {
+          console.log('No initial session found');
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error in getInitialSession:', error);
         setLoading(false);
       }
-    });
+    };
+
+    getInitialSession();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Admin auth state changed:', event, session?.user?.email);
-        setUser(session?.user ?? null);
+        
         if (session?.user) {
+          setUser(session.user);
           await checkAdminProfile(session.user.id);
         } else {
+          setUser(null);
           setAdminProfile(null);
           setLoading(false);
         }
@@ -51,6 +69,9 @@ export const useAdminAuth = () => {
 
   const checkAdminProfile = async (userId: string) => {
     try {
+      console.log('Checking admin profile for user:', userId);
+      setLoading(true);
+
       // Utiliser une requête directe sans RLS pour éviter la récursion
       const { data, error } = await supabase
         .rpc('is_admin', { user_id: userId });
@@ -61,6 +82,8 @@ export const useAdminAuth = () => {
         setLoading(false);
         return;
       }
+
+      console.log('Admin check result:', data);
 
       if (data) {
         // Si l'utilisateur est admin, récupérer son profil
@@ -75,6 +98,7 @@ export const useAdminAuth = () => {
           console.error('Error fetching admin profile:', profileError);
           setAdminProfile(null);
         } else {
+          console.log('Admin profile found:', profile);
           setAdminProfile(profile);
           // Update last login
           await supabase
@@ -83,6 +107,7 @@ export const useAdminAuth = () => {
             .eq('id', profile.id);
         }
       } else {
+        console.log('User is not an admin');
         setAdminProfile(null);
       }
     } catch (error) {
@@ -103,14 +128,22 @@ export const useAdminAuth = () => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign in error:', error);
+        throw error;
+      }
 
-      console.log('Admin sign in successful:', data.user?.email);
-      
-      toast({
-        title: "Connexion réussie",
-        description: "Bienvenue dans l'administration !",
-      });
+      if (data.user) {
+        console.log('Admin sign in successful:', data.user.email);
+        // Ne pas faire checkAdminProfile ici car onAuthStateChange va le faire
+        
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue dans l'administration !",
+        });
+        
+        return data;
+      }
     } catch (error: any) {
       console.error('Admin sign in error:', error);
       toast({
@@ -139,10 +172,14 @@ export const useAdminAuth = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign up error:', error);
+        throw error;
+      }
 
       // Créer le profil admin manuellement
       if (data.user) {
+        console.log('User created, creating admin profile...');
         const { error: profileError } = await supabase
           .from('admin_profiles')
           .insert({
@@ -155,6 +192,7 @@ export const useAdminAuth = () => {
 
         if (profileError) {
           console.error('Error creating admin profile:', profileError);
+          throw new Error('Erreur lors de la création du profil administrateur');
         } else {
           console.log('Admin profile created successfully');
         }
@@ -164,6 +202,8 @@ export const useAdminAuth = () => {
         title: "Compte admin créé",
         description: "Votre compte administrateur a été créé avec succès",
       });
+      
+      return data;
     } catch (error: any) {
       console.error('Admin sign up error:', error);
       toast({
@@ -182,11 +222,15 @@ export const useAdminAuth = () => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
+      setUser(null);
+      setAdminProfile(null);
+
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",
       });
     } catch (error: any) {
+      console.error('Sign out error:', error);
       toast({
         title: "Erreur de déconnexion",
         description: error.message,
