@@ -1,14 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
@@ -18,20 +17,20 @@ const productSchema = z.object({
   description: z.string().optional(),
   original_price: z.number().min(0, 'Le prix doit être positif'),
   discount: z.number().min(0).max(100).optional(),
-  stock: z.number().min(0, 'Le stock doit être positif'),
+  stock: z.number().min(0, 'Le stock ne peut pas être négatif'),
   category_id: z.string().optional(),
-  status: z.enum(['active', 'inactive', 'out_of_stock']),
-  is_visible: z.boolean(),
-  featured: z.boolean(),
   images: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
+  is_visible: z.boolean(),
+  status: z.enum(['active', 'inactive', 'draft']),
   sku: z.string().optional(),
-  weight: z.number().optional(),
+  weight: z.number().min(0).optional(),
   dimensions: z.object({
     length: z.number().optional(),
     width: z.number().optional(),
     height: z.number().optional(),
   }).optional(),
+  featured: z.boolean().optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -44,10 +43,8 @@ interface AdminProductFormProps {
 export const AdminProductForm: React.FC<AdminProductFormProps> = ({ product, onClose }) => {
   const { createProduct, updateProduct } = useProducts();
   const { categories } = useCategories();
-  const [imageUrls, setImageUrls] = useState<string[]>(product?.images || []);
-  const [newImageUrl, setNewImageUrl] = useState('');
-  const [tags, setTags] = useState<string[]>(product?.tags || []);
-  const [newTag, setNewTag] = useState('');
+  const [imageInput, setImageInput] = useState('');
+  const [tagInput, setTagInput] = useState('');
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -58,67 +55,73 @@ export const AdminProductForm: React.FC<AdminProductFormProps> = ({ product, onC
       discount: product?.discount || 0,
       stock: product?.stock || 0,
       category_id: product?.category_id || '',
-      status: product?.status || 'active',
-      is_visible: product?.is_visible ?? true,
-      featured: product?.featured ?? false,
       images: product?.images || [],
       tags: product?.tags || [],
+      is_visible: product?.is_visible ?? true,
+      status: product?.status || 'active',
       sku: product?.sku || '',
       weight: product?.weight || 0,
-      dimensions: product?.dimensions || {
-        length: 0,
-        width: 0,
-        height: 0,
-      },
+      dimensions: product?.dimensions || { length: 0, width: 0, height: 0 },
+      featured: product?.featured || false,
     },
   });
 
-  useEffect(() => {
-    form.setValue('images', imageUrls);
-  }, [imageUrls, form]);
-
-  useEffect(() => {
-    form.setValue('tags', tags);
-  }, [tags, form]);
-
   const addImage = () => {
-    if (newImageUrl.trim()) {
-      setImageUrls([...imageUrls, newImageUrl.trim()]);
-      setNewImageUrl('');
+    if (imageInput.trim()) {
+      const currentImages = form.getValues('images') || [];
+      form.setValue('images', [...currentImages, imageInput.trim()]);
+      setImageInput('');
     }
   };
 
   const removeImage = (index: number) => {
-    setImageUrls(imageUrls.filter((_, i) => i !== index));
+    const currentImages = form.getValues('images') || [];
+    form.setValue('images', currentImages.filter((_, i) => i !== index));
   };
 
   const addTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim())) {
-      setTags([...tags, newTag.trim()]);
-      setNewTag('');
+    if (tagInput.trim()) {
+      const currentTags = form.getValues('tags') || [];
+      form.setValue('tags', [...currentTags, tagInput.trim()]);
+      setTagInput('');
     }
   };
 
   const removeTag = (index: number) => {
-    setTags(tags.filter((_, i) => i !== index));
+    const currentTags = form.getValues('tags') || [];
+    form.setValue('tags', currentTags.filter((_, i) => i !== index));
   };
 
   const onSubmit = async (data: ProductFormData) => {
     try {
-      // Calculate discounted price if discount is provided
-      const discountedPrice = data.discount && data.discount > 0 
-        ? data.original_price * (1 - data.discount / 100)
+      const discountedPrice = data.discount 
+        ? data.original_price * (1 - data.discount / 100) 
         : data.original_price;
 
       const productData = {
-        ...data,
-        discounted_price: discountedPrice !== data.original_price ? discountedPrice : null,
-        images: imageUrls,
-        tags,
+        name: data.name,
+        description: data.description || null,
+        original_price: data.original_price,
+        discounted_price: discountedPrice,
+        discount: data.discount || 0,
+        stock: data.stock,
+        category_id: data.category_id || null,
+        images: data.images || [],
+        tags: data.tags || [],
+        is_visible: data.is_visible,
+        status: data.status,
+        sku: data.sku || null,
+        weight: data.weight || null,
+        dimensions: data.dimensions || null,
+        featured: data.featured || false,
+        popular: 0
       };
 
       if (product) {
-        await updateProduct.mutateAsync({ id: product.id, ...productData });
+        await updateProduct.mutateAsync({ 
+          id: product.id, 
+          ...productData
+        });
       } else {
         await createProduct.mutateAsync(productData);
       }
@@ -132,10 +135,7 @@ export const AdminProductForm: React.FC<AdminProductFormProps> = ({ product, onC
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Basic Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Informations de base</h3>
-          
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="name"
@@ -152,15 +152,51 @@ export const AdminProductForm: React.FC<AdminProductFormProps> = ({ product, onC
 
           <FormField
             control={form.control}
-            name="description"
+            name="sku"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>SKU</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Description du produit"
-                    className="min-h-[100px]"
+                  <Input placeholder="SKU-001" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Description du produit"
+                  className="min-h-[100px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="original_price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Prix original *</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    placeholder="0.00"
                     {...field}
+                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -168,158 +204,121 @@ export const AdminProductForm: React.FC<AdminProductFormProps> = ({ product, onC
             )}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="original_price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Prix original *</FormLabel>
+          <FormField
+            control={form.control}
+            name="discount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Remise (%)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    min="0" 
+                    max="100"
+                    placeholder="0"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="stock"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Stock *</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    min="0"
+                    placeholder="0"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="category_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Catégorie</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                    />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une catégorie" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <FormField
-              control={form.control}
-              name="discount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Remise (%)</FormLabel>
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Statut</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      placeholder="0"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                    />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner le statut" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="stock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Stock *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="category_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Catégorie</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une catégorie" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories?.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Statut</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="active">Actif</SelectItem>
-                      <SelectItem value="inactive">Inactif</SelectItem>
-                      <SelectItem value="out_of_stock">Rupture de stock</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                  <SelectContent>
+                    <SelectItem value="active">Actif</SelectItem>
+                    <SelectItem value="inactive">Inactif</SelectItem>
+                    <SelectItem value="draft">Brouillon</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         {/* Images */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Images</h3>
-          
-          <div className="flex gap-2">
+        <div>
+          <FormLabel>Images</FormLabel>
+          <div className="flex gap-2 mb-2">
             <Input
               placeholder="URL de l'image"
-              value={newImageUrl}
-              onChange={(e) => setNewImageUrl(e.target.value)}
-              className="flex-1"
+              value={imageInput}
+              onChange={(e) => setImageInput(e.target.value)}
             />
-            <Button type="button" onClick={addImage}>
-              <Plus className="h-4 w-4" />
-            </Button>
+            <Button type="button" onClick={addImage}>Ajouter</Button>
           </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {imageUrls.map((url, index) => (
+          <div className="flex flex-wrap gap-2">
+            {(form.watch('images') || []).map((image, index) => (
               <div key={index} className="relative group">
-                <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                  <img
-                    src={url}
-                    alt={`Image ${index + 1}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                    }}
-                  />
-                </div>
+                <img src={image} alt="" className="w-20 h-20 object-cover rounded" />
                 <Button
                   type="button"
-                  size="sm"
                   variant="destructive"
-                  className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  size="sm"
+                  className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100"
                   onClick={() => removeImage(index)}
                 >
-                  <X className="h-3 w-3" />
+                  ×
                 </Button>
               </div>
             ))}
@@ -327,94 +326,80 @@ export const AdminProductForm: React.FC<AdminProductFormProps> = ({ product, onC
         </div>
 
         {/* Tags */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Tags</h3>
-          
-          <div className="flex gap-2">
+        <div>
+          <FormLabel>Tags</FormLabel>
+          <div className="flex gap-2 mb-2">
             <Input
-              placeholder="Ajouter un tag"
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-              className="flex-1"
+              placeholder="Nouveau tag"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
             />
-            <Button type="button" onClick={addTag}>
-              <Plus className="h-4 w-4" />
-            </Button>
+            <Button type="button" onClick={addTag}>Ajouter</Button>
           </div>
-
           <div className="flex flex-wrap gap-2">
-            {tags.map((tag, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-md text-sm"
-              >
+            {(form.watch('tags') || []).map((tag, index) => (
+              <div key={index} className="bg-secondary px-2 py-1 rounded text-sm flex items-center gap-2">
                 {tag}
                 <Button
                   type="button"
-                  size="sm"
                   variant="ghost"
-                  className="h-4 w-4 p-0 hover:bg-primary/20"
+                  size="sm"
+                  className="h-auto p-0 text-destructive hover:text-destructive"
                   onClick={() => removeTag(index)}
                 >
-                  <X className="h-3 w-3" />
+                  ×
                 </Button>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Settings */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Paramètres</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="is_visible"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Visible</FormLabel>
-                    <div className="text-sm text-muted-foreground">
-                      Le produit est visible sur le site
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="is_visible"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Visible</FormLabel>
+                  <div className="text-sm text-muted-foreground">
+                    Le produit est visible sur le site
                   </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-            <FormField
-              control={form.control}
-              name="featured"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Produit vedette</FormLabel>
-                    <div className="text-sm text-muted-foreground">
-                      Mettre en avant ce produit
-                    </div>
+          <FormField
+            control={form.control}
+            name="featured"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Mis en avant</FormLabel>
+                  <div className="text-sm text-muted-foreground">
+                    Produit mis en avant sur la page d'accueil
                   </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
         </div>
 
         {/* Form Actions */}
-        <div className="flex gap-3 pt-6 border-t">
+        <div className="flex gap-3 pt-4">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Annuler
           </Button>

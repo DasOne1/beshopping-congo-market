@@ -53,7 +53,14 @@ export const AdminCategoryForm: React.FC<AdminCategoryFormProps> = ({ category, 
       if (category) {
         await updateCategory.mutateAsync({ id: category.id, ...data });
       } else {
-        await createCategory.mutateAsync(data);
+        await createCategory.mutateAsync({
+          name: data.name,
+          description: data.description || null,
+          slug: data.slug,
+          image: data.image || null,
+          is_visible: data.is_visible,
+          parent_id: null
+        });
       }
       
       onClose();

@@ -1,424 +1,280 @@
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import {
-  Settings,
-  Store,
-  Bell,
-  Shield,
-  Users,
-  Mail,
-  Phone,
-  MapPin,
-  Save,
-  Plus,
-  Edit,
-  Trash2,
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/hooks/useSettings';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { toast } from '@/components/ui/use-toast';
+import { motion } from 'framer-motion';
+import { Settings, Save, Store, Phone, Mail, MapPin } from 'lucide-react';
 
 const AdminSettings = () => {
-  const { settings, isLoading, updateSetting } = useSettings();
-  const { adminProfile } = useAdminAuth();
+  const { settings, updateSetting, isLoading } = useSettings();
   const [formData, setFormData] = useState({
-    storeName: '',
-    storeDescription: '',
-    storeEmail: '',
-    storePhone: '',
-    storeAddress: '',
-    notifications: true,
-    emailNotifications: true,
-    orderNotifications: true,
+    site_name: '',
+    site_description: '',
+    contact_email: '',
+    contact_phone: '',
+    contact_address: '',
+    whatsapp_number: '',
+    enable_notifications: true,
+    enable_email_orders: true,
   });
 
-  const handleSaveSettings = async () => {
-    try {
-      // Save each setting
-      await Promise.all([
-        updateSetting.mutateAsync({ key: 'store_name', value: formData.storeName }),
-        updateSetting.mutateAsync({ key: 'store_description', value: formData.storeDescription }),
-        updateSetting.mutateAsync({ key: 'store_email', value: formData.storeEmail }),
-        updateSetting.mutateAsync({ key: 'store_phone', value: formData.storePhone }),
-        updateSetting.mutateAsync({ key: 'store_address', value: formData.storeAddress }),
-        updateSetting.mutateAsync({ key: 'notifications_enabled', value: formData.notifications }),
-        updateSetting.mutateAsync({ key: 'email_notifications', value: formData.emailNotifications }),
-        updateSetting.mutateAsync({ key: 'order_notifications', value: formData.orderNotifications }),
-      ]);
-    } catch (error) {
-      console.error('Error saving settings:', error);
-    }
-  };
+  useEffect(() => {
+    if (settings && Array.isArray(settings)) {
+      const settingsMap = settings.reduce((acc, setting) => {
+        acc[setting.key] = setting.value;
+        return acc;
+      }, {} as Record<string, any>);
 
-  const handleInputChange = (key: string, value: any) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
-  };
-
-  React.useEffect(() => {
-    if (settings) {
       setFormData({
-        storeName: settings.find(s => s.key === 'store_name')?.value || '',
-        storeDescription: settings.find(s => s.key === 'store_description')?.value || '',
-        storeEmail: settings.find(s => s.key === 'store_email')?.value || '',
-        storePhone: settings.find(s => s.key === 'store_phone')?.value || '',
-        storeAddress: settings.find(s => s.key === 'store_address')?.value || '',
-        notifications: settings.find(s => s.key === 'notifications_enabled')?.value ?? true,
-        emailNotifications: settings.find(s => s.key === 'email_notifications')?.value ?? true,
-        orderNotifications: settings.find(s => s.key === 'order_notifications')?.value ?? true,
+        site_name: settingsMap.site_name || '',
+        site_description: settingsMap.site_description || '',
+        contact_email: settingsMap.contact_email || '',
+        contact_phone: settingsMap.contact_phone || '',
+        contact_address: settingsMap.contact_address || '',
+        whatsapp_number: settingsMap.whatsapp_number || '',
+        enable_notifications: settingsMap.enable_notifications !== false,
+        enable_email_orders: settingsMap.enable_email_orders !== false,
       });
     }
   }, [settings]);
 
+  const handleInputChange = (key: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleSave = async (key: string, value: any) => {
+    try {
+      await updateSetting.mutateAsync({ key, value });
+      toast({
+        title: "Paramètre mis à jour",
+        description: "Le paramètre a été sauvegardé avec succès.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder le paramètre.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveAll = async () => {
+    try {
+      for (const [key, value] of Object.entries(formData)) {
+        await updateSetting.mutateAsync({ key, value });
+      }
+      toast({
+        title: "Paramètres mis à jour",
+        description: "Tous les paramètres ont été sauvegardés avec succès.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder certains paramètres.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 bg-gray-200 rounded w-1/4 animate-pulse"></div>
-        <Card>
-          <CardContent className="p-6">
-            <div className="animate-pulse space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-4 bg-gray-200 rounded w-full"></div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="p-6">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Paramètres</h1>
-        <p className="text-muted-foreground">
-          Configurez les paramètres de votre boutique et de votre compte
-        </p>
-      </div>
+    <div className="p-6 space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex justify-between items-center"
+      >
+        <div>
+          <h1 className="text-3xl font-bold flex items-center">
+            <Settings className="mr-2 h-8 w-8" />
+            Paramètres
+          </h1>
+          <p className="text-muted-foreground">Gérez les paramètres de votre application</p>
+        </div>
+        <Button onClick={handleSaveAll} disabled={updateSetting.isPending}>
+          <Save className="mr-2 h-4 w-4" />
+          Sauvegarder tout
+        </Button>
+      </motion.div>
 
-      <Tabs defaultValue="store" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="store">Boutique</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-          <TabsTrigger value="profile">Profil</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Informations générales */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Store className="mr-2 h-5 w-5" />
+                Informations générales
+              </CardTitle>
+              <CardDescription>
+                Paramètres de base de votre boutique
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="site_name">Nom du site</Label>
+                <Input
+                  id="site_name"
+                  value={formData.site_name}
+                  onChange={(e) => handleInputChange('site_name', e.target.value)}
+                  placeholder="BeShopping"
+                />
+              </div>
+              <div>
+                <Label htmlFor="site_description">Description du site</Label>
+                <Textarea
+                  id="site_description"
+                  value={formData.site_description}
+                  onChange={(e) => handleInputChange('site_description', e.target.value)}
+                  placeholder="Votre boutique en ligne de confiance"
+                  className="min-h-[100px]"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        {/* Store Settings */}
-        <TabsContent value="store">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Store className="h-5 w-5" />
-                  Informations de la Boutique
-                </CardTitle>
-                <CardDescription>
-                  Configurez les informations principales de votre boutique
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="storeName">Nom de la boutique</Label>
-                    <Input
-                      id="storeName"
-                      value={formData.storeName}
-                      onChange={(e) => handleInputChange('storeName', e.target.value)}
-                      placeholder="BeShopping Congo"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="storeEmail">Email de contact</Label>
-                    <Input
-                      id="storeEmail"
-                      type="email"
-                      value={formData.storeEmail}
-                      onChange={(e) => handleInputChange('storeEmail', e.target.value)}
-                      placeholder="contact@beshopping.com"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="storeDescription">Description de la boutique</Label>
-                  <Textarea
-                    id="storeDescription"
-                    value={formData.storeDescription}
-                    onChange={(e) => handleInputChange('storeDescription', e.target.value)}
-                    placeholder="Décrivez votre boutique..."
-                    className="min-h-[100px]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="storePhone">Téléphone</Label>
-                    <Input
-                      id="storePhone"
-                      value={formData.storePhone}
-                      onChange={(e) => handleInputChange('storePhone', e.target.value)}
-                      placeholder="+243 978 100 940"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="storeAddress">Adresse</Label>
-                    <Input
-                      id="storeAddress"
-                      value={formData.storeAddress}
-                      onChange={(e) => handleInputChange('storeAddress', e.target.value)}
-                      placeholder="Lubumbashi, RDC"
-                    />
-                  </div>
-                </div>
-
-                <Button onClick={handleSaveSettings} className="gap-2">
-                  <Save className="h-4 w-4" />
-                  Enregistrer les paramètres
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </TabsContent>
-
-        {/* Notifications Settings */}
-        <TabsContent value="notifications">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Notifications
-                </CardTitle>
-                <CardDescription>
-                  Configurez vos préférences de notifications
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="notifications">Notifications générales</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Recevoir des notifications pour les événements importants
-                      </p>
-                    </div>
-                    <Switch
-                      id="notifications"
-                      checked={formData.notifications}
-                      onCheckedChange={(value) => handleInputChange('notifications', value)}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="emailNotifications">Notifications email</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Recevoir des notifications par email
-                      </p>
-                    </div>
-                    <Switch
-                      id="emailNotifications"
-                      checked={formData.emailNotifications}
-                      onCheckedChange={(value) => handleInputChange('emailNotifications', value)}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="orderNotifications">Nouvelles commandes</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Être notifié immédiatement des nouvelles commandes
-                      </p>
-                    </div>
-                    <Switch
-                      id="orderNotifications"
-                      checked={formData.orderNotifications}
-                      onCheckedChange={(value) => handleInputChange('orderNotifications', value)}
-                    />
-                  </div>
-                </div>
-
-                <Button onClick={handleSaveSettings} className="gap-2">
-                  <Save className="h-4 w-4" />
-                  Enregistrer les préférences
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </TabsContent>
-
-        {/* Users Management */}
-        <TabsContent value="users">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Gestion des Utilisateurs Admin
-                </CardTitle>
-                <CardDescription>
-                  Gérez les comptes administrateurs de votre boutique
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-sm font-medium">Administrateurs actuels</h4>
-                    <Button size="sm" className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Ajouter un admin
-                    </Button>
-                  </div>
-
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nom</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Rôle</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell>{adminProfile?.full_name}</TableCell>
-                        <TableCell>{adminProfile?.email}</TableCell>
-                        <TableCell>{adminProfile?.role}</TableCell>
-                        <TableCell>
-                          <span className="text-green-600">Actif</span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="outline">
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button size="sm" variant="outline" disabled>
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </TabsContent>
-
-        {/* Profile Settings */}
-        <TabsContent value="profile">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Mon Profil Administrateur
-                </CardTitle>
-                <CardDescription>
-                  Gérez vos informations personnelles d'administrateur
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Nom complet</Label>
-                    <Input
-                      id="fullName"
-                      value={adminProfile?.full_name || ''}
-                      readOnly
-                      className="bg-muted"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={adminProfile?.email || ''}
-                      readOnly
-                      className="bg-muted"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Rôle</Label>
-                    <Input
-                      id="role"
-                      value={adminProfile?.role || ''}
-                      readOnly
-                      className="bg-muted"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastLogin">Dernière connexion</Label>
-                    <Input
-                      id="lastLogin"
-                      value={adminProfile?.last_login 
-                        ? new Date(adminProfile.last_login).toLocaleString('fr-FR')
-                        : 'Première connexion'
-                      }
-                      readOnly
-                      className="bg-muted"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="memberSince">Membre depuis</Label>
+        {/* Informations de contact */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Phone className="mr-2 h-5 w-5" />
+                Informations de contact
+              </CardTitle>
+              <CardDescription>
+                Coordonnées de contact pour vos clients
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="contact_email">Email de contact</Label>
+                <div className="flex">
+                  <Mail className="w-10 px-3 h-10 border border-r-0 rounded-l bg-muted flex items-center justify-center" />
                   <Input
-                    id="memberSince"
-                    value={adminProfile?.created_at 
-                      ? new Date(adminProfile.created_at).toLocaleDateString('fr-FR')
-                      : ''
-                    }
-                    readOnly
-                    className="bg-muted"
+                    id="contact_email"
+                    type="email"
+                    value={formData.contact_email}
+                    onChange={(e) => handleInputChange('contact_email', e.target.value)}
+                    placeholder="contact@beshopping.com"
+                    className="rounded-l-none"
                   />
                 </div>
+              </div>
+              <div>
+                <Label htmlFor="contact_phone">Téléphone de contact</Label>
+                <div className="flex">
+                  <Phone className="w-10 px-3 h-10 border border-r-0 rounded-l bg-muted flex items-center justify-center" />
+                  <Input
+                    id="contact_phone"
+                    value={formData.contact_phone}
+                    onChange={(e) => handleInputChange('contact_phone', e.target.value)}
+                    placeholder="+33 1 23 45 67 89"
+                    className="rounded-l-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="whatsapp_number">Numéro WhatsApp</Label>
+                <Input
+                  id="whatsapp_number"
+                  value={formData.whatsapp_number}
+                  onChange={(e) => handleInputChange('whatsapp_number', e.target.value)}
+                  placeholder="+33123456789"
+                />
+              </div>
+              <div>
+                <Label htmlFor="contact_address">Adresse</Label>
+                <div className="flex">
+                  <MapPin className="w-10 px-3 h-10 border border-r-0 rounded-l bg-muted flex items-center justify-center" />
+                  <Textarea
+                    id="contact_address"
+                    value={formData.contact_address}
+                    onChange={(e) => handleInputChange('contact_address', e.target.value)}
+                    placeholder="123 Rue de la Paix, 75001 Paris, France"
+                    className="rounded-l-none min-h-[80px]"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-                <p className="text-sm text-muted-foreground">
-                  Pour modifier vos informations personnelles, contactez un super administrateur.
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </TabsContent>
-      </Tabs>
+        {/* Préférences */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="lg:col-span-2"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Préférences</CardTitle>
+              <CardDescription>
+                Paramètres de fonctionnement de votre boutique
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Notifications actives</Label>
+                  <div className="text-sm text-muted-foreground">
+                    Recevoir des notifications pour les nouvelles commandes
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.enable_notifications}
+                  onCheckedChange={(checked) => handleInputChange('enable_notifications', checked)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Emails de commande</Label>
+                  <div className="text-sm text-muted-foreground">
+                    Envoyer des emails de confirmation aux clients
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.enable_email_orders}
+                  onCheckedChange={(checked) => handleInputChange('enable_email_orders', checked)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </div>
   );
 };
