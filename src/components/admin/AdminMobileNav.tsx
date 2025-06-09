@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -6,29 +5,31 @@ import {
   Package, 
   ShoppingCart, 
   BarChart3, 
-  TrendingUp 
+  TrendingUp,
+  Users,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const AdminMobileNav = () => {
   const navigation = [
     {
-      name: 'Home',
+      name: 'Dashboard',
       href: '/admin/dashboard',
       icon: LayoutDashboard,
     },
     {
-      name: 'Catalog',
+      name: 'Catalogue',
       href: '/admin/catalog',
       icon: Package,
     },
     {
-      name: 'Orders',
+      name: 'Commandes',
       href: '/admin/orders',
       icon: ShoppingCart,
     },
     {
-      name: 'Reports',
+      name: 'Rapports',
       href: '/admin/reports',
       icon: BarChart3,
     },
@@ -37,6 +38,12 @@ const AdminMobileNav = () => {
       href: '/admin/analytics',
       icon: TrendingUp,
     },
+    {
+      name: 'Clients',
+      href: '/admin/customers',
+      icon: Users,
+    },
+   
   ];
 
   return (
@@ -50,15 +57,15 @@ const AdminMobileNav = () => {
               to={item.href}
               className={({ isActive }) =>
                 cn(
-                  'flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors',
+                  'flex flex-col items-center gap-1 px-2 py-1 text-xs font-medium transition-colors',
                   isActive
                     ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-gray-600 dark:text-gray-400'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
                 )
               }
             >
               <Icon className="h-5 w-5" />
-              <span>{item.name}</span>
+              <span className="text-[10px]">{item.name}</span>
             </NavLink>
           );
         })}

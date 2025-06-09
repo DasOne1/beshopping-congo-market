@@ -20,6 +20,11 @@ export function MobileNavBar() {
     { icon: User, path: '/account' },
   ];
 
+  // Ne pas afficher dans la section admin
+  if (location.pathname.startsWith('/admin')) {
+    return null;
+  }
+
   // Afficher seulement sur mobile
   if (!isMobile) {
     return null;
