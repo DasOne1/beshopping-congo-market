@@ -92,54 +92,54 @@ const AdminOrders = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">Total</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-lg md:text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">En attente</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">En attente</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
+            <div className="text-lg md:text-2xl font-bold text-orange-600">{stats.pending}</div>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">En cours</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">En cours</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.processing}</div>
+            <div className="text-lg md:text-2xl font-bold text-blue-600">{stats.processing}</div>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Terminées</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">Terminées</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
+            <div className="text-lg md:text-2xl font-bold text-green-600">{stats.completed}</div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="col-span-2 md:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clients</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">Clients</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.customers}</div>
+            <div className="text-lg md:text-2xl font-bold">{stats.customers}</div>
           </CardContent>
         </Card>
       </div>
@@ -157,7 +157,7 @@ const AdminOrders = () => {
         </div>
         
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="Filtrer par statut" />
           </SelectTrigger>
           <SelectContent>
@@ -175,90 +175,92 @@ const AdminOrders = () => {
       {/* Orders Table */}
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Commande</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Montant</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredOrders.map((order) => (
-                <TableRow 
-                  key={order.id}
-                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
-                  onClick={() => {
-                    setSelectedOrder(order);
-                    setIsDetailDialogOpen(true);
-                  }}
-                >
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{order.order_number}</p>
-                      <p className="text-sm text-gray-500">
-                        {order.order_items?.length || 0} article(s)
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{order.customer_name}</p>
-                      <p className="text-sm text-gray-500">{order.customer_phone}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatDateTime(order.created_at!)}</TableCell>
-                  <TableCell className="font-medium">
-                    {formatCurrency(order.total_amount)}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(order.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedOrder(order);
-                          setIsDetailDialogOpen(true);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      
-                      <Select onValueChange={(value) => handleStatusUpdate(order.id, value)}>
-                        <SelectTrigger className="w-[130px]">
-                          <SelectValue placeholder="Changer" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">En attente</SelectItem>
-                          <SelectItem value="confirmed">Confirmée</SelectItem>
-                          <SelectItem value="processing">En cours</SelectItem>
-                          <SelectItem value="shipped">Expédiée</SelectItem>
-                          <SelectItem value="delivered">Livrée</SelectItem>
-                          <SelectItem value="cancelled">Annulée</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(order.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[100px] md:min-w-[120px]">Commande</TableHead>
+                  <TableHead className="min-w-[120px] md:min-w-[150px]">Client</TableHead>
+                  <TableHead className="min-w-[80px] md:min-w-[120px]">Date</TableHead>
+                  <TableHead className="min-w-[80px] md:min-w-[100px]">Montant</TableHead>
+                  <TableHead className="min-w-[100px] md:min-w-[120px]">Statut</TableHead>
+                  <TableHead className="text-right min-w-[150px] md:min-w-[200px]">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredOrders.map((order) => (
+                  <TableRow 
+                    key={order.id}
+                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setIsDetailDialogOpen(true);
+                    }}
+                  >
+                    <TableCell className="min-w-[100px] md:min-w-[120px]">
+                      <div>
+                        <p className="font-medium text-sm md:text-base">{order.order_number}</p>
+                        <p className="text-xs md:text-sm text-gray-500">
+                          {order.order_items?.length || 0} article(s)
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="min-w-[120px] md:min-w-[150px]">
+                      <div>
+                        <p className="font-medium text-sm md:text-base">{order.customer_name}</p>
+                        <p className="text-xs md:text-sm text-gray-500">{order.customer_phone}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="min-w-[80px] md:min-w-[120px] text-xs md:text-sm">{formatDateTime(order.created_at!)}</TableCell>
+                    <TableCell className="font-medium min-w-[80px] md:min-w-[100px] text-sm md:text-base">
+                      {formatCurrency(order.total_amount)}
+                    </TableCell>
+                    <TableCell className="min-w-[100px] md:min-w-[120px]">{getStatusBadge(order.status)}</TableCell>
+                    <TableCell className="text-right min-w-[150px] md:min-w-[200px]">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedOrder(order);
+                            setIsDetailDialogOpen(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        
+                        <Select onValueChange={(value) => handleStatusUpdate(order.id, value)}>
+                          <SelectTrigger className="w-[100px] md:w-[130px]">
+                            <SelectValue placeholder="Changer" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">En attente</SelectItem>
+                            <SelectItem value="confirmed">Confirmée</SelectItem>
+                            <SelectItem value="processing">En cours</SelectItem>
+                            <SelectItem value="shipped">Expédiée</SelectItem>
+                            <SelectItem value="delivered">Livrée</SelectItem>
+                            <SelectItem value="cancelled">Annulée</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(order.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { Search, Settings, Moon, Sun, Bell, User, ShoppingBag } from 'lucide-react';
+import React from 'react';
+import { Settings, Moon, Sun, Bell, User, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +18,6 @@ const AdminHeader = () => {
   const { adminProfile, signOut } = useAdminAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSignOut = async () => {
     await signOut();
@@ -41,27 +39,8 @@ const AdminHeader = () => {
           </div>
         </div>
 
-        {/* Barre de recherche */}
-        <div className="hidden md:flex flex-1 max-w-md mx-4">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              type="text"
-              placeholder="Rechercher..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-gray-100 dark:bg-gray-700 border-0"
-            />
-          </div>
-        </div>
-
         {/* Actions header */}
         <div className="flex items-center gap-2">
-          {/* Recherche mobile */}
-          <Button variant="ghost" size="sm" className="md:hidden">
-            <Search className="h-4 w-4" />
-          </Button>
-
           {/* Toggle thème */}
           <Button variant="ghost" size="sm" onClick={toggleTheme}>
             {theme === 'dark' ? (
