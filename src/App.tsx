@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,7 @@ import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import SplashScreen from "@/components/SplashScreen";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { MobileNavBar } from "@/components/MobileNavBar";
+import AdminLayout from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import Categories from "./pages/Categories";
@@ -21,6 +23,8 @@ import Account from "./pages/Account";
 import CustomOrder from "./pages/CustomOrder";
 import NotFound from "./pages/NotFound";
 import EmailCustomerAuth from "./pages/EmailCustomerAuth";
+import AdminAuth from "./pages/AdminAuth";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -56,6 +60,12 @@ function App() {
                       <Route path="/account" element={<Account />} />
                       <Route path="/custom-order" element={<CustomOrder />} />
                       <Route path="/customer-auth" element={<EmailCustomerAuth />} />
+
+                      {/* Admin routes */}
+                      <Route path="/admin/auth" element={<AdminAuth />} />
+                      <Route path="/admin" element={<AdminLayout />}>
+                        <Route path="dashboard" element={<AdminDashboard />} />
+                      </Route>
 
                       {/* 404 route */}
                       <Route path="*" element={<NotFound />} />
