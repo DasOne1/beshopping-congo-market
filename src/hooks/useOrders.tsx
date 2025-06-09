@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -13,12 +13,54 @@ export const useOrders = () => {
         .from('orders')
         .select(`
           *,
-          order_items(*)
+          order_items(*),
+          shipping_address
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data;
+    },
+  });
+
+  const createOrder = useMutation({
+    mutationFn: async ({ order, items }: { order: any; items: any[] }) => {
+      // Créer la commande
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert([order])
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Ajouter les articles de la commande
+      const orderItems = items.map(item => ({
+        ...item,
+        order_id: orderData.id
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      return orderData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast({
+        title: "Commande créée",
+        description: "La commande a été créée avec succès",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -79,6 +121,7 @@ export const useOrders = () => {
   return {
     orders,
     isLoading,
+    createOrder,
     updateOrderStatus,
     deleteOrder,
   };

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { useCustomers } from '@/hooks/useCustomers';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import CustomerDialog from './CustomerDialog';
 import CustomerDetailDialog from './CustomerDetailDialog';
+import { Customer } from '@/types';
 
 interface CustomersSectionProps {
   searchTerm: string;
@@ -16,7 +16,7 @@ interface CustomersSectionProps {
 
 const CustomersSection = ({ searchTerm }: CustomersSectionProps) => {
   const { customers, isLoading, deleteCustomer } = useCustomers();
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
@@ -37,29 +37,37 @@ const CustomersSection = ({ searchTerm }: CustomersSectionProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header Actions */}
-      <div className="flex justify-end">
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau client
-        </Button>
+    <div className="flex flex-col h-full">
+      {/* Header Actions - Fixed */}
+      <div className="flex-none space-y-6">
+        <div className="flex justify-end">
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau client
+          </Button>
+        </div>
+
+        {/* Table Header - Fixed */}
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead>Client</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Commandes</TableHead>
+                <TableHead>Total dépensé</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Membre depuis</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+          </Table>
+        </div>
       </div>
 
-      {/* Customers Table */}
-      <div className="border rounded-lg">
+      {/* Table Body - Scrollable */}
+      <div className="flex-1 overflow-y-auto border rounded-lg mt-[-1px]">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Client</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Commandes</TableHead>
-              <TableHead>Total dépensé</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Membre depuis</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
           <TableBody>
             {filteredCustomers.map((customer) => (
               <TableRow 
@@ -102,7 +110,7 @@ const CustomersSection = ({ searchTerm }: CustomersSectionProps) => {
                     {customer.orders_count || 0} commande(s)
                   </Badge>
                 </TableCell>
-                <TableCell className="font-medium">
+                <TableCell>
                   {formatCurrency(customer.total_spent || 0)}
                 </TableCell>
                 <TableCell>

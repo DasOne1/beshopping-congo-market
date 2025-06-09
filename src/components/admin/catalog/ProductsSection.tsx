@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import ProductDialog from './ProductDialog';
 import ProductDetailDialog from './ProductDetailDialog';
+import { Product } from '@/types';
 
 interface ProductsSectionProps {
   searchTerm: string;
@@ -18,7 +19,7 @@ interface ProductsSectionProps {
 const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
   const { products, isLoading, updateProduct, deleteProduct } = useProducts();
   const { categories } = useCategories();
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -56,64 +57,72 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="flex gap-2">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="active">Actif</SelectItem>
-              <SelectItem value="inactive">Inactif</SelectItem>
-              <SelectItem value="draft">Brouillon</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="flex flex-col h-full">
+      {/* Header Actions - Fixed */}
+      <div className="flex-none space-y-6">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="flex gap-2">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="active">Actif</SelectItem>
+                <SelectItem value="inactive">Inactif</SelectItem>
+                <SelectItem value="draft">Brouillon</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Catégorie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les catégories</SelectItem>
+                {categories?.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Catégorie" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les catégories</SelectItem>
-              {categories?.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau produit
+          </Button>
         </div>
-        
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau produit
-        </Button>
+
+        {/* Table Header - Fixed */}
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead>Produit</TableHead>
+                <TableHead>Prix</TableHead>
+                <TableHead>Stock</TableHead>
+                <TableHead>Catégorie</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Créé le</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+          </Table>
+        </div>
       </div>
 
-      {/* Products Table */}
-      <div className="border rounded-lg">
+      {/* Table Body - Scrollable */}
+      <div className="flex-1 overflow-y-auto border rounded-lg mt-[-1px]">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Produit</TableHead>
-              <TableHead>Prix</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Catégorie</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Créé le</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
           <TableBody>
             {filteredProducts.map((product) => (
               <TableRow 
                 key={product.id} 
                 className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
                 onClick={() => {
-                  setSelectedProduct(product);
+                  setSelectedProduct(product as Product);
                   setIsDetailDialogOpen(true);
                 }}
               >
@@ -174,7 +183,7 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedProduct(product);
+                        setSelectedProduct(product as Product);
                         setIsCreateDialogOpen(true);
                       }}
                     >
