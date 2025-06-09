@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,95 +27,92 @@ const AdminCatalog = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
-      {/* Header - Fixed */}
-      <div className="flex-none p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Catalogue
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Gérez vos catégories, produits et clients
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Catalogue
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Gérez vos catégories, produits et clients
+          </p>
+        </div>
+        
+        {/* Search */}
+        <div className="relative w-full sm:w-auto sm:min-w-[300px]">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Rechercher..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Catégories</CardTitle>
+            <FolderOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.categories}</div>
+            <p className="text-xs text-muted-foreground">
+              Total des catégories
             </p>
-          </div>
-          
-          {/* Search */}
-          <div className="relative w-full sm:w-auto sm:min-w-[300px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Rechercher..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Produits</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.products}</div>
+            <p className="text-xs text-muted-foreground">
+              Produits en stock
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Clients</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.customers}</div>
+            <p className="text-xs text-muted-foreground">
+              Clients enregistrés
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Catégories</CardTitle>
-              <FolderOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.categories}</div>
-              <p className="text-xs text-muted-foreground">
-                Total des catégories
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Produits</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.products}</div>
-              <p className="text-xs text-muted-foreground">
-                Produits en stock
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Clients</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.customers}</div>
-              <p className="text-xs text-muted-foreground">
-                Clients enregistrés
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tabs - Fixed */}
+      {/* Main Content */}
+      <Tabs defaultValue="categories" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="categories">Catégories</TabsTrigger>
           <TabsTrigger value="products">Produits</TabsTrigger>
           <TabsTrigger value="customers">Clients</TabsTrigger>
         </TabsList>
-      </div>
-
-      {/* Main Content - Scrollable */}
-      <div className="flex-1 overflow-y-auto p-6 pt-0">
-        <TabsContent value="categories" className="mt-6">
+        
+        <TabsContent value="categories">
           <CategoriesSection searchTerm={searchTerm} />
         </TabsContent>
         
-        <TabsContent value="products" className="mt-6">
+        <TabsContent value="products">
           <ProductsSection searchTerm={searchTerm} />
         </TabsContent>
         
-        <TabsContent value="customers" className="mt-6">
+        <TabsContent value="customers">
           <CustomersSection searchTerm={searchTerm} />
         </TabsContent>
-      </div>
+      </Tabs>
     </div>
   );
 };

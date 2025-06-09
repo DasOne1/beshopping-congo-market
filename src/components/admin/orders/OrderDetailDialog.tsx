@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -108,7 +108,11 @@ const OrderDetailDialog = ({ order, open, onOpenChange }: OrderDetailDialogProps
                     {typeof order.shipping_address === 'string' ? (
                       <p>{order.shipping_address}</p>
                     ) : (
-                      <p>{order.shipping_address.address}</p>
+                      <div>
+                        <p>{order.shipping_address.street}</p>
+                        <p>{order.shipping_address.city}</p>
+                        <p>{order.shipping_address.country}</p>
+                      </div>
                     )}
                   </div>
                 ) : (
