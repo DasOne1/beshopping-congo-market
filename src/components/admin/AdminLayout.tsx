@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-// import { useAdminAuth } from '@/hooks/useAdminAuth';
 import AdminHeader from './AdminHeader';
 import AdminSidebar from './AdminSidebar';
 import AdminMobileNav from './AdminMobileNav';
 
 const AdminLayout = () => {
+  // Authentification temporairement désactivée pour permettre l'accès
   // const { isAuthenticated, loading } = useAdminAuth();
 
   // if (loading) {

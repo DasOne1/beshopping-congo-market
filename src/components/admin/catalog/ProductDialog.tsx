@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,7 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
     category_id: '',
     sku: '',
     weight: '',
-    status: 'active',
+    status: 'active' as 'active' | 'inactive' | 'draft',
     is_visible: true,
     featured: false,
     images: [''],
@@ -268,7 +267,7 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
               <Label htmlFor="status">Statut</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                onValueChange={(value: 'active' | 'inactive' | 'draft') => setFormData(prev => ({ ...prev, status: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />
