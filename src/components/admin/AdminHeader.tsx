@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Search, Settings, Moon, Sun, Bell, User } from 'lucide-react';
+import { Search, Settings, Moon, Sun, Bell, User, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -116,6 +115,11 @@ const AdminHeader = () => {
               <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
                 Paramètres
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/')}>
+                <ShoppingBag className="mr-2 h-4 w-4" />
+                Aller à la boutique
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
