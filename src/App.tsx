@@ -25,6 +25,12 @@ import NotFound from "./pages/NotFound";
 import EmailCustomerAuth from "./pages/EmailCustomerAuth";
 import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminCatalog from "./pages/admin/AdminCatalog";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminReports from "./pages/admin/AdminReports";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminProfile from "./pages/admin/AdminProfile";
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -65,6 +71,12 @@ function App() {
                       <Route path="/admin/auth" element={<AdminAuth />} />
                       <Route path="/admin" element={<AdminLayout />}>
                         <Route path="dashboard" element={<AdminDashboard />} />
+                        <Route path="catalog" element={<AdminCatalog />} />
+                        <Route path="orders" element={<AdminOrders />} />
+                        <Route path="reports" element={<AdminReports />} />
+                        <Route path="analytics" element={<AdminAnalytics />} />
+                        <Route path="settings" element={<AdminSettings />} />
+                        <Route path="profile" element={<AdminProfile />} />
                       </Route>
 
                       {/* 404 route */}
