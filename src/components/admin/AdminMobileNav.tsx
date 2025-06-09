@@ -6,7 +6,6 @@ import {
   ShoppingCart, 
   BarChart3, 
   TrendingUp,
-  Users,
   Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -37,11 +36,6 @@ const AdminMobileNav = () => {
       name: 'Analytics',
       href: '/admin/analytics',
       icon: TrendingUp,
-    },
-    {
-      name: 'Clients',
-      href: '/admin/customers',
-      icon: Users,
     },
     {
       name: 'Paramètres',
