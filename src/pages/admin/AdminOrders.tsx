@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,7 +52,7 @@ const AdminOrders = () => {
     const Icon = config.icon;
 
     return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
+      <Badge variant={config.variant} className="flex items-center gap-1 text-xs">
         <Icon className="h-3 w-3" />
         {config.label}
       </Badge>
@@ -73,83 +74,83 @@ const AdminOrders = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 max-w-full overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white truncate">
             Commandes
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1">
             Gérez toutes les commandes de votre boutique
           </p>
         </div>
         
-        <Button>
+        <Button className="w-full md:w-auto">
           <Download className="h-4 w-4 mr-2" />
           Exporter
         </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Total</CardTitle>
+            <CardTitle className="text-sm font-medium">Total</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg md:text-2xl font-bold">{stats.total}</div>
+            <div className="text-xl md:text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">En attente</CardTitle>
+            <CardTitle className="text-sm font-medium">En attente</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg md:text-2xl font-bold text-orange-600">{stats.pending}</div>
+            <div className="text-xl md:text-2xl font-bold text-orange-600">{stats.pending}</div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">En cours</CardTitle>
+            <CardTitle className="text-sm font-medium">En cours</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg md:text-2xl font-bold text-blue-600">{stats.processing}</div>
+            <div className="text-xl md:text-2xl font-bold text-blue-600">{stats.processing}</div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Terminées</CardTitle>
+            <CardTitle className="text-sm font-medium">Terminées</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg md:text-2xl font-bold text-green-600">{stats.completed}</div>
+            <div className="text-xl md:text-2xl font-bold text-green-600">{stats.completed}</div>
           </CardContent>
         </Card>
         
-        <Card className="col-span-2 md:col-span-1">
+        <Card className="w-full sm:col-span-2 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Clients</CardTitle>
+            <CardTitle className="text-sm font-medium">Clients</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg md:text-2xl font-bold">{stats.customers}</div>
+            <div className="text-xl md:text-2xl font-bold">{stats.customers}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col gap-3 md:flex-row md:gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Rechercher par numéro, client ou email..."
+            placeholder="Rechercher par numéro, client..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -157,7 +158,7 @@ const AdminOrders = () => {
         </div>
         
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[200px]">
+          <SelectTrigger className="w-full md:w-[180px]">
             <SelectValue placeholder="Filtrer par statut" />
           </SelectTrigger>
           <SelectContent>
@@ -173,18 +174,18 @@ const AdminOrders = () => {
       </div>
 
       {/* Orders Table */}
-      <Card>
+      <Card className="w-full">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[100px] md:min-w-[120px]">Commande</TableHead>
-                  <TableHead className="min-w-[120px] md:min-w-[150px]">Client</TableHead>
-                  <TableHead className="min-w-[80px] md:min-w-[120px]">Date</TableHead>
-                  <TableHead className="min-w-[80px] md:min-w-[100px]">Montant</TableHead>
-                  <TableHead className="min-w-[100px] md:min-w-[120px]">Statut</TableHead>
-                  <TableHead className="text-right min-w-[150px] md:min-w-[200px]">Actions</TableHead>
+                  <TableHead className="w-[120px]">Commande</TableHead>
+                  <TableHead className="w-[140px]">Client</TableHead>
+                  <TableHead className="w-[100px]">Date</TableHead>
+                  <TableHead className="w-[80px]">Montant</TableHead>
+                  <TableHead className="w-[100px]">Statut</TableHead>
+                  <TableHead className="text-right w-[180px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -197,26 +198,26 @@ const AdminOrders = () => {
                       setIsDetailDialogOpen(true);
                     }}
                   >
-                    <TableCell className="min-w-[100px] md:min-w-[120px]">
+                    <TableCell>
                       <div>
-                        <p className="font-medium text-sm md:text-base">{order.order_number}</p>
-                        <p className="text-xs md:text-sm text-gray-500">
+                        <p className="font-medium text-sm">{order.order_number}</p>
+                        <p className="text-xs text-gray-500">
                           {order.order_items?.length || 0} article(s)
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell className="min-w-[120px] md:min-w-[150px]">
+                    <TableCell>
                       <div>
-                        <p className="font-medium text-sm md:text-base">{order.customer_name}</p>
-                        <p className="text-xs md:text-sm text-gray-500">{order.customer_phone}</p>
+                        <p className="font-medium text-sm truncate max-w-[120px]">{order.customer_name}</p>
+                        <p className="text-xs text-gray-500 truncate max-w-[120px]">{order.customer_phone}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="min-w-[80px] md:min-w-[120px] text-xs md:text-sm">{formatDateTime(order.created_at!)}</TableCell>
-                    <TableCell className="font-medium min-w-[80px] md:min-w-[100px] text-sm md:text-base">
+                    <TableCell className="text-xs">{formatDateTime(order.created_at!)}</TableCell>
+                    <TableCell className="font-medium text-sm">
                       {formatCurrency(order.total_amount)}
                     </TableCell>
-                    <TableCell className="min-w-[100px] md:min-w-[120px]">{getStatusBadge(order.status)}</TableCell>
-                    <TableCell className="text-right min-w-[150px] md:min-w-[200px]">
+                    <TableCell>{getStatusBadge(order.status)}</TableCell>
+                    <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
@@ -231,8 +232,8 @@ const AdminOrders = () => {
                         </Button>
                         
                         <Select onValueChange={(value) => handleStatusUpdate(order.id, value)}>
-                          <SelectTrigger className="w-[100px] md:w-[130px]">
-                            <SelectValue placeholder="Changer" />
+                          <SelectTrigger className="w-[90px] h-8">
+                            <SelectValue placeholder="•••" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pending">En attente</SelectItem>

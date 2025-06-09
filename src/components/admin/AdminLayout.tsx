@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import AdminHeader from './AdminHeader';
@@ -21,20 +22,20 @@ const AdminLayout = () => {
   // }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <AdminHeader />
       
       {/* Layout principal */}
-      <div className="flex">
+      <div className="flex w-full">
         {/* Sidebar desktop */}
         <div className="hidden md:block">
           <AdminSidebar />
         </div>
         
         {/* Contenu principal */}
-        <main className="flex-1 md:ml-64 pt-16 pb-20 md:pb-4">
-          <div className="p-4 md:p-6">
+        <main className="flex-1 md:ml-64 pt-16 pb-20 md:pb-6 w-full min-w-0">
+          <div className="p-3 md:p-6 max-w-full">
             <Outlet />
           </div>
         </main>
