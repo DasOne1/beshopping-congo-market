@@ -6,11 +6,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
+import ImageUpload from '@/components/ImageUpload';
+import { Product } from '@/types';
 
 interface ProductDialogProps {
-  product?: any;
+  product?: Product;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -232,33 +236,80 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
           </div>
 
           {/* Images */}
-          <div className="space-y-2">
+          <div className="space-y-4">
             <Label>Images</Label>
-            {formData.images.map((image, index) => (
-              <div key={index} className="flex gap-2">
-                <Input
+            <div className="grid grid-cols-2 gap-4">
+              {formData.images.map((image, index) => (
+                <ImageUpload
+                  key={index}
                   value={image}
-                  onChange={(e) => updateImageField(index, e.target.value)}
-                  placeholder="URL de l'image"
+                  onChange={(value) => {
+                    const newImages = [...formData.images];
+                    newImages[index] = value;
+                    setFormData(prev => ({ ...prev, images: newImages }));
+                  }}
+                  onRemove={() => {
+                    const newImages = formData.images.filter((_, i) => i !== index);
+                    setFormData(prev => ({ ...prev, images: newImages }));
+                  }}
+                  maxSize={2}
                 />
-                {formData.images.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => removeImageField(index)}
-                  >
-                    Supprimer
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addImageField}
-            >
-              Ajouter une image
-            </Button>
+              ))}
+            </div>
+            {formData.images.length < 4 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setFormData(prev => ({ ...prev, images: [...prev.images, ''] }))}
+              >
+                Ajouter une image
+              </Button>
+            )}
+          </div>
+
+          {/* Tags */}
+          <div className="space-y-4">
+            <Label>Tags</Label>
+            <div className="flex flex-wrap gap-2">
+              {formData.tags.map((tag, index) => (
+                tag && (
+                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                    {tag}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-4 w-4 p-0 hover:bg-transparent"
+                      onClick={() => {
+                        const newTags = formData.tags.filter((_, i) => i !== index);
+                        setFormData(prev => ({ ...prev, tags: newTags }));
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                )
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ajouter un tag"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const input = e.target as HTMLInputElement;
+                    const value = input.value.trim();
+                    if (value && !formData.tags.includes(value)) {
+                      setFormData(prev => ({
+                        ...prev,
+                        tags: [...prev.tags.filter(t => t), value]
+                      }));
+                      input.value = '';
+                    }
+                  }
+                }}
+              />
+            </div>
           </div>
 
           {/* Status and Visibility */}

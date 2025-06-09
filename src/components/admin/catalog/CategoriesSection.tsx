@@ -1,10 +1,11 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Eye, EyeOff, FolderOpen } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
+import { useProducts } from '@/hooks/useProducts';
 import { formatDate } from '@/lib/utils';
 import CategoryDialog from './CategoryDialog';
 import CategoryDetailDialog from './CategoryDetailDialog';
@@ -15,6 +16,7 @@ interface CategoriesSectionProps {
 
 const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
   const { categories, isLoading, updateCategory, deleteCategory } = useCategories();
+  const { products } = useProducts();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -23,6 +25,10 @@ const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
     category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     category.description?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  const getProductCount = (categoryId: string) => {
+    return products?.filter(product => product.category_id === categoryId).length || 0;
+  };
 
   const toggleVisibility = async (category: any) => {
     await updateCategory.mutateAsync({
@@ -90,7 +96,7 @@ const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
                   {category.parent_id ? "Sous-catégorie" : "Catégorie principale"}
                 </Badge>
                 <span className="text-sm text-gray-500">
-                  0 produits
+                  {getProductCount(category.id)} produits
                 </span>
               </div>
               

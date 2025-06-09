@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useCategories } from '@/hooks/useCategories';
+import ImageUpload from '@/components/ImageUpload';
 
 interface CategoryDialogProps {
   category?: any;
@@ -51,7 +52,7 @@ const CategoryDialog = ({ category, open, onOpenChange }: CategoryDialogProps) =
     const categoryData = {
       ...formData,
       slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-      parent_id: formData.parent_id || null
+      parent_id: formData.parent_id === 'none' ? null : formData.parent_id
     };
 
     if (category) {
@@ -96,7 +97,7 @@ const CategoryDialog = ({ category, open, onOpenChange }: CategoryDialogProps) =
                   <SelectValue placeholder="Aucune (catégorie principale)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucune (catégorie principale)</SelectItem>
+                  <SelectItem value="none">Aucune (catégorie principale)</SelectItem>
                   {parentCategories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
@@ -118,13 +119,12 @@ const CategoryDialog = ({ category, open, onOpenChange }: CategoryDialogProps) =
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="image">URL de l'image</Label>
-            <Input
-              id="image"
-              type="url"
+            <Label>Image</Label>
+            <ImageUpload
               value={formData.image}
-              onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
-              placeholder="https://..."
+              onChange={(value) => setFormData(prev => ({ ...prev, image: value }))}
+              onRemove={() => setFormData(prev => ({ ...prev, image: '' }))}
+              maxSize={2}
             />
           </div>
           

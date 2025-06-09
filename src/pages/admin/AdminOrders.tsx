@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -230,10 +230,8 @@ const AdminOrders = () => {
                       </Button>
                       
                       <Select onValueChange={(value) => handleStatusUpdate(order.id, value)}>
-                        <SelectTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue placeholder="Changer" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="pending">En attente</SelectItem>
