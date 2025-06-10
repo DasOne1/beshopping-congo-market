@@ -1,0 +1,42 @@
+.admin-loader-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.admin-loader-dots {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+
+.admin-loader-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #6366f1;
+  opacity: 0.3;
+  animation: admin-loader-fade 1.2s linear infinite;
+}
+
+/* Positionner les 12 points autour d'un cercle */
+.admin-loader-dot-1  { top: 0; left: 23px; animation-delay: 0s; }
+.admin-loader-dot-2  { top: 6px; left: 40px; animation-delay: 0.1s; }
+.admin-loader-dot-3  { top: 19px; left: 49px; animation-delay: 0.2s; }
+.admin-loader-dot-4  { top: 34px; left: 44px; animation-delay: 0.3s; }
+.admin-loader-dot-5  { top: 46px; left: 32px; animation-delay: 0.4s; }
+.admin-loader-dot-6  { top: 50px; left: 16px; animation-delay: 0.5s; }
+.admin-loader-dot-7  { top: 44px; left: 2px;  animation-delay: 0.6s; }
+.admin-loader-dot-8  { top: 32px; left: -4px; animation-delay: 0.7s; }
+.admin-loader-dot-9  { top: 19px; left: 0px;  animation-delay: 0.8s; }
+.admin-loader-dot-10 { top: 6px; left: 7px;   animation-delay: 0.9s; }
+.admin-loader-dot-11 { top: 0px; left: 23px;  animation-delay: 1.0s; }
+.admin-loader-dot-12 { top: 6px; left: 40px;  animation-delay: 1.1s; }
+
+@keyframes admin-loader-fade {
+  0%, 100% { opacity: 0.3; }
+  40% { opacity: 1; }
+  60% { opacity: 0.3; }
+} 

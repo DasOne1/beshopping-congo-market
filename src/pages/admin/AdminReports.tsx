@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Download, FileText, TrendingUp, Users, Package, ShoppingCart, Calendar, Filter } from 'lucide-react';
+import { Download, FileText, TrendingUp, Users, Package, ShoppingCart, Filter } from 'lucide-react';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import AdminLoader from '@/components/admin/AdminLoader';
 
 const AdminReports = () => {
   const { stats, recentOrders, topProducts, isLoading } = useAdminDashboard();
@@ -36,7 +36,7 @@ const AdminReports = () => {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center p-8">Chargement...</div>;
+    return <AdminLoader />;
   }
 
   return (

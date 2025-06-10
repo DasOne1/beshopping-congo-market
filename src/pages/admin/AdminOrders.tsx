@@ -1,16 +1,17 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Filter, Download, Eye, Edit, Trash2, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Download, Eye, Trash2, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 import OrderDetailDialog from '@/components/admin/orders/OrderDetailDialog';
+import AdminLoader from '@/components/admin/AdminLoader';
 
 const AdminOrders = () => {
   const { orders, isLoading, updateOrderStatus, deleteOrder } = useOrders();
@@ -70,7 +71,7 @@ const AdminOrders = () => {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center p-8">Chargement...</div>;
+    return <AdminLoader />;
   }
 
   return (

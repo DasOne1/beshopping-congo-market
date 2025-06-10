@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Store, Mail, Globe, Shield, Bell, Palette, Database } from 'lucide-react';
+import { Settings, Store, Mail, Globe, Shield, Palette, Database } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
-import { toast } from '@/components/ui/use-toast';
 
 const AdminSettings = () => {
   const { settings, updateSetting } = useSettings();

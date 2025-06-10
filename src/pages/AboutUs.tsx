@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Users, Award, Truck, Shield, Star, MapPin, Phone, Mail } from 'lucide-react';
 import Header from '@/components/Header';

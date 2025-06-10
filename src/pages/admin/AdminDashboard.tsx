@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   ShoppingCart, 
@@ -7,10 +6,7 @@ import {
   Truck, 
   CheckCircle, 
   DollarSign,
-  TrendingUp,
-  Users,
-  Package
-} from 'lucide-react';
+  TrendingUp} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';

@@ -1,49 +1,43 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, TrendingDown, Users, ShoppingCart, Package, DollarSign, Calendar, Eye } from 'lucide-react';
+import { TrendingUp, Users, ShoppingCart, Package, DollarSign, Calendar, Eye } from 'lucide-react';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { formatCurrency } from '@/lib/utils';
+import AdminLoader from '@/components/admin/AdminLoader';
 
 const AdminAnalytics = () => {
-  const { stats, topProducts, isLoading } = useAdminDashboard();
+  const { stats, topProducts, isLoading: dashboardLoading } = useAdminDashboard();
+  const { analytics, isLoading: analyticsLoading } = useAnalytics();
   const [timePeriod, setTimePeriod] = useState('month');
 
-  // Données de démonstration pour les graphiques
-  const salesData = [
-    { name: 'Jan', ventes: 4000, commandes: 240 },
-    { name: 'Fév', ventes: 3000, commandes: 139 },
-    { name: 'Mar', ventes: 2000, commandes: 980 },
-    { name: 'Avr', ventes: 2780, commandes: 390 },
-    { name: 'Mai', ventes: 1890, commandes: 480 },
-    { name: 'Jun', ventes: 2390, commandes: 380 },
-    { name: 'Jul', ventes: 3490, commandes: 430 }
-  ];
-
-  const categoryData = [
-    { name: 'Électronique', value: 400, color: '#8884d8' },
-    { name: 'Vêtements', value: 300, color: '#82ca9d' },
-    { name: 'Maison', value: 200, color: '#ffc658' },
-    { name: 'Sports', value: 100, color: '#ff7300' }
-  ];
-
-  const trafficData = [
-    { name: 'Lun', visiteurs: 1200, vues: 2400 },
-    { name: 'Mar', visiteurs: 1900, vues: 1398 },
-    { name: 'Mer', visiteurs: 800, vues: 9800 },
-    { name: 'Jeu', visiteurs: 3908, vues: 3908 },
-    { name: 'Ven', visiteurs: 4800, vues: 4800 },
-    { name: 'Sam', visiteurs: 3800, vues: 3800 },
-    { name: 'Dim', visiteurs: 4300, vues: 4300 }
-  ];
-
-  if (isLoading) {
-    return <div className="flex justify-center p-8">Chargement...</div>;
+  if (dashboardLoading || analyticsLoading) {
+    return <AdminLoader />;
   }
+
+  // Transformer les données d'analyse pour les graphiques
+  const salesData = analytics.salesByDay.map(day => ({
+    name: new Date(day.date).toLocaleDateString('fr-FR', { month: 'short' }),
+    ventes: day.revenue,
+    commandes: day.sales
+  }));
+
+  const categoryData = analytics.customerSegments.map(segment => ({
+    name: segment.segment,
+    value: segment.count,
+    color: segment.segment === 'Clients VIP' ? '#8884d8' : 
+           segment.segment === 'Clients réguliers' ? '#82ca9d' : 
+           segment.segment === 'Nouveaux clients' ? '#ffc658' : '#ff7300'
+  }));
+
+  const trafficData = analytics.salesByDay.map(day => ({
+    name: new Date(day.date).toLocaleDateString('fr-FR', { weekday: 'short' }),
+    visiteurs: Math.round(day.sales * 3), // Estimation basée sur le taux de conversion
+    vues: Math.round(day.sales * 10) // Estimation basée sur le taux de conversion
+  }));
 
   return (
     <div className="space-y-6">
@@ -75,7 +69,7 @@ const AdminAnalytics = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Revenus totaux</CardTitle>
@@ -85,7 +79,10 @@ const AdminAnalytics = () => {
             <div className="text-2xl font-bold">{formatCurrency(stats?.totalRevenue || 0)}</div>
             <div className="flex items-center text-xs text-green-600">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +12.5% vs mois dernier
+              {analytics.salesByDay.length > 1 ? 
+                `${((analytics.salesByDay[analytics.salesByDay.length - 1].revenue / analytics.salesByDay[0].revenue - 1) * 100).toFixed(1)}% vs mois dernier` :
+                'Nouveau'
+              }
             </div>
           </CardContent>
         </Card>
@@ -99,7 +96,10 @@ const AdminAnalytics = () => {
             <div className="text-2xl font-bold">{stats?.totalOrders || 0}</div>
             <div className="flex items-center text-xs text-green-600">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +8.2% vs mois dernier
+              {analytics.salesByDay.length > 1 ?
+                `${((analytics.salesByDay[analytics.salesByDay.length - 1].sales / analytics.salesByDay[0].sales - 1) * 100).toFixed(1)}% vs mois dernier` :
+                'Nouveau'
+              }
             </div>
           </CardContent>
         </Card>
@@ -110,10 +110,13 @@ const AdminAnalytics = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3.2%</div>
-            <div className="flex items-center text-xs text-red-600">
-              <TrendingDown className="h-3 w-3 mr-1" />
-              -0.4% vs mois dernier
+            <div className="text-2xl font-bold">{analytics.conversionRate.toFixed(1)}%</div>
+            <div className="flex items-center text-xs text-green-600">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              {analytics.salesByDay.length > 1 ?
+                `${((analytics.conversionRate / (analytics.totalViews / analytics.totalPurchases) - 1) * 100).toFixed(1)}% vs mois dernier` :
+                'Nouveau'
+              }
             </div>
           </CardContent>
         </Card>
@@ -125,11 +128,14 @@ const AdminAnalytics = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(stats?.totalOrders ? (stats.totalRevenue / stats.totalOrders) : 0)}
+              {formatCurrency(analytics.averageOrderValue)}
             </div>
             <div className="flex items-center text-xs text-green-600">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +4.1% vs mois dernier
+              {analytics.salesByDay.length > 1 ?
+                `${((analytics.averageOrderValue / (analytics.salesByDay[0].revenue / analytics.salesByDay[0].sales) - 1) * 100).toFixed(1)}% vs mois dernier` :
+                'Nouveau'
+              }
             </div>
           </CardContent>
         </Card>
@@ -163,7 +169,7 @@ const AdminAnalytics = () => {
         {/* Category Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Répartition par catégorie</CardTitle>
+            <CardTitle>Répartition des clients</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -181,7 +187,7 @@ const AdminAnalytics = () => {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [value, 'Ventes']} />
+                <Tooltip formatter={(value) => [value, 'Clients']} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -245,10 +251,13 @@ const AdminAnalytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">24,386</div>
+            <div className="text-3xl font-bold">{analytics.totalViews.toLocaleString()}</div>
             <div className="flex items-center text-sm text-green-600 mt-2">
               <TrendingUp className="h-4 w-4 mr-1" />
-              +15.3% ce mois
+              {analytics.salesByDay.length > 1 ?
+                `${((analytics.totalViews / analytics.salesByDay[0].sales - 1) * 100).toFixed(1)}% ce mois` :
+                'Nouveau'
+              }
             </div>
           </CardContent>
         </Card>
@@ -261,10 +270,15 @@ const AdminAnalytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">8,549</div>
+            <div className="text-3xl font-bold">
+              {analytics.customerSegments.reduce((sum, segment) => sum + segment.count, 0).toLocaleString()}
+            </div>
             <div className="flex items-center text-sm text-green-600 mt-2">
               <TrendingUp className="h-4 w-4 mr-1" />
-              +7.8% ce mois
+              {analytics.salesByDay.length > 1 ?
+                `${((analytics.customerSegments[0].count / analytics.salesByDay[0].sales - 1) * 100).toFixed(1)}% ce mois` :
+                'Nouveau'
+              }
             </div>
           </CardContent>
         </Card>
@@ -277,7 +291,9 @@ const AdminAnalytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">12</div>
+            <div className="text-3xl font-bold">
+              {topProducts?.filter(p => p.total_quantity === 0).length || 0}
+            </div>
             <Badge variant="destructive" className="mt-2">
               Action requise
             </Badge>

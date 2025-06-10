@@ -1,15 +1,12 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Edit, Trash2, Eye, EyeOff, Package, Users, FolderOpen } from 'lucide-react';
+import { Search, Package, Users, FolderOpen } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
 import { useCustomers } from '@/hooks/useCustomers';
-import { formatCurrency, formatDate } from '@/lib/utils';
 import CategoriesSection from '@/components/admin/catalog/CategoriesSection';
 import ProductsSection from '@/components/admin/catalog/ProductsSection';
 import CustomersSection from '@/components/admin/catalog/CustomersSection';
