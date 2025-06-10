@@ -1,8 +1,8 @@
-import React from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Truck, Shield, ArrowRight, Star, TrendingUp, Palette } from 'lucide-react';
+import { ShoppingBag, Truck, Shield, Star, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -12,12 +12,10 @@ import CategoryCarousel from '@/components/CategoryCarousel';
 import { FeaturedGallery } from '@/components/FeaturedGallery';
 import WhatsAppContact from '@/components/WhatsAppContact';
 import { MobileNavBar } from '@/components/MobileNavBar';
-import { useProducts } from '@/hooks/useProducts';
-import { useCategories } from '@/hooks/useCategories';
+import { useProducts } from '@/hooks/useOptimizedProducts';
+import { useCategories } from '@/hooks/useOptimizedCategories';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 
 const heroImages = [
   '/images/pic1.jpeg',
@@ -31,14 +29,12 @@ const heroImages = [
 const Index = () => {
   const navigate = useNavigate();
   
-  // Activer la synchronisation en temps réel
-  useRealtimeSync();
-  
   const { products, featuredProducts, popularProducts, isLoading: productsLoading } = useProducts();
   const { categories, isLoading: categoriesLoading } = useCategories();
   const { trackEvent } = useAnalytics();
 
   const [currentHero, setCurrentHero] = useState(0);
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentHero((prev) => (prev + 1) % heroImages.length);
@@ -55,7 +51,7 @@ const Index = () => {
     });
   }, []);
 
-  // Group products by category with real-time data - include only active products for home page
+  // Group products by category - include only active products
   const productsByCategory = categories?.map(category => ({
     category,
     products: products?.filter(p => p.category_id === category.id && p.status === 'active').slice(0, 6) || []
@@ -63,12 +59,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header fixe qui reste toujours visible */}
       <Header />
       
-      {/* Main content avec padding pour éviter que le contenu soit caché par le header fixe */}
       <main className="pt-14 md:pt-16">
-        {/* Hero Section */}
+        {/* Hero Section optimisé */}
         <section
           className="relative py-12 md:py-20 min-h-[420px] md:min-h-[480px] flex items-center"
           style={{
@@ -78,7 +72,6 @@ const Index = () => {
             transition: 'background-image 0.7s ease-in-out',
           }}
         >
-          {/* Overlay pour lisibilité */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/70 via-background/80 to-secondary/70 opacity-80 z-0"></div>
           <div className="container mx-auto px-4 relative z-10 flex items-center min-h-[350px] md:min-h-[400px]">
             <div className="max-w-2xl space-y-4 md:space-y-6 py-6 md:py-8">
@@ -109,7 +102,7 @@ const Index = () => {
                   className="text-sm md:text-base lg:text-lg px-4 md:px-6 lg:px-8 border-primary text-primary hover:bg-primary/10"
                   onClick={() => navigate('/custom-order')}
                 >
-                  <Palette className="mr-2 h-4 w-4 md:h-5 md:w-5  " />
+                  <Palette className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                   Commande personnalisée
                 </Button>
               </div>
@@ -131,19 +124,19 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Categories Carousel - Sticky mais en dessous du header fixe */}
+        {/* Categories Carousel - optimisé avec cache */}
         <div className="sticky top-14 md:top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border/40">
           <div className="w-full">
             <CategoryCarousel />
           </div>
         </div>
 
-        {/* Featured Products Carousel */}
+        {/* Featured Products Carousel - optimisé */}
         <div className="w-full">
           <FeaturedGallery />
         </div>
 
-        {/* Products by Category - Une seule carte par ligne sur mobile */}
+        {/* Products by Category - optimisé avec skeleton loading */}
         {productsLoading || categoriesLoading ? (
           <section className="py-4 md:py-6">
             <div className="container mx-auto px-4">
@@ -203,13 +196,8 @@ const Index = () => {
         )}
       </main>
 
-      {/* Footer */}
       <Footer />
-
-      {/* Mobile Navigation Bar */}
       <MobileNavBar />
-
-      {/* WhatsApp Contact Button */}
       <WhatsAppContact phoneNumber="+243 978 100 940" message="Bonjour, je souhaite passer une commande" />
     </div>
   );
