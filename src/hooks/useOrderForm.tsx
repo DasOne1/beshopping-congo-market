@@ -1,119 +1,70 @@
 
-import { useState, FormEvent } from 'react';
-import { useCart } from '@/contexts/CartContext';
-import { useOrders } from '@/hooks/useOptimizedOrders';
-import { generateWhatsAppMessage } from '@/utils/whatsappMessageGenerator';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
-export interface OrderFormData {
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  whatsapp_number: string;
-  payment_method: string;
-  notes: string;
-  shipping_address: {
-    street: string;
-    city: string;
-    state: string;
-    postal_code: string;
-    country: string;
-  };
-}
+const orderSchema = z.object({
+  customer_name: z.string().min(1, 'Le nom est requis'),
+  customer_phone: z.string().min(1, 'Le téléphone est requis'),
+  customer_email: z.string().email('Email invalide').optional().or(z.literal('')),
+  whatsapp_number: z.string().optional(),
+  shipping_address: z.object({
+    street: z.string().min(1, 'L\'adresse est requise'),
+    city: z.string().min(1, 'La ville est requise'),
+    state: z.string().optional(),
+    postal_code: z.string().optional(),
+    country: z.string().default('RD Congo'),
+  }),
+  notes: z.string().optional(),
+  payment_method: z.enum(['cash', 'mobile_money', 'bank_transfer']).default('cash'),
+});
+
+export type OrderFormData = z.infer<typeof orderSchema>;
 
 export const useOrderForm = () => {
-  const { cartItems, totalAmount, clearCart } = useCart();
-  const { createOrder } = useOrders();
-  
-  const [formData, setFormData] = useState<OrderFormData>({
-    customer_name: '',
-    customer_email: '',
-    customer_phone: '',
-    whatsapp_number: '',
-    payment_method: 'cash',
-    notes: '',
-    shipping_address: {
-      street: '',
-      city: '',
-      state: '',
-      postal_code: '',
-      country: 'Congo'
-    }
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<OrderFormData>({
+    resolver: zodResolver(orderSchema),
+    defaultValues: {
+      customer_name: '',
+      customer_phone: '',
+      customer_email: '',
+      whatsapp_number: '',
+      shipping_address: {
+        street: '',
+        city: '',
+        state: '',
+        postal_code: '',
+        country: 'RD Congo',
+      },
+      notes: '',
+      payment_method: 'cash',
+    },
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [orderDetails, setOrderDetails] = useState<any>(null);
-
-  const updateFormData = (field: keyof OrderFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const updateShippingAddress = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      shipping_address: { ...prev.shipping_address, [field]: value }
-    }));
-  };
-
-  const validateForm = () => {
-    return formData.customer_name && formData.customer_phone && cartItems.length > 0;
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!validateForm() || isSubmitting) return;
-
+  const submitOrder = async (data: OrderFormData) => {
     setIsSubmitting(true);
     try {
-      const orderData = {
-        ...formData,
-        total_amount: totalAmount,
-        subtotal: totalAmount,
-        status: 'pending' as const,
-        order_items: cartItems.map((item: any) => ({
-          product_id: item.id,
-          product_name: item.name,
-          quantity: item.quantity,
-          unit_price: item.original_price,
-          total_price: item.original_price * item.quantity,
-          product_image: item.images?.[0] || ''
-        }))
-      };
-
-      const result = await createOrder.mutateAsync(orderData);
-      setOrderDetails(result);
-      setShowConfirmation(true);
-      clearCart();
+      // Logique de soumission
+      console.log('Submitting order:', data);
+      return data;
     } catch (error) {
-      console.error('Erreur lors de la création de la commande:', error);
+      console.error('Error submitting order:', error);
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleWhatsAppOrder = () => {
-    const message = generateWhatsAppMessage(orderDetails, cartItems);
-    const whatsappUrl = `https://wa.me/${formData.whatsapp_number || formData.customer_phone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
-  const whatsappMessage = orderDetails ? generateWhatsAppMessage(orderDetails, cartItems) : '';
-
   return {
-    formData,
-    updateFormData,
-    updateShippingAddress,
-    handleSubmit,
+    form,
     isSubmitting,
-    cartItems,
-    totalAmount,
-    form: formData,
-    showConfirmation,
-    orderDetails,
-    setShowConfirmation,
-    setOrderDetails,
-    handleWhatsAppOrder,
-    validateForm,
-    whatsappMessage,
+    submitOrder,
+    formState: form.formState,
+    watch: form.watch,
+    setValue: form.setValue,
+    getValues: form.getValues,
   };
 };

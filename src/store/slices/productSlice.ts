@@ -41,7 +41,7 @@ export const createProductSlice: StateCreator<ProductSlice> = (set, get) => ({
       });
     } catch (error) {
       console.error('Error fetching products:', error);
-      set({ isLoadingProducts: false });
+      set({ products: [], isLoadingProducts: false });
     }
   },
   

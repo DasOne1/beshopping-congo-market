@@ -39,12 +39,12 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 export const useGlobalStore = create<GlobalState>()(
   persist(
     (set, get) => ({
-      // Slices
-      ...createProductSlice(set, get),
-      ...createCategorySlice(set, get),
-      ...createOrderSlice(set, get),
-      ...createCustomerSlice(set, get),
-      ...createDashboardSlice(set, get),
+      // Slices avec le bon nombre d'arguments
+      ...createProductSlice(set, get, { name: 'products' } as any),
+      ...createCategorySlice(set, get, { name: 'categories' } as any),
+      ...createOrderSlice(set, get, { name: 'orders' } as any),
+      ...createCustomerSlice(set, get, { name: 'customers' } as any),
+      ...createDashboardSlice(set, get, { name: 'dashboard' } as any),
       
       // Cache metadata
       lastUpdated: {
@@ -82,8 +82,10 @@ export const useGlobalStore = create<GlobalState>()(
             get().fetchProducts(true),
             get().fetchOrders(true),
             get().fetchCustomers(true),
-            get().fetchDashboardStats(true),
           ]);
+          
+          // Calculer les stats après avoir chargé les données
+          await get().fetchDashboardStats(true);
           
           console.log('✅ Préchargement terminé avec succès');
         } catch (error) {
@@ -98,8 +100,8 @@ export const useGlobalStore = create<GlobalState>()(
           get().fetchProducts(force),
           get().fetchOrders(force),
           get().fetchCustomers(force),
-          get().fetchDashboardStats(force),
         ]);
+        await get().fetchDashboardStats(force);
       },
     }),
     {

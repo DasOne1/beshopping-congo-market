@@ -3,10 +3,13 @@ import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useGlobalStore } from '@/store/useGlobalStore';
-import { useOptimizedProducts as useOptimizedProductsData } from './useOptimizedData';
+import { useOptimizedProducts } from './useOptimizedData';
+
+// Réexporter Product depuis le store
+export type { Product } from '@/store/types';
 
 export const useProducts = () => {
-  const { products, isLoading, refetch } = useOptimizedProductsData();
+  const { products, isLoading, refetch } = useOptimizedProducts();
   const { addProduct, updateProduct, removeProduct } = useGlobalStore();
 
   // Produits vedettes (depuis le cache)
@@ -15,7 +18,7 @@ export const useProducts = () => {
   // Produits populaires (depuis le cache)
   const popularProducts = products
     .filter(p => p.status === 'active')
-    .sort((a, b) => (b.tags?.length || 0) - (a.tags?.length || 0))
+    .sort((a, b) => (b.popular || 0) - (a.popular || 0))
     .slice(0, 6);
 
   const createProduct = useMutation({
@@ -23,6 +26,7 @@ export const useProducts = () => {
       const productWithDefaults = {
         ...product,
         is_visible: product.is_visible !== undefined ? product.is_visible : true,
+        tags: product.tags || [],
       };
 
       const { data, error } = await supabase
@@ -41,6 +45,7 @@ export const useProducts = () => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_visible: newProduct.is_visible !== undefined ? newProduct.is_visible : true,
+        tags: newProduct.tags || [],
       };
       addProduct(optimisticProduct);
       return optimisticProduct;

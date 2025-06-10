@@ -41,7 +41,7 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get) => ({
       });
     } catch (error) {
       console.error('Error fetching orders:', error);
-      set({ isLoadingOrders: false });
+      set({ orders: [], isLoadingOrders: false });
     }
   },
   

@@ -1,6 +1,6 @@
 
 import { StateCreator } from 'zustand';
-import { DashboardStats } from '../types';
+import { DashboardStats, Order, Product, Customer } from '../types';
 
 export interface DashboardSlice {
   dashboardStats: DashboardStats | null;
@@ -12,7 +12,10 @@ export interface DashboardSlice {
 }
 
 export const createDashboardSlice: StateCreator<
-  DashboardSlice & { orders: any[]; products: any[]; customers: any[] }
+  DashboardSlice,
+  [],
+  [],
+  DashboardSlice
 > = (set, get) => ({
   dashboardStats: null,
   isLoadingStats: false,
@@ -31,20 +34,40 @@ export const createDashboardSlice: StateCreator<
     try {
       set({ isLoadingStats: true });
       
-      const orders = state.orders || [];
-      const products = state.products || [];
-      const customers = state.customers || [];
+      // On va récupérer les données depuis le store global
+      // Cette fonction sera appelée après que les autres données soient chargées
+      const globalState = get() as any;
+      const orders: Order[] = globalState.orders || [];
+      const products: Product[] = globalState.products || [];
+      const customers: Customer[] = globalState.customers || [];
+      
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const startOfYear = new Date(today.getFullYear(), 0, 1);
       
       const stats: DashboardStats = {
         totalOrders: orders.length,
         totalProducts: products.length,
         totalCustomers: customers.length,
         totalRevenue: orders
-          .filter((o: any) => o.status === 'delivered')
-          .reduce((sum: number, order: any) => sum + order.total_amount, 0),
-        pendingOrders: orders.filter((o: any) => o.status === 'pending').length,
-        activeOrders: orders.filter((o: any) => o.status === 'processing' || o.status === 'shipped').length,
-        completedOrders: orders.filter((o: any) => o.status === 'delivered').length,
+          .filter((o: Order) => o.status === 'delivered')
+          .reduce((sum: number, order: Order) => sum + order.total_amount, 0),
+        pendingOrders: orders.filter((o: Order) => o.status === 'pending').length,
+        activeOrders: orders.filter((o: Order) => o.status === 'processing' || o.status === 'shipped').length,
+        completedOrders: orders.filter((o: Order) => o.status === 'delivered').length,
+        processingOrders: orders.filter((o: Order) => o.status === 'processing').length,
+        todayOrders: orders.filter((o: Order) => {
+          const orderDate = new Date(o.created_at || '');
+          return orderDate.toDateString() === today.toDateString();
+        }).length,
+        monthlyOrders: orders.filter((o: Order) => {
+          const orderDate = new Date(o.created_at || '');
+          return orderDate >= startOfMonth;
+        }).length,
+        yearlyOrders: orders.filter((o: Order) => {
+          const orderDate = new Date(o.created_at || '');
+          return orderDate >= startOfYear;
+        }).length,
       };
       
       set({ 

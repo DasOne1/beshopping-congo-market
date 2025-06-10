@@ -41,7 +41,7 @@ export const createCategorySlice: StateCreator<CategorySlice> = (set, get) => ({
       });
     } catch (error) {
       console.error('Error fetching categories:', error);
-      set({ isLoadingCategories: false });
+      set({ categories: [], isLoadingCategories: false });
     }
   },
   

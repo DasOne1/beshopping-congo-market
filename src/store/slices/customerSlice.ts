@@ -41,7 +41,7 @@ export const createCustomerSlice: StateCreator<CustomerSlice> = (set, get) => ({
       });
     } catch (error) {
       console.error('Error fetching customers:', error);
-      set({ isLoadingCustomers: false });
+      set({ customers: [], isLoadingCustomers: false });
     }
   },
   
