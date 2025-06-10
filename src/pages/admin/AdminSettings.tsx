@@ -109,12 +109,12 @@ const AdminSettings = () => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="timezone">Fuseau horaire</Label>
-                    <Select defaultValue="Africa/Kinshasa">
+                    <Select defaultValue="Africa/Lubumbasi">
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Africa/Kinshasa">Africa/Kinshasa</SelectItem>
+                        <SelectItem value="Africa/Lubumbasi">Africa/Lubumbasi</SelectItem>
                         <SelectItem value="UTC">UTC</SelectItem>
                       </SelectContent>
                     </Select>

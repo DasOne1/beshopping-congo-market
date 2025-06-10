@@ -3,6 +3,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Order } from '@/types';
 
+interface OrderInput {
+  customer_id: string | null;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string | null;
+  shipping_address: { address: string };
+  total_amount: number;
+  subtotal: number;
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+}
+
+interface OrderItemInput {
+  product_id: string;
+  product_name: string;
+  product_image: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+}
+
 export const useOrders = () => {
   const queryClient = useQueryClient();
 
@@ -75,10 +95,45 @@ export const useOrders = () => {
     },
   });
 
+  const createOrder = useMutation({
+    mutationFn: async ({ order, items }: { order: OrderInput; items: OrderItemInput[] }) => {
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert([order])
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(items.map(item => ({ ...item, order_id: orderData.id })));
+
+      if (itemsError) throw itemsError;
+
+      return orderData as Order;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast({
+        title: "Commande créée",
+        description: "La commande a été créée avec succès",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     orders,
     isLoading,
     updateOrderStatus,
     deleteOrder,
+    createOrder,
   };
 };

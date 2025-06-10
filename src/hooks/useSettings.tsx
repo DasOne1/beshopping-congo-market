@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -98,8 +99,8 @@ export const useSettings = () => {
     settings: settings || {
       company_name: 'BeShopping',
       company_email: 'contact@beshopping.com',
-      company_phone: '+243123456789',
-      company_address: { street: 'Av. des Cliniques', city: 'Kinshasa', country: 'RDC' },
+      company_phone: '+243 974 984 449',
+      company_address: { street: 'Av. des Cliniques', city: 'Lubumbasi', country: 'RDC' },
       currency: 'CDF',
       tax_rate: 0,
       shipping_fee: 5000,

@@ -1,12 +1,9 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShoppingBag, Heart, User, Home, Phone, Info, Menu, Wand2 } from 'lucide-react';
+import { X, ShoppingBag, Heart, User, Home, Phone, Info, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ThemeToggle } from './ThemeToggle';
-import { Logo } from './Logo';
 import {
   Drawer,
   DrawerClose,

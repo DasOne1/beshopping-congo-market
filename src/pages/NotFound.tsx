@@ -2,14 +2,11 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Home, ShoppingBag, ArrowLeft } from 'lucide-react';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
 
 const NotFound = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
       
       <main className="flex-1 flex items-center justify-center px-4">
         <motion.div 
@@ -90,7 +87,6 @@ const NotFound = () => {
         </motion.div>
       </main>
       
-      <Footer />
     </div>
   );
 };

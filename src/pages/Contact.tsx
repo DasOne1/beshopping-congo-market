@@ -11,17 +11,17 @@ const Contact = () => {
     {
       icon: <MapPin className="w-6 h-6" />,
       title: "Adresse",
-      content: "Kinshasa, République Démocratique du Congo"
+      content: "Lubumbashi, République Démocratique du Congo"
     },
     {
       icon: <Phone className="w-6 h-6" />,
       title: "Téléphone",
-      content: "+243 978 100 940"
+      content: "+243 974 984 449"
     },
     {
       icon: <Mail className="w-6 h-6" />,
       title: "Email",
-      content: "contact@dasgabriel.com"
+      content: "contact@beshoppingcongo.com"
     },
     {
       icon: <Clock className="w-6 h-6" />,
@@ -126,7 +126,7 @@ const Contact = () => {
                     Carte de localisation
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Kinshasa, RDC
+                    Lubumbasi, RDC
                   </p>
                 </div>
               </div>
@@ -143,7 +143,7 @@ const Contact = () => {
               <ul className="space-y-3 text-muted-foreground">
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-primary rounded-full mr-3"></div>
-                  Livraison rapide à Kinshasa
+                  Livraison rapide à Lubumbasi
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-primary rounded-full mr-3"></div>
