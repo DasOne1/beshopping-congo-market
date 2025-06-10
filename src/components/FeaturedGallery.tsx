@@ -28,6 +28,12 @@ export const FeaturedGallery = () => {
     return null;
   }
 
+  // Ajouter is_visible par défaut pour les produits
+  const productsWithVisibility = featuredProducts.map(product => ({
+    ...product,
+    is_visible: product.is_visible !== undefined ? product.is_visible : true
+  }));
+
   return (
     <section className="py-6 md:py-8 bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4">
@@ -51,7 +57,7 @@ export const FeaturedGallery = () => {
           transition={{ duration: 0.8 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
-          {featuredProducts.map((product, index) => (
+          {productsWithVisibility.map((product, index) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 20 }}

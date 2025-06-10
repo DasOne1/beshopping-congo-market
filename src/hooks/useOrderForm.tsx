@@ -1,141 +1,103 @@
 
-import { useState, useEffect } from 'react';
-import { useCartContext } from '@/contexts/CartContext';
+import { useState, FormEvent } from 'react';
+import { useCart } from '@/contexts/CartContext';
 import { useOrders } from '@/hooks/useOptimizedOrders';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { generateWhatsAppMessage } from '@/utils/whatsappMessageGenerator';
 
-interface OrderFormData {
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  whatsappNumber: string;
-  shippingAddress: {
+export interface OrderFormData {
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  whatsapp_number: string;
+  payment_method: string;
+  notes: string;
+  shipping_address: {
     street: string;
     city: string;
     state: string;
-    zipCode: string;
+    postal_code: string;
     country: string;
   };
-  paymentMethod: string;
-  notes: string;
 }
 
 export const useOrderForm = () => {
-  const { cartItems, totalAmount, clearCart } = useCartContext();
+  const { cartItems, totalAmount, clearCart } = useCart();
   const { createOrder } = useOrders();
   
   const [formData, setFormData] = useState<OrderFormData>({
-    customerName: '',
-    customerEmail: '',
-    customerPhone: '',
-    whatsappNumber: '',
-    shippingAddress: {
+    customer_name: '',
+    customer_email: '',
+    customer_phone: '',
+    whatsapp_number: '',
+    payment_method: 'cash',
+    notes: '',
+    shipping_address: {
       street: '',
       city: '',
       state: '',
-      zipCode: '',
-      country: 'Congo (RDC)',
-    },
-    paymentMethod: 'cash',
-    notes: '',
+      postal_code: '',
+      country: 'Congo'
+    }
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (cartItems.length === 0) {
-      toast({
-        title: "Panier vide",
-        description: "Ajoutez des produits au panier avant de passer commande",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Calculer les totaux
-      const subtotal = totalAmount;
-      const taxAmount = subtotal * 0.1; // 10% de taxe
-      const shippingAmount = 5000; // Frais de livraison fixes
-      const finalTotal = subtotal + taxAmount + shippingAmount;
-
-      // Créer la commande
-      const orderData = {
-        customer_name: formData.customerName,
-        customer_email: formData.customerEmail,
-        customer_phone: formData.customerPhone,
-        whatsapp_number: formData.whatsappNumber,
-        total_amount: finalTotal,
-        subtotal: subtotal,
-        tax_amount: taxAmount,
-        shipping_amount: shippingAmount,
-        discount_amount: 0,
-        status: 'pending',
-        payment_method: formData.paymentMethod,
-        payment_status: 'pending',
-        shipping_address: formData.shippingAddress,
-        notes: formData.notes,
-      };
-
-      await createOrder.mutateAsync(orderData);
-
-      // Vider le panier
-      clearCart();
-      
-      // Réinitialiser le formulaire
-      setFormData({
-        customerName: '',
-        customerEmail: '',
-        customerPhone: '',
-        whatsappNumber: '',
-        shippingAddress: {
-          street: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          country: 'Congo (RDC)',
-        },
-        paymentMethod: 'cash',
-        notes: '',
-      });
-
-      toast({
-        title: "Commande créée",
-        description: "Votre commande a été créée avec succès",
-      });
-
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Une erreur s'est produite",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
 
   const updateFormData = (field: keyof OrderFormData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const updateShippingAddress = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      shippingAddress: {
-        ...prev.shippingAddress,
-        [field]: value,
-      },
+      shipping_address: { ...prev.shipping_address, [field]: value }
     }));
   };
+
+  const validateForm = () => {
+    return formData.customer_name && formData.customer_phone && cartItems.length > 0;
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!validateForm() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const orderData = {
+        ...formData,
+        total_amount: totalAmount,
+        subtotal: totalAmount,
+        status: 'pending' as const,
+        order_items: cartItems.map((item: any) => ({
+          product_id: item.id,
+          product_name: item.name,
+          quantity: item.quantity,
+          unit_price: item.original_price,
+          total_price: item.original_price * item.quantity,
+          product_image: item.images?.[0] || ''
+        }))
+      };
+
+      const result = await createOrder.mutateAsync(orderData);
+      setOrderDetails(result);
+      setShowConfirmation(true);
+      clearCart();
+    } catch (error) {
+      console.error('Erreur lors de la création de la commande:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleWhatsAppOrder = () => {
+    const message = generateWhatsAppMessage(orderDetails, cartItems);
+    const whatsappUrl = `https://wa.me/${formData.whatsapp_number || formData.customer_phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const whatsappMessage = orderDetails ? generateWhatsAppMessage(orderDetails, cartItems) : '';
 
   return {
     formData,
@@ -145,5 +107,13 @@ export const useOrderForm = () => {
     isSubmitting,
     cartItems,
     totalAmount,
+    form: formData,
+    showConfirmation,
+    orderDetails,
+    setShowConfirmation,
+    setOrderDetails,
+    handleWhatsAppOrder,
+    validateForm,
+    whatsappMessage,
   };
 };

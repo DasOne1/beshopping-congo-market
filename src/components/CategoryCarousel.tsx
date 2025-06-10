@@ -22,7 +22,14 @@ const CategoryCarousel = () => {
   return (
     <div className="flex space-x-4 overflow-x-auto py-4 px-4">
       {categories.map((category) => (
-        <CategoryCard key={category.id} category={category} />
+        <CategoryCard 
+          key={category.id} 
+          id={category.id}
+          name={category.name}
+          description={category.description}
+          image={category.image}
+          slug={category.slug}
+        />
       ))}
     </div>
   );

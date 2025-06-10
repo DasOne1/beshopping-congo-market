@@ -15,6 +15,7 @@ interface Product {
   status: string;
   featured?: boolean;
   tags?: string[];
+  is_visible: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -32,13 +33,13 @@ interface Category {
 
 interface Order {
   id: string;
-  order_number: string;
+  order_number?: string;
   customer_name: string;
   customer_email?: string;
   customer_phone?: string;
   total_amount: number;
   status: string;
-  created_at: string;
+  created_at?: string;
   order_items?: any[];
 }
 
@@ -287,7 +288,6 @@ export const useGlobalStore = create<GlobalState>()(
         try {
           set({ isLoadingStats: true });
           
-          // Use cached orders if available
           const orders = state.orders.length > 0 ? state.orders : [];
           const products = state.products.length > 0 ? state.products : [];
           const customers = state.customers.length > 0 ? state.customers : [];
@@ -327,7 +327,6 @@ export const useGlobalStore = create<GlobalState>()(
           console.log('🚀 Préchargement avec service centralisé...');
           const result = await dataService.preloadAllData();
           
-          // Forcer le rechargement de toutes les données
           await Promise.all([
             get().fetchCategories(true),
             get().fetchProducts(true),

@@ -1,29 +1,25 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product } from '@/types';
+import { toast } from '@/components/ui/use-toast';
 
-export interface CartItem {
-  productId: string;
+interface CartItem {
+  id: string;
+  name: string;
+  original_price: number;
+  discounted_price?: number;
+  images: string[];
   quantity: number;
-}
-
-export interface CartProduct {
-  productId: string;
-  quantity: number;
-  product: Product;
+  stock: number;
 }
 
 interface CartContextType {
-  cart: CartItem[];
-  cartProducts: CartProduct[];
-  addToCart: (productId: string, quantity?: number) => void;
+  cartItems: CartItem[];
+  addToCart: (product: any, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  getCartItemCount: () => number;
-  getTotalQuantity: () => number;
-  getCartTotal: () => number;
-  isInCart: (productId: string) => boolean;
+  totalItems: number;
+  totalAmount: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -36,42 +32,93 @@ export const useCart = () => {
   return context;
 };
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
+// Export alternatif pour compatibilité
+export const useCartContext = useCart;
 
-  // Load cart from localStorage on component mount
+export const CartProvider = ({ children }: { children: React.ReactNode }) => {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+  // Charger le panier depuis le localStorage au démarrage
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       try {
-        setCart(JSON.parse(savedCart));
+        setCartItems(JSON.parse(savedCart));
       } catch (error) {
-        console.error('Error parsing saved cart:', error);
+        console.error('Erreur lors du chargement du panier:', error);
       }
     }
   }, []);
 
-  // Save cart to localStorage whenever cart changes
+  // Sauvegarder le panier dans le localStorage à chaque modification
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+  }, [cartItems]);
 
-  const addToCart = (productId: string, quantity: number = 1) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.productId === productId);
+  const addToCart = (product: any, quantity = 1) => {
+    setCartItems(prev => {
+      const existingItem = prev.find(item => item.id === product.id);
+      
       if (existingItem) {
-        return prevCart.map(item =>
-          item.productId === productId
-            ? { ...item, quantity: item.quantity + quantity }
+        const newQuantity = existingItem.quantity + quantity;
+        if (newQuantity > product.stock) {
+          toast({
+            title: "Stock insuffisant",
+            description: `Seulement ${product.stock} articles disponibles`,
+            variant: "destructive",
+          });
+          return prev;
+        }
+        
+        toast({
+          title: "Panier mis à jour",
+          description: `${product.name} quantité mise à jour`,
+        });
+        
+        return prev.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: newQuantity }
             : item
         );
+      } else {
+        if (quantity > product.stock) {
+          toast({
+            title: "Stock insuffisant",
+            description: `Seulement ${product.stock} articles disponibles`,
+            variant: "destructive",
+          });
+          return prev;
+        }
+        
+        toast({
+          title: "Produit ajouté",
+          description: `${product.name} ajouté au panier`,
+        });
+        
+        return [...prev, {
+          id: product.id,
+          name: product.name,
+          original_price: product.original_price,
+          discounted_price: product.discounted_price,
+          images: product.images,
+          quantity,
+          stock: product.stock,
+        }];
       }
-      return [...prevCart, { productId, quantity }];
     });
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.productId !== productId));
+    setCartItems(prev => {
+      const item = prev.find(item => item.id === productId);
+      if (item) {
+        toast({
+          title: "Produit retiré",
+          description: `${item.name} retiré du panier`,
+        });
+      }
+      return prev.filter(item => item.id !== productId);
+    });
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
@@ -79,52 +126,49 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       removeFromCart(productId);
       return;
     }
-    
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item.productId === productId ? { ...item, quantity } : item
-      )
+
+    setCartItems(prev =>
+      prev.map(item => {
+        if (item.id === productId) {
+          if (quantity > item.stock) {
+            toast({
+              title: "Stock insuffisant",
+              description: `Seulement ${item.stock} articles disponibles`,
+              variant: "destructive",
+            });
+            return item;
+          }
+          return { ...item, quantity };
+        }
+        return item;
+      })
     );
   };
 
   const clearCart = () => {
-    setCart([]);
+    setCartItems([]);
+    toast({
+      title: "Panier vidé",
+      description: "Tous les articles ont été retirés du panier",
+    });
   };
 
-  const getCartItemCount = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  };
-
-  const getTotalQuantity = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  };
-
-  const getCartTotal = () => {
-    // Cette fonction nécessiterait l'accès aux produits pour calculer le total
-    // Pour l'instant, on retourne 0
-    return 0;
-  };
-
-  const isInCart = (productId: string) => {
-    return cart.some(item => item.productId === productId);
-  };
-
-  // Pour cartProducts, on retourne un tableau vide car on n'a pas accès aux produits ici
-  // Cette logique sera gérée dans les composants qui utilisent useProducts
-  const cartProducts: CartProduct[] = [];
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  
+  const totalAmount = cartItems.reduce((sum, item) => {
+    const price = item.discounted_price || item.original_price;
+    return sum + (price * item.quantity);
+  }, 0);
 
   return (
     <CartContext.Provider value={{
-      cart,
-      cartProducts,
+      cartItems,
       addToCart,
       removeFromCart,
       updateQuantity,
       clearCart,
-      getCartItemCount,
-      getTotalQuantity,
-      getCartTotal,
-      isInCart,
+      totalItems,
+      totalAmount,
     }}>
       {children}
     </CartContext.Provider>

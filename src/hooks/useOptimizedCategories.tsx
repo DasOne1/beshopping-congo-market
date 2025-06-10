@@ -3,10 +3,12 @@ import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useGlobalStore } from '@/store/useGlobalStore';
-import { useOptimizedCategories } from './useOptimizedData';
+import { useOptimizedCategories as useOptimizedCategoriesData } from './useOptimizedData';
+
+export const useOptimizedCategories = useOptimizedCategoriesData;
 
 export const useCategories = () => {
-  const { categories, isLoading, refetch } = useOptimizedCategories();
+  const { categories, isLoading, refetch } = useOptimizedCategoriesData();
   const { addCategory, updateCategory, removeCategory } = useGlobalStore();
 
   const createCategory = useMutation({
@@ -21,7 +23,6 @@ export const useCategories = () => {
       return data;
     },
     onMutate: async (newCategory) => {
-      // Optimistic update
       const optimisticCategory = {
         ...newCategory,
         id: `temp-${Date.now()}`,
@@ -32,7 +33,6 @@ export const useCategories = () => {
       return optimisticCategory;
     },
     onSuccess: (data, variables, context) => {
-      // Replace optimistic update with real data
       if (context) {
         removeCategory(context.id);
         addCategory(data);
@@ -43,7 +43,6 @@ export const useCategories = () => {
       });
     },
     onError: (error: any, variables, context) => {
-      // Revert optimistic update
       if (context) {
         removeCategory(context.id);
       }
@@ -68,7 +67,6 @@ export const useCategories = () => {
       return data;
     },
     onMutate: async ({ id, ...updates }) => {
-      // Optimistic update
       updateCategory(id, updates);
       return { id, updates };
     },
@@ -79,7 +77,6 @@ export const useCategories = () => {
       });
     },
     onError: (error: any, variables, context) => {
-      // Revert optimistic update
       refetch();
       toast({
         title: "Erreur",
@@ -100,7 +97,6 @@ export const useCategories = () => {
       return id;
     },
     onMutate: async (id) => {
-      // Optimistic update
       removeCategory(id);
       return { id };
     },
@@ -111,7 +107,6 @@ export const useCategories = () => {
       });
     },
     onError: (error: any, variables, context) => {
-      // Revert optimistic update
       refetch();
       toast({
         title: "Erreur",

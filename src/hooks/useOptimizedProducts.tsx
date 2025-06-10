@@ -3,10 +3,12 @@ import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useGlobalStore } from '@/store/useGlobalStore';
-import { useOptimizedProducts } from './useOptimizedData';
+import { useOptimizedProducts as useOptimizedProductsData } from './useOptimizedData';
+
+export const useOptimizedProducts = useOptimizedProductsData;
 
 export const useProducts = () => {
-  const { products, isLoading, refetch } = useOptimizedProducts();
+  const { products, isLoading, refetch } = useOptimizedProductsData();
   const { addProduct, updateProduct, removeProduct } = useGlobalStore();
 
   // Produits vedettes (depuis le cache)
@@ -20,9 +22,14 @@ export const useProducts = () => {
 
   const createProduct = useMutation({
     mutationFn: async (product: any) => {
+      const productWithDefaults = {
+        ...product,
+        is_visible: product.is_visible !== undefined ? product.is_visible : true,
+      };
+
       const { data, error } = await supabase
         .from('products')
-        .insert([product])
+        .insert([productWithDefaults])
         .select()
         .single();
 
@@ -30,18 +37,17 @@ export const useProducts = () => {
       return data;
     },
     onMutate: async (newProduct) => {
-      // Optimistic update
       const optimisticProduct = {
         ...newProduct,
         id: `temp-${Date.now()}`,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        is_visible: newProduct.is_visible !== undefined ? newProduct.is_visible : true,
       };
       addProduct(optimisticProduct);
       return optimisticProduct;
     },
     onSuccess: (data, variables, context) => {
-      // Replace optimistic update with real data
       if (context) {
         removeProduct(context.id);
         addProduct(data);
@@ -52,7 +58,6 @@ export const useProducts = () => {
       });
     },
     onError: (error: any, variables, context) => {
-      // Revert optimistic update
       if (context) {
         removeProduct(context.id);
       }
@@ -77,7 +82,6 @@ export const useProducts = () => {
       return data;
     },
     onMutate: async ({ id, ...updates }) => {
-      // Optimistic update
       updateProduct(id, updates);
       return { id, updates };
     },
@@ -88,7 +92,6 @@ export const useProducts = () => {
       });
     },
     onError: (error: any, variables, context) => {
-      // Revert optimistic update
       refetch();
       toast({
         title: "Erreur",
@@ -109,7 +112,6 @@ export const useProducts = () => {
       return id;
     },
     onMutate: async (id) => {
-      // Optimistic update
       removeProduct(id);
       return { id };
     },
@@ -120,7 +122,6 @@ export const useProducts = () => {
       });
     },
     onError: (error: any, variables, context) => {
-      // Revert optimistic update
       refetch();
       toast({
         title: "Erreur",
