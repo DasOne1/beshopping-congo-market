@@ -1,5 +1,6 @@
 
 import { useOptimizedDashboard } from './useOptimizedData';
+import { useGlobalStore } from '@/store/useGlobalStore';
 
 export const useAdminDashboard = () => {
   const { stats, isLoading, refetch } = useOptimizedDashboard();

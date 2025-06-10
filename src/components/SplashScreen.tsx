@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '@/components/Logo';
-import { useDataPreloader } from '@/hooks/useDataPreloader';
+import { useDataPreloader } from '@/hooks/useOptimizedData';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface SplashScreenProps {
@@ -11,7 +12,7 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const { isLoaded, isLoading, error } = useDataPreloader();
+  const { preloadAllData } = useDataPreloader();
   const { theme } = useTheme();
 
   // Déterminer le thème effectif (résoudre 'system')
@@ -27,31 +28,45 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
     let progressInterval: NodeJS.Timeout;
 
-    if (isLoading) {
-      // Animation de progression plus rapide
-      progressInterval = setInterval(() => {
-        setLoadingProgress(prev => {
-          const newProgress = prev + 25; // Augmentation plus rapide
-          return newProgress <= 75 ? newProgress : 75; // Ne pas aller à 100% tant que les données ne sont pas chargées
-        });
-      }, 150); // Intervalle plus court
-    } else if (isLoaded || error) {
-      // Compléter immédiatement la progression
-      setLoadingProgress(100);
-      
-      // Réduire le temps d'attente avant de masquer le splash screen
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-        setTimeout(onComplete, 300); // Animation de sortie plus rapide
-      }, 400); // Temps d'affichage réduit
+    const loadApp = async () => {
+      try {
+        // Animation de progression plus rapide
+        progressInterval = setInterval(() => {
+          setLoadingProgress(prev => {
+            const newProgress = prev + 25; // Augmentation plus rapide
+            return newProgress <= 75 ? newProgress : 75; // Ne pas aller à 100% tant que les données ne sont pas chargées
+          });
+        }, 150); // Intervalle plus court
 
-      return () => clearTimeout(timer);
-    }
+        // Précharger les données
+        await preloadAllData();
+        
+        // Compléter immédiatement la progression
+        setLoadingProgress(100);
+        
+        // Réduire le temps d'attente avant de masquer le splash screen
+        setTimeout(() => {
+          setIsVisible(false);
+          setTimeout(onComplete, 300); // Animation de sortie plus rapide
+        }, 400); // Temps d'affichage réduit
+
+      } catch (error) {
+        console.error('Erreur lors du chargement:', error);
+        // Continuer même en cas d'erreur
+        setLoadingProgress(100);
+        setTimeout(() => {
+          setIsVisible(false);
+          setTimeout(onComplete, 300);
+        }, 400);
+      }
+    };
+
+    loadApp();
 
     return () => {
       if (progressInterval) clearInterval(progressInterval);
     };
-  }, [isLoading, isLoaded, error, onComplete]);
+  }, [onComplete, preloadAllData]);
 
   return (
     <AnimatePresence>
@@ -138,9 +153,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2 }}
             >
-              {isLoading ? 'Chargement...' : 
-               error ? 'Prêt malgré l\'erreur' : 
-               'Prêt !'}
+              Chargement...
             </motion.div>
           </motion.div>
         </motion.div>
