@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useGlobalStore } from '@/store/useGlobalStore';
 import { useOptimizedOrders } from './useOptimizedData';
+import { Order } from '@/store/types';
 
 export const useOrders = () => {
   const { orders, isLoading, refetch } = useOptimizedOrders();
@@ -11,22 +12,34 @@ export const useOrders = () => {
 
   const createOrder = useMutation({
     mutationFn: async (order: any) => {
+      const orderWithDefaults = {
+        ...order,
+        status: order.status || 'pending',
+      };
+
       const { data, error } = await supabase
         .from('orders')
-        .insert([order])
+        .insert([orderWithDefaults])
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      
+      const typedData: Order = {
+        ...data,
+        status: data.status as 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+      };
+      
+      return typedData;
     },
     onMutate: async (newOrder) => {
-      const optimisticOrder = {
+      const optimisticOrder: Order = {
         ...newOrder,
         id: `temp-${Date.now()}`,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         order_number: `ORD-${Date.now()}`,
+        status: newOrder.status || 'pending',
       };
       addOrder(optimisticOrder);
       return optimisticOrder;
@@ -54,7 +67,7 @@ export const useOrders = () => {
   });
 
   const updateOrderStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' }) => {
       const { data, error } = await supabase
         .from('orders')
         .update({ status })
@@ -63,7 +76,13 @@ export const useOrders = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      
+      const typedData: Order = {
+        ...data,
+        status: data.status as 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+      };
+      
+      return typedData;
     },
     onMutate: async ({ id, status }) => {
       updateOrder(id, { status });

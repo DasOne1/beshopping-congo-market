@@ -4,18 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useGlobalStore } from '@/store/useGlobalStore';
 import { useOptimizedProducts } from './useOptimizedData';
-
-// Réexporter Product depuis le store
-export type { Product } from '@/store/types';
+import { Product } from '@/store/types';
 
 export const useProducts = () => {
   const { products, isLoading, refetch } = useOptimizedProducts();
   const { addProduct, updateProduct, removeProduct } = useGlobalStore();
 
-  // Produits vedettes (depuis le cache)
   const featuredProducts = products.filter(p => p.featured && p.status === 'active').slice(0, 8);
-  
-  // Produits populaires (depuis le cache)
   const popularProducts = products
     .filter(p => p.status === 'active')
     .sort((a, b) => (b.popular || 0) - (a.popular || 0))
@@ -27,6 +22,7 @@ export const useProducts = () => {
         ...product,
         is_visible: product.is_visible !== undefined ? product.is_visible : true,
         tags: product.tags || [],
+        status: product.status || 'active',
       };
 
       const { data, error } = await supabase
@@ -36,16 +32,24 @@ export const useProducts = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      
+      // Assurer la conversion du type status
+      const typedData: Product = {
+        ...data,
+        status: data.status as 'active' | 'inactive' | 'draft'
+      };
+      
+      return typedData;
     },
     onMutate: async (newProduct) => {
-      const optimisticProduct = {
+      const optimisticProduct: Product = {
         ...newProduct,
         id: `temp-${Date.now()}`,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_visible: newProduct.is_visible !== undefined ? newProduct.is_visible : true,
         tags: newProduct.tags || [],
+        status: newProduct.status || 'active',
       };
       addProduct(optimisticProduct);
       return optimisticProduct;
@@ -82,7 +86,13 @@ export const useProducts = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      
+      const typedData: Product = {
+        ...data,
+        status: data.status as 'active' | 'inactive' | 'draft'
+      };
+      
+      return typedData;
     },
     onMutate: async ({ id, ...updates }) => {
       updateProduct(id, updates);

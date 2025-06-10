@@ -2,67 +2,49 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Loader2 } from 'lucide-react';
-import { useDataPreloader } from '@/hooks/useOptimizedData';
-import { useGlobalStore } from '@/store/useGlobalStore';
 
-interface OptimizedSplashScreenProps {
+interface SplashScreenProps {
   onComplete: () => void;
 }
 
-const OptimizedSplashScreen = ({ onComplete }: OptimizedSplashScreenProps) => {
+const SplashScreen = ({ onComplete }: SplashScreenProps) => {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState('Initialisation...');
-  const { preloadAllData } = useDataPreloader();
-  const { products, categories, orders, customers, dashboardStats } = useGlobalStore();
 
   useEffect(() => {
     const loadApp = async () => {
       try {
-        // Étape 1: Afficher immédiatement les données en cache si disponibles
         setProgress(10);
-        setCurrentStep('Chargement du cache...');
+        setCurrentStep('Chargement des données...');
         
-        // Vérifier si on a des données en cache
-        const hasCache = products.length > 0 || categories.length > 0;
+        await new Promise(resolve => setTimeout(resolve, 800));
         
-        if (hasCache) {
-          setProgress(30);
-          setCurrentStep('Données disponibles en cache');
-          // Petit délai pour montrer que les données sont prêtes
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-
-        // Étape 2: Précharger toutes les données en arrière-plan
         setProgress(40);
-        setCurrentStep('Actualisation des données...');
+        setCurrentStep('Préparation de l\'interface...');
         
-        // Préchargement progressif
-        await preloadAllData();
+        await new Promise(resolve => setTimeout(resolve, 600));
         
         setProgress(80);
         setCurrentStep('Finalisation...');
         
-        // Délai final pour une transition fluide
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(resolve => setTimeout(resolve, 400));
         
         setProgress(100);
         setCurrentStep('Prêt !');
         
-        // Délai avant de masquer le splash screen
         setTimeout(() => {
           onComplete();
         }, 500);
         
       } catch (error) {
         console.error('Erreur lors du chargement:', error);
-        // Continuer même en cas d'erreur
         setCurrentStep('Prêt !');
         setTimeout(onComplete, 1000);
       }
     };
 
     loadApp();
-  }, [onComplete, preloadAllData, products.length, categories.length]);
+  }, [onComplete]);
 
   return (
     <AnimatePresence>
@@ -73,7 +55,6 @@ const OptimizedSplashScreen = ({ onComplete }: OptimizedSplashScreenProps) => {
         transition={{ duration: 0.8, ease: "easeInOut" }}
       >
         <div className="text-center space-y-8 px-4">
-          {/* Logo animé */}
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
@@ -84,7 +65,6 @@ const OptimizedSplashScreen = ({ onComplete }: OptimizedSplashScreenProps) => {
               <ShoppingBag className="w-12 h-12 text-primary" />
             </div>
             
-            {/* Cercle de chargement */}
             <motion.div
               className="absolute inset-0 border-4 border-white/30 border-t-white rounded-full"
               animate={{ rotate: 360 }}
@@ -92,7 +72,6 @@ const OptimizedSplashScreen = ({ onComplete }: OptimizedSplashScreenProps) => {
             />
           </motion.div>
 
-          {/* Titre */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -107,7 +86,6 @@ const OptimizedSplashScreen = ({ onComplete }: OptimizedSplashScreenProps) => {
             </p>
           </motion.div>
 
-          {/* Barre de progression */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -128,29 +106,10 @@ const OptimizedSplashScreen = ({ onComplete }: OptimizedSplashScreenProps) => {
               <span className="text-sm font-medium">{currentStep}</span>
             </div>
           </motion.div>
-
-          {/* Statistiques en temps réel si disponibles */}
-          {(products.length > 0 || categories.length > 0) && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.5, duration: 0.5 }}
-              className="grid grid-cols-2 gap-4 text-white/80 text-sm"
-            >
-              <div className="text-center">
-                <div className="font-bold text-lg">{categories.length}</div>
-                <div>Catégories</div>
-              </div>
-              <div className="text-center">
-                <div className="font-bold text-lg">{products.length}</div>
-                <div>Produits</div>
-              </div>
-            </motion.div>
-          )}
         </div>
       </motion.div>
     </AnimatePresence>
   );
 };
 
-export default OptimizedSplashScreen;
+export default SplashScreen;

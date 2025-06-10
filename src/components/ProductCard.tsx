@@ -1,155 +1,124 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { Heart, ShoppingCart, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Heart, ShoppingCart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { Product } from '@/types';
-import ProductImageCarousel from './ProductImageCarousel';
+import { toast } from '@/components/ui/use-toast';
+import { Product } from '@/store/types';
 
 interface ProductCardProps {
   product: Product;
-  viewMode?: 'grid' | 'list';
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' }) => {
-  const { addToCart, isInCart } = useCart();
+const ProductCard = ({ product }: ProductCardProps) => {
+  const { addToCart } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    addToCart(product.id, 1);
+    addToCart(product);
+    toast({
+      title: "Ajouté au panier",
+      description: `${product.name} a été ajouté à votre panier`,
+    });
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
     if (isFavorite(product.id)) {
       removeFromFavorites(product.id);
+      toast({
+        title: "Retiré des favoris",
+        description: `${product.name} a été retiré de vos favoris`,
+      });
     } else {
-      addToFavorites(product.id);
+      addToFavorites(product);
+      toast({
+        title: "Ajouté aux favoris",
+        description: `${product.name} a été ajouté à vos favoris`,
+      });
     }
   };
 
-  const formatPrice = (price: number): string => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  };
-
-  const discountPercentage = product.discounted_price 
-    ? Math.round(((product.original_price - product.discounted_price) / product.original_price) * 100)
-    : 0;
-
-  const cardClasses = viewMode === 'list' ? "w-full" : "w-full";
-  const isOutOfStock = product.status === 'inactive';
+  const displayPrice = product.discounted_price || product.original_price;
+  const hasDiscount = product.discounted_price && product.discounted_price < product.original_price;
 
   return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
-      className={cardClasses}
-    >
-      <Card className={`group relative overflow-hidden border border-border/40 hover:border-border/80 hover:shadow-lg transition-all duration-300 bg-card ${isOutOfStock ? 'opacity-75' : ''}`}>
-        <div className="relative">
-          <Link to={`/product/${product.id}`}>
-            <ProductImageCarousel
-              images={product.images || []}
-              productName={product.name}
-              className="w-full"
-            />
-          </Link>
+    <Link to={`/product/${product.id}`}>
+      <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+        <div className="relative overflow-hidden">
+          <div className="aspect-square bg-gray-100 dark:bg-gray-800">
+            {product.images && product.images.length > 0 ? (
+              <img
+                src={product.images[0]}
+                alt={product.name}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-gray-400">Pas d'image</span>
+              </div>
+            )}
+          </div>
           
-          {/* Discount badge */}
-          {discountPercentage > 0 && !isOutOfStock && (
-            <Badge className="absolute top-2 left-2 bg-red-500 text-white z-10">
-              -{discountPercentage}%
+          {hasDiscount && (
+            <Badge className="absolute top-2 left-2 bg-red-500 text-white">
+              -{Math.round(((product.original_price - product.discounted_price!) / product.original_price) * 100)}%
             </Badge>
           )}
-          
-          {/* Out of stock overlay */}
-          {isOutOfStock && (
-            <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
-              <Badge variant="secondary" className="bg-gray-600 text-white">
-                Hors stock
-              </Badge>
-            </div>
-          )}
-          
-          {/* Favorite button */}
+
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 bg-background/80 hover:bg-background z-10"
+            className={`absolute top-2 right-2 transition-colors ${
+              isFavorite(product.id) 
+                ? 'text-red-500 hover:text-red-600' 
+                : 'text-gray-500 hover:text-red-500'
+            }`}
             onClick={handleToggleFavorite}
           >
-            <Heart 
-              className={`h-4 w-4 ${isFavorite(product.id) ? 'fill-red-500 text-red-500' : ''}`} 
-            />
+            <Heart className={`h-5 w-5 ${isFavorite(product.id) ? 'fill-current' : ''}`} />
           </Button>
         </div>
-        
-        <CardContent className="p-3">
-          <Link to={`/product/${product.id}`}>
-            <h3 className="font-medium text-sm line-clamp-2 mb-2 text-foreground hover:text-primary transition-colors">
-              {product.name}
-            </h3>
-          </Link>
+
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+            {product.name}
+          </h3>
           
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <Star 
-                  key={i} 
-                  className={`h-3 w-3 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
-                />
-              ))}
-              <span className="text-xs text-muted-foreground ml-1">(4.0)</span>
-            </div>
-            
-            {/* Status badge on the same line as rating */}
-            <Badge 
-              variant={isOutOfStock ? "secondary" : "default"}
-              className="text-xs"
-            >
-              {isOutOfStock ? 'Hors stock' : 'En stock'}
-            </Badge>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              {product.discounted_price && !isOutOfStock ? (
-                <>
-                  <span className="font-bold text-primary text-sm">
-                    {formatPrice(product.discounted_price)} FC
-                  </span>
-                  <span className="text-xs text-muted-foreground line-through">
-                    {formatPrice(product.original_price)} FC
-                  </span>
-                </>
-              ) : (
-                <span className="font-bold text-primary text-sm">
-                  {formatPrice(product.original_price)} FC
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-primary">
+                {displayPrice.toLocaleString()} FC
+              </span>
+              {hasDiscount && (
+                <span className="text-sm text-gray-500 line-through">
+                  {product.original_price.toLocaleString()} FC
                 </span>
               )}
             </div>
-            
-            <Button 
-              onClick={handleAddToCart}
-              disabled={isInCart(product.id)}
-              className="w-full h-8 text-xs"
-              variant={isOutOfStock ? "secondary" : "default"}
-            >
-              <ShoppingCart className="h-3 w-3 mr-1" />
-              {isInCart(product.id) ? 'Dans le panier' : 'Ajouter'}
-            </Button>
+            {product.stock <= 5 && product.stock > 0 && (
+              <Badge variant="outline" className="text-orange-600 border-orange-600">
+                Stock faible
+              </Badge>
+            )}
           </div>
+
+          <Button 
+            className="w-full" 
+            onClick={handleAddToCart}
+            disabled={product.stock === 0}
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            {product.stock === 0 ? 'Rupture de stock' : 'Ajouter au panier'}
+          </Button>
         </CardContent>
       </Card>
-    </motion.div>
+    </Link>
   );
 };
 
