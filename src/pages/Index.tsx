@@ -1,110 +1,12 @@
 
 import React, { useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { ShoppingBag, Star, Truck, Shield, Phone } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { FeaturedGallery } from '@/components/FeaturedGallery';
 import CategoryCarousel from '@/components/CategoryCarousel';
+import { FeaturedGallery } from '@/components/FeaturedGallery';
 import WhatsAppContact from '@/components/WhatsAppContact';
 import { useGlobalStore } from '@/store/useGlobalStore';
-
-const HeroSection = () => (
-  <section className="relative min-h-[70vh] flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 overflow-hidden">
-    <div className="absolute inset-0 bg-[url('/shopping-cart-logo.svg')] bg-center bg-no-repeat bg-contain opacity-5"></div>
-    
-    <div className="container mx-auto px-4 text-center relative z-10">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="max-w-4xl mx-auto space-y-6"
-      >
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
-          Votre <span className="text-primary">Shopping</span> au Congo
-        </h1>
-        
-        <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-          Découvrez des produits de qualité, livrés partout au Congo avec le sourire
-        </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-          <Button size="lg" className="text-lg px-8 py-6 rounded-full">
-            <ShoppingBag className="mr-2 h-5 w-5" />
-            Commencer mes achats
-          </Button>
-          <Button variant="outline" size="lg" className="text-lg px-8 py-6 rounded-full">
-            <Phone className="mr-2 h-5 w-5" />
-            Nous contacter
-          </Button>
-        </div>
-      </motion.div>
-    </div>
-  </section>
-);
-
-const FeatureSection = () => {
-  const features = [
-    {
-      icon: Star,
-      title: "Produits de Qualité",
-      description: "Sélection rigoureuse de produits authentiques et durables"
-    },
-    {
-      icon: Truck,
-      title: "Livraison Rapide",
-      description: "Livraison express partout au Congo en 24-48h"
-    },
-    {
-      icon: Shield,
-      title: "Paiement Sécurisé",
-      description: "Transactions sécurisées et multiples moyens de paiement"
-    }
-  ];
-
-  return (
-    <section className="py-16 bg-muted/50">
-      <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Pourquoi Choisir BeShopping ?
-          </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Une expérience d'achat unique, pensée pour vous simplifier la vie
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-            >
-              <Card className="text-center h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardContent className="pt-8 pb-6">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                    <feature.icon className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
 
 const Index = () => {
   const { preloadAllData } = useGlobalStore();
@@ -114,38 +16,116 @@ const Index = () => {
   }, [preloadAllData]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <>
       <Header />
       
-      <main className="flex-1">
-        <HeroSection />
-        
-        <section className="py-12">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-center mb-8"
-            >
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                Nos Catégories
-              </h2>
-              <p className="text-muted-foreground">
-                Explorez nos différentes gammes de produits
-              </p>
-            </motion.div>
-            <CategoryCarousel />
+      <main className="min-h-screen bg-background">
+        {/* Hero Section */}
+        <section className="relative bg-gradient-to-r from-primary/5 to-secondary/5 py-12 md:py-20">
+          <div className="container mx-auto px-4 text-center">
+            <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
+              Bienvenue chez BeShopping
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Découvrez notre sélection exceptionnelle de produits de qualité
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg font-medium transition-colors">
+                Voir nos produits
+              </button>
+              <button className="border border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-3 rounded-lg font-medium transition-colors">
+                En savoir plus
+              </button>
+            </div>
           </div>
         </section>
 
-        <FeaturedGallery />
-        <FeatureSection />
+        {/* Categories Section */}
+        <section className="py-8 md:py-12">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-foreground">
+              Nos Catégories
+            </h2>
+            <Suspense fallback={
+              <div className="flex space-x-4 overflow-x-auto py-4">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="animate-pulse">
+                    <div className="w-20 h-20 bg-gray-200 rounded-full mb-2"></div>
+                    <div className="w-16 h-4 bg-gray-200 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            }>
+              <CategoryCarousel />
+            </Suspense>
+          </div>
+        </section>
+
+        {/* Featured Products */}
+        <Suspense fallback={
+          <section className="py-6 md:py-8">
+            <div className="container mx-auto px-4">
+              <div className="mb-6">
+                <div className="h-8 bg-gray-200 rounded w-64 animate-pulse mb-2 mx-auto"></div>
+                <div className="h-4 bg-gray-200 rounded w-96 animate-pulse mx-auto"></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="animate-pulse">
+                    <div className="aspect-square bg-gray-200 rounded-lg mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        }>
+          <FeaturedGallery />
+        </Suspense>
+
+        {/* Services Section */}
+        <section className="py-12 md:py-16 bg-muted/50">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-foreground">
+              Pourquoi nous choisir ?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🚚</span>
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-foreground">Livraison Rapide</h3>
+                <p className="text-muted-foreground">
+                  Livraison gratuite pour toutes commandes
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">💎</span>
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-foreground">Qualité Premium</h3>
+                <p className="text-muted-foreground">
+                  Produits de haute qualité sélectionnés avec soin
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🎧</span>
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-foreground">Support 24/7</h3>
+                <p className="text-muted-foreground">
+                  Assistance client disponible à tout moment
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
+      <WhatsAppContact phoneNumber="+243123456789" message="Bonjour, je souhaite plus d'informations sur vos produits." />
       <Footer />
-      <WhatsAppContact />
-    </div>
+    </>
   );
 };
 

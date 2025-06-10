@@ -1,25 +1,20 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { toast } from '@/components/ui/use-toast';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { Product } from '@/types';
 
-interface CartItem {
-  id: string;
-  name: string;
-  original_price: number;
-  discounted_price?: number;
-  images: string[];
+interface CartItem extends Product {
   quantity: number;
-  stock: number;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: any, quantity?: number) => void;
+  totalAmount: number;
+  addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  totalItems: number;
-  totalAmount: number;
+  getTotalQuantity: () => number;
+  isInCart: (productId: string) => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -32,144 +27,69 @@ export const useCart = () => {
   return context;
 };
 
-// Export alternatif pour compatibilité
-export const useCartContext = useCart;
-
-export const CartProvider = ({ children }: { children: React.ReactNode }) => {
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  // Charger le panier depuis le localStorage au démarrage
-  useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        setCartItems(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Erreur lors du chargement du panier:', error);
-      }
-    }
-  }, []);
-
-  // Sauvegarder le panier dans le localStorage à chaque modification
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
-
-  const addToCart = (product: any, quantity = 1) => {
+  const addToCart = useCallback((product: Product, quantity: number = 1) => {
     setCartItems(prev => {
       const existingItem = prev.find(item => item.id === product.id);
-      
       if (existingItem) {
-        const newQuantity = existingItem.quantity + quantity;
-        if (newQuantity > product.stock) {
-          toast({
-            title: "Stock insuffisant",
-            description: `Seulement ${product.stock} articles disponibles`,
-            variant: "destructive",
-          });
-          return prev;
-        }
-        
-        toast({
-          title: "Panier mis à jour",
-          description: `${product.name} quantité mise à jour`,
-        });
-        
         return prev.map(item =>
           item.id === product.id
-            ? { ...item, quantity: newQuantity }
+            ? { ...item, quantity: item.quantity + quantity }
             : item
         );
-      } else {
-        if (quantity > product.stock) {
-          toast({
-            title: "Stock insuffisant",
-            description: `Seulement ${product.stock} articles disponibles`,
-            variant: "destructive",
-          });
-          return prev;
-        }
-        
-        toast({
-          title: "Produit ajouté",
-          description: `${product.name} ajouté au panier`,
-        });
-        
-        return [...prev, {
-          id: product.id,
-          name: product.name,
-          original_price: product.original_price,
-          discounted_price: product.discounted_price,
-          images: product.images,
-          quantity,
-          stock: product.stock,
-        }];
       }
+      return [...prev, { ...product, quantity }];
     });
-  };
+  }, []);
 
-  const removeFromCart = (productId: string) => {
-    setCartItems(prev => {
-      const item = prev.find(item => item.id === productId);
-      if (item) {
-        toast({
-          title: "Produit retiré",
-          description: `${item.name} retiré du panier`,
-        });
-      }
-      return prev.filter(item => item.id !== productId);
-    });
-  };
+  const removeFromCart = useCallback((productId: string) => {
+    setCartItems(prev => prev.filter(item => item.id !== productId));
+  }, []);
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(productId);
       return;
     }
-
     setCartItems(prev =>
-      prev.map(item => {
-        if (item.id === productId) {
-          if (quantity > item.stock) {
-            toast({
-              title: "Stock insuffisant",
-              description: `Seulement ${item.stock} articles disponibles`,
-              variant: "destructive",
-            });
-            return item;
-          }
-          return { ...item, quantity };
-        }
-        return item;
-      })
+      prev.map(item =>
+        item.id === productId ? { ...item, quantity } : item
+      )
     );
-  };
+  }, [removeFromCart]);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCartItems([]);
-    toast({
-      title: "Panier vidé",
-      description: "Tous les articles ont été retirés du panier",
-    });
-  };
+  }, []);
 
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  
-  const totalAmount = cartItems.reduce((sum, item) => {
-    const price = item.discounted_price || item.original_price;
-    return sum + (price * item.quantity);
-  }, 0);
+  const getTotalQuantity = useCallback(() => {
+    return cartItems.reduce((total, item) => total + item.quantity, 0);
+  }, [cartItems]);
+
+  const isInCart = useCallback((productId: string) => {
+    return cartItems.some(item => item.id === productId);
+  }, [cartItems]);
+
+  const totalAmount = cartItems.reduce(
+    (total, item) => total + item.original_price * item.quantity,
+    0
+  );
 
   return (
-    <CartContext.Provider value={{
-      cartItems,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      totalItems,
-      totalAmount,
-    }}>
+    <CartContext.Provider
+      value={{
+        cartItems,
+        totalAmount,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        getTotalQuantity,
+        isInCart,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
