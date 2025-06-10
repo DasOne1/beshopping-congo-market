@@ -12,23 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-interface Order {
-  id: string;
-  order_number: string;
-  customer_id?: string;
-  customer_name: string;
-  total_amount: number;
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  created_at?: string;
-  order_items?: Array<{
-    id: string;
-    product_name: string;
-    product_image?: string;
-    quantity: number;
-    unit_price: number;
-  }>;
-}
+import { Order } from '@/types';
 
 interface OrderDashboardProps {
   orders: Order[];

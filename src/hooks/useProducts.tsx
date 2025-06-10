@@ -1,12 +1,15 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { Product } from '@/types';
+
+type ProductInput = Omit<Product, 'id' | 'created_at' | 'updated_at'>;
+type ProductUpdate = Partial<ProductInput> & { id: string };
 
 export const useProducts = () => {
   const queryClient = useQueryClient();
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -15,12 +18,12 @@ export const useProducts = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Product[];
     },
   });
 
   const createProduct = useMutation({
-    mutationFn: async (product: any) => {
+    mutationFn: async (product: ProductInput) => {
       const { data, error } = await supabase
         .from('products')
         .insert([product])
@@ -28,7 +31,7 @@ export const useProducts = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Product;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -37,7 +40,7 @@ export const useProducts = () => {
         description: "Le produit a été créé avec succès",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
         description: error.message,
@@ -47,7 +50,7 @@ export const useProducts = () => {
   });
 
   const updateProduct = useMutation({
-    mutationFn: async ({ id, ...updates }: any) => {
+    mutationFn: async ({ id, ...updates }: ProductUpdate) => {
       const { data, error } = await supabase
         .from('products')
         .update(updates)
@@ -56,7 +59,7 @@ export const useProducts = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Product;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -65,7 +68,7 @@ export const useProducts = () => {
         description: "Le produit a été mis à jour avec succès",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
         description: error.message,
@@ -91,7 +94,7 @@ export const useProducts = () => {
         description: "Le produit a été supprimé avec succès",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
         description: error.message,

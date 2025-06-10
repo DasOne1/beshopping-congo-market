@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -12,9 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
-import { useProducts, Product } from '@/hooks/useProducts';
+import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { Product } from '@/types';
 
 const Products = () => {
   const navigate = useNavigate();
@@ -52,7 +52,7 @@ const Products = () => {
     }
   }, [searchQuery]);
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = (products as Product[]).filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -62,8 +62,9 @@ const Products = () => {
     const price = product.discounted_price || product.original_price;
     const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
     
-    // Include both active and inactive products in the list
-    return matchesSearch && matchesCategory && matchesPrice;
+    const matchesStatus = product.status === 'active';
+    
+    return matchesSearch && matchesCategory && matchesPrice && matchesStatus;
   });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {

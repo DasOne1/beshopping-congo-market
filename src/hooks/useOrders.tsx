@@ -1,12 +1,12 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { Order } from '@/types';
 
 export const useOrders = () => {
   const queryClient = useQueryClient();
 
-  const { data: orders = [], isLoading } = useQuery({
+  const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ['orders'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -18,12 +18,12 @@ export const useOrders = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Order[];
     },
   });
 
   const updateOrderStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: Order['status'] }) => {
       const { data, error } = await supabase
         .from('orders')
         .update({ status })
@@ -32,7 +32,7 @@ export const useOrders = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Order;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -41,7 +41,7 @@ export const useOrders = () => {
         description: "Le statut de la commande a été mis à jour",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
         description: error.message,
@@ -58,7 +58,6 @@ export const useOrders = () => {
         .eq('id', id);
 
       if (error) throw error;
-      return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -67,7 +66,7 @@ export const useOrders = () => {
         description: "La commande a été supprimée avec succès",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
         description: error.message,

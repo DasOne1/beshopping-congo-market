@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from 'react';
 import {
@@ -19,10 +20,10 @@ export function FeaturedGallery() {
   
   // Utiliser les données en temps réel
   useRealtimeSync();
-  const { featuredProducts } = useProducts();
+  const { products } = useProducts();
   
   // Filtrer uniquement les produits vedettes actifs
-  const displayedProducts = featuredProducts?.filter(p => p.featured && p.status === 'active') || [];
+  const displayedProducts = products?.filter(p => p.featured && p.status === 'active') || [];
   
   // Autoplay
   useEffect(() => {

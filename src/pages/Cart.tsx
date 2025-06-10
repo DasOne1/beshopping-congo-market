@@ -15,6 +15,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
 import { WhatsAppIcon } from '@/components/WhatsAppIcon';
+import { Product } from '@/types';
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity } = useCart();
@@ -25,25 +26,36 @@ const Cart = () => {
   // Get cart products with full product data
   const cartProducts = cart.map(cartItem => {
     const product = products.find(p => p.id === cartItem.productId);
+    const typedProduct: Product = product ? {
+      ...product,
+      status: product.status as 'active' | 'inactive' | 'draft',
+      category_id: product.category_id || '',
+      description: product.description || '',
+      tags: product.tags || [],
+      stock: product.stock || 0,
+      created_at: product.created_at || new Date().toISOString(),
+      updated_at: product.updated_at || new Date().toISOString()
+    } : {
+      id: cartItem.productId,
+      name: 'Produit non trouvé',
+      description: '',
+      original_price: 0,
+      discounted_price: null,
+      images: [],
+      stock: 0,
+      category_id: '',
+      tags: [],
+      featured: false,
+      is_visible: true,
+      status: 'inactive',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
     return {
       productId: cartItem.productId,
       quantity: cartItem.quantity,
-      product: product || {
-        id: cartItem.productId,
-        name: 'Produit non trouvé',
-        description: '',
-        original_price: 0,
-        discounted_price: null,
-        images: [],
-        stock: 0,
-        category_id: '',
-        tags: [],
-        featured: false,
-        is_visible: true,
-        status: 'active' as const,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
+      product: typedProduct
     };
   });
 

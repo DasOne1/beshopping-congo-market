@@ -1,0 +1,9 @@
+.hero-section {
+  background-size: cover;
+  background-position: center;
+  transition: background-image 0.7s ease-in-out;
+}
+
+.hero-section[data-image] {
+  background-image: var(--hero-image);
+} 

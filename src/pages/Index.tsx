@@ -18,6 +18,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import './Index.css';
 
 const heroImages = [
   '/images/pic1.jpeg',
@@ -34,7 +35,7 @@ const Index = () => {
   // Activer la synchronisation en temps réel
   useRealtimeSync();
   
-  const { products, featuredProducts, popularProducts, isLoading: productsLoading } = useProducts();
+  const { products, isLoading: productsLoading } = useProducts();
   const { categories, isLoading: categoriesLoading } = useCategories();
   const { trackEvent } = useAnalytics();
 
@@ -70,13 +71,8 @@ const Index = () => {
       <main className="pt-14 md:pt-16">
         {/* Hero Section */}
         <section
-          className="relative py-12 md:py-20 min-h-[420px] md:min-h-[480px] flex items-center"
-          style={{
-            backgroundImage: `url(${heroImages[currentHero]})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            transition: 'background-image 0.7s ease-in-out',
-          }}
+          className={`relative py-12 md:py-20 min-h-[420px] md:min-h-[480px] flex items-center bg-cover bg-center transition-all duration-700`}
+          style={{ backgroundImage: `url(${heroImages[currentHero]})` }}
         >
           {/* Overlay pour lisibilité */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/70 via-background/80 to-secondary/70 opacity-80 z-0"></div>

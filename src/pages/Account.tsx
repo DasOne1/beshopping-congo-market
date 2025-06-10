@@ -18,6 +18,7 @@ import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useOrders } from '@/hooks/useOrders';
 import OrderDashboard from '@/components/OrderDashboard';
 import { toast } from '@/components/ui/use-toast';
+import { Order } from '@/types';
 
 const Account = () => {
   const navigate = useNavigate();
@@ -34,12 +35,12 @@ const Account = () => {
   const { orders: allOrders, isLoading: isLoadingOrders } = useOrders();
 
   // Filtrer les commandes pour n'afficher que celles du client connecté
-  const orders = isAuthenticated && currentCustomer
+  const orders = (isAuthenticated && currentCustomer
     ? allOrders.filter(order => {
         console.log('Order customer_id:', order.customer_id, 'Current customer id:', currentCustomer.id);
         return order.customer_id === currentCustomer.id;
       })
-    : [];
+    : []) as Order[];
 
   console.log('All orders:', allOrders);
   console.log('Filtered orders:', orders);
