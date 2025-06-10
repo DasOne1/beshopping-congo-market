@@ -1,73 +1,44 @@
 
-import { useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { useGlobalStore } from '@/store/useGlobalStore';
-import { useOptimizedProducts } from './useOptimizedData';
-import { Product } from '@/store/types';
+import type { Product } from '@/types';
 
 export const useProducts = () => {
-  const { products, isLoading, refetch } = useOptimizedProducts();
-  const { addProduct, updateProduct, removeProduct } = useGlobalStore();
+  const queryClient = useQueryClient();
 
-  const featuredProducts = products.filter(p => p.featured && p.status === 'active').slice(0, 8);
-  const popularProducts = products
-    .filter(p => p.status === 'active')
-    .sort((a, b) => (b.popular || 0) - (a.popular || 0))
-    .slice(0, 6);
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Product[];
+    },
+  });
 
   const createProduct = useMutation({
     mutationFn: async (product: any) => {
-      const productWithDefaults = {
-        ...product,
-        is_visible: product.is_visible !== undefined ? product.is_visible : true,
-        tags: product.tags || [],
-        status: product.status || 'active',
-      };
-
       const { data, error } = await supabase
         .from('products')
-        .insert([productWithDefaults])
+        .insert([product])
         .select()
         .single();
 
       if (error) throw error;
-      
-      // Assurer la conversion du type status
-      const typedData: Product = {
-        ...data,
-        status: data.status as 'active' | 'inactive' | 'draft'
-      };
-      
-      return typedData;
+      return data;
     },
-    onMutate: async (newProduct) => {
-      const optimisticProduct: Product = {
-        ...newProduct,
-        id: `temp-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        is_visible: newProduct.is_visible !== undefined ? newProduct.is_visible : true,
-        tags: newProduct.tags || [],
-        status: newProduct.status || 'active',
-      };
-      addProduct(optimisticProduct);
-      return optimisticProduct;
-    },
-    onSuccess: (data, variables, context) => {
-      if (context) {
-        removeProduct(context.id);
-        addProduct(data);
-      }
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       toast({
         title: "Produit créé",
         description: "Le produit a été créé avec succès",
       });
     },
-    onError: (error: any, variables, context) => {
-      if (context) {
-        removeProduct(context.id);
-      }
+    onError: (error: any) => {
       toast({
         title: "Erreur",
         description: error.message,
@@ -76,7 +47,7 @@ export const useProducts = () => {
     },
   });
 
-  const updateProductMutation = useMutation({
+  const updateProduct = useMutation({
     mutationFn: async ({ id, ...updates }: any) => {
       const { data, error } = await supabase
         .from('products')
@@ -86,26 +57,16 @@ export const useProducts = () => {
         .single();
 
       if (error) throw error;
-      
-      const typedData: Product = {
-        ...data,
-        status: data.status as 'active' | 'inactive' | 'draft'
-      };
-      
-      return typedData;
-    },
-    onMutate: async ({ id, ...updates }) => {
-      updateProduct(id, updates);
-      return { id, updates };
+      return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       toast({
         title: "Produit mis à jour",
         description: "Le produit a été mis à jour avec succès",
       });
     },
-    onError: (error: any, variables, context) => {
-      refetch();
+    onError: (error: any) => {
       toast({
         title: "Erreur",
         description: error.message,
@@ -124,18 +85,14 @@ export const useProducts = () => {
       if (error) throw error;
       return id;
     },
-    onMutate: async (id) => {
-      removeProduct(id);
-      return { id };
-    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       toast({
         title: "Produit supprimé",
         description: "Le produit a été supprimé avec succès",
       });
     },
-    onError: (error: any, variables, context) => {
-      refetch();
+    onError: (error: any) => {
       toast({
         title: "Erreur",
         description: error.message,
@@ -146,12 +103,11 @@ export const useProducts = () => {
 
   return {
     products,
-    featuredProducts,
-    popularProducts,
     isLoading,
     createProduct,
-    updateProduct: updateProductMutation,
+    updateProduct,
     deleteProduct,
-    refetch,
   };
 };
+
+export { Product };

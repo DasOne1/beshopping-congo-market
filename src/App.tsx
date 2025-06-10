@@ -8,7 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
-import SplashScreen from "@/components/SplashScreen";
+import OptimizedSplashScreen from "@/components/OptimizedSplashScreen";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { MobileNavBar } from "@/components/MobileNavBar";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -44,7 +44,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes
+      gcTime: 30 * 60 * 1000, // 30 minutes (remplace cacheTime)
       refetchOnWindowFocus: false,
       retry: 1,
       retryDelay: 500,
@@ -63,10 +63,12 @@ const AppContent = () => {
     <>
       <ScrollToTop />
       <Routes>
+        {/* Routes publiques critiques (chargement immédiat) */}
         <Route path="/" element={<Index />} />
         <Route path="/customer-auth" element={<EmailCustomerAuth />} />
         <Route path="/admin/auth" element={<AdminAuth />} />
 
+        {/* Routes secondaires avec lazy loading */}
         <Route 
           path="/products" 
           element={
@@ -140,6 +142,7 @@ const AppContent = () => {
           } 
         />
 
+        {/* Routes admin avec lazy loading */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route 
             path="dashboard" 
@@ -199,6 +202,7 @@ const AppContent = () => {
           />
         </Route>
 
+        {/* 404 route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
       <MobileNavBar />
@@ -219,7 +223,7 @@ function App() {
             <BrowserRouter>
               <ThemeProvider>
                 {!splashComplete && (
-                  <SplashScreen onComplete={() => setSplashComplete(true)} />
+                  <OptimizedSplashScreen onComplete={() => setSplashComplete(true)} />
                 )}
                 {splashComplete && <AppContent />}
               </ThemeProvider>

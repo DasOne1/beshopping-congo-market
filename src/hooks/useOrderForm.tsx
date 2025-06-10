@@ -1,112 +1,149 @@
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { generateWhatsAppMessage } from '@/utils/whatsappMessageGenerator';
-import { CartItem } from '@/contexts/CartContext';
+import { useState, useEffect } from 'react';
+import { useCartContext } from '@/contexts/CartContext';
+import { useOrders } from '@/hooks/useOptimizedOrders';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
-const orderSchema = z.object({
-  customer_name: z.string().min(1, 'Le nom est requis'),
-  customer_phone: z.string().min(1, 'Le téléphone est requis'),
-  customer_email: z.string().email('Email invalide').optional().or(z.literal('')),
-  whatsapp_number: z.string().optional(),
-  shipping_address: z.object({
-    street: z.string().min(1, 'L\'adresse est requise'),
-    city: z.string().min(1, 'La ville est requise'),
-    state: z.string().optional(),
-    postal_code: z.string().optional(),
-    country: z.string().default('RD Congo'),
-  }),
-  notes: z.string().optional(),
-  payment_method: z.enum(['cash', 'mobile_money', 'bank_transfer']).default('cash'),
-});
+interface OrderFormData {
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  whatsappNumber: string;
+  shippingAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  paymentMethod: string;
+  notes: string;
+}
 
-export type OrderFormData = z.infer<typeof orderSchema>;
-
-export const useOrderForm = (cartItems: CartItem[] = []) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [orderDetails, setOrderDetails] = useState<any>(null);
-  const [whatsappMessage, setWhatsappMessage] = useState('');
-
-  const form = useForm<OrderFormData>({
-    resolver: zodResolver(orderSchema),
-    defaultValues: {
-      customer_name: '',
-      customer_phone: '',
-      customer_email: '',
-      whatsapp_number: '',
-      shipping_address: {
-        street: '',
-        city: '',
-        state: '',
-        postal_code: '',
-        country: 'RD Congo',
-      },
-      notes: '',
-      payment_method: 'cash',
+export const useOrderForm = () => {
+  const { cartItems, totalAmount, clearCart } = useCartContext();
+  const { createOrder } = useOrders();
+  
+  const [formData, setFormData] = useState<OrderFormData>({
+    customerName: '',
+    customerEmail: '',
+    customerPhone: '',
+    whatsappNumber: '',
+    shippingAddress: {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: 'Congo (RDC)',
     },
+    paymentMethod: 'cash',
+    notes: '',
   });
 
-  const validateForm = () => {
-    return form.trigger();
-  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submitOrder = async (data: OrderFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (cartItems.length === 0) {
+      toast({
+        title: "Panier vide",
+        description: "Ajoutez des produits au panier avant de passer commande",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
+
     try {
-      console.log('Submitting order:', data);
-      
+      // Calculer les totaux
+      const subtotal = totalAmount;
+      const taxAmount = subtotal * 0.1; // 10% de taxe
+      const shippingAmount = 5000; // Frais de livraison fixes
+      const finalTotal = subtotal + taxAmount + shippingAmount;
+
+      // Créer la commande
       const orderData = {
-        ...data,
-        cartItems,
-        total: cartItems.reduce((sum, item) => {
-          const price = item.product.discounted_price || item.product.original_price;
-          return sum + (price * item.quantity);
-        }, 0),
+        customer_name: formData.customerName,
+        customer_email: formData.customerEmail,
+        customer_phone: formData.customerPhone,
+        whatsapp_number: formData.whatsappNumber,
+        total_amount: finalTotal,
+        subtotal: subtotal,
+        tax_amount: taxAmount,
+        shipping_amount: shippingAmount,
+        discount_amount: 0,
+        status: 'pending',
+        payment_method: formData.paymentMethod,
+        payment_status: 'pending',
+        shipping_address: formData.shippingAddress,
+        notes: formData.notes,
       };
+
+      await createOrder.mutateAsync(orderData);
+
+      // Vider le panier
+      clearCart();
       
-      setOrderDetails(orderData);
-      
-      // Générer le message WhatsApp
-      const message = generateWhatsAppMessage(cartItems, data);
-      setWhatsappMessage(message);
-      
-      setShowConfirmation(true);
-      return orderData;
-    } catch (error) {
-      console.error('Error submitting order:', error);
-      throw error;
+      // Réinitialiser le formulaire
+      setFormData({
+        customerName: '',
+        customerEmail: '',
+        customerPhone: '',
+        whatsappNumber: '',
+        shippingAddress: {
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: 'Congo (RDC)',
+        },
+        paymentMethod: 'cash',
+        notes: '',
+      });
+
+      toast({
+        title: "Commande créée",
+        description: "Votre commande a été créée avec succès",
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Une erreur s'est produite",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSubmit = form.handleSubmit(submitOrder);
+  const updateFormData = (field: keyof OrderFormData, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
-  const handleWhatsAppOrder = () => {
-    const phoneNumber = "243123456789"; // Numéro par défaut
-    const encodedMessage = encodeURIComponent(whatsappMessage);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+  const updateShippingAddress = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      shippingAddress: {
+        ...prev.shippingAddress,
+        [field]: value,
+      },
+    }));
   };
 
   return {
-    form,
-    isSubmitting,
-    submitOrder,
-    formState: form.formState,
-    watch: form.watch,
-    setValue: form.setValue,
-    getValues: form.getValues,
-    showConfirmation,
-    setShowConfirmation,
-    orderDetails,
-    setOrderDetails,
+    formData,
+    updateFormData,
+    updateShippingAddress,
     handleSubmit,
-    handleWhatsAppOrder,
-    validateForm,
-    whatsappMessage,
+    isSubmitting,
+    cartItems,
+    totalAmount,
   };
 };

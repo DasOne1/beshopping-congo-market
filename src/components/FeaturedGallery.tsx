@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useProducts } from '@/hooks/useProducts';
+import { useProducts } from '@/hooks/useOptimizedProducts';
 import ProductCard from './ProductCard';
 import ProductSkeleton from './ProductSkeleton';
 

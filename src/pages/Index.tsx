@@ -1,131 +1,205 @@
 
-import React, { useEffect } from 'react';
-import { Suspense } from 'react';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { ShoppingBag, Truck, Shield, Star, Palette } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ProductCard from '@/components/ProductCard';
+import ProductSkeleton from '@/components/ProductSkeleton';
 import CategoryCarousel from '@/components/CategoryCarousel';
 import { FeaturedGallery } from '@/components/FeaturedGallery';
 import WhatsAppContact from '@/components/WhatsAppContact';
-import { useGlobalStore } from '@/store/useGlobalStore';
+import { MobileNavBar } from '@/components/MobileNavBar';
+import { useProducts } from '@/hooks/useOptimizedProducts';
+import { useCategories } from '@/hooks/useOptimizedCategories';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { useNavigate } from 'react-router-dom';
+
+const heroImages = [
+  '/images/pic1.jpeg',
+  '/images/pic2.jpeg',
+  '/images/pic3.jpeg',
+  '/images/pic4.jpeg',
+  '/images/pic5.jpeg',
+  '/images/pic6.jpeg',
+];
 
 const Index = () => {
-  const { preloadAllData } = useGlobalStore();
+  const navigate = useNavigate();
+  
+  const { products, featuredProducts, popularProducts, isLoading: productsLoading } = useProducts();
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { trackEvent } = useAnalytics();
+
+  const [currentHero, setCurrentHero] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentHero((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
-    preloadAllData();
-  }, [preloadAllData]);
+    // Track page view
+    trackEvent.mutate({
+      event_type: 'view_product',
+      session_id: sessionStorage.getItem('session_id') || 'anonymous',
+      metadata: { page: 'home' }
+    });
+  }, []);
+
+  // Group products by category - include only active products
+  const productsByCategory = categories?.map(category => ({
+    category,
+    products: products?.filter(p => p.category_id === category.id && p.status === 'active').slice(0, 6) || []
+  })).filter(group => group.products.length > 0) || [];
 
   return (
-    <>
+    <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="min-h-screen bg-background">
-        {/* Hero Section */}
-        <section className="relative bg-gradient-to-r from-primary/5 to-secondary/5 py-12 md:py-20">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
-              Bienvenue chez BeShopping
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Découvrez notre sélection exceptionnelle de produits de qualité
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg font-medium transition-colors">
-                Voir nos produits
-              </button>
-              <button className="border border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-3 rounded-lg font-medium transition-colors">
-                En savoir plus
-              </button>
+      <main className="pt-14 md:pt-16">
+        {/* Hero Section optimisé */}
+        <section
+          className="relative py-12 md:py-20 min-h-[420px] md:min-h-[480px] flex items-center"
+          style={{
+            backgroundImage: `url(${heroImages[currentHero]})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            transition: 'background-image 0.7s ease-in-out',
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/70 via-background/80 to-secondary/70 opacity-80 z-0"></div>
+          <div className="container mx-auto px-4 relative z-10 flex items-center min-h-[350px] md:min-h-[400px]">
+            <div className="max-w-2xl space-y-4 md:space-y-6 py-6 md:py-8">
+              <Badge className="mb-2 px-3 md:px-4 py-1 text-sm md:text-base bg-primary/90 text-white shadow-lg">
+                Bienvenue sur BeShopping Congo
+              </Badge>
+              <h1 className="text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold leading-tight text-gray-900 dark:text-white drop-shadow-md">
+                Découvrez les
+                <span className="text-primary block">meilleurs produits</span>
+                du Congo
+              </h1>
+              <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-xl">
+                Une sélection soigneusement choisie des produits les plus recherchés,
+                livrés directement chez vous à Lubumbashi et dans tout le Congo.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-4 md:mt-6">
+                <Button 
+                  size="lg" 
+                  className="text-sm md:text-base lg:text-lg px-4 md:px-6 lg:px-8 shadow-md bg-primary hover:bg-primary/90 text-white"
+                  onClick={() => navigate('/products')}
+                >
+                  <ShoppingBag className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                  Explorer les produits
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  className="text-sm md:text-base lg:text-lg px-4 md:px-6 lg:px-8 border-primary text-primary hover:bg-primary/10"
+                  onClick={() => navigate('/custom-order')}
+                >
+                  <Palette className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                  Commande personnalisée
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-3 md:gap-4 mt-4 md:mt-6">
+                <div className="flex items-center gap-2 text-primary font-medium text-sm md:text-base">
+                  <Truck className="h-4 w-4 md:h-5 md:w-5" /> 
+                  Livraison rapide
+                </div>
+                <div className="flex items-center gap-2 text-primary font-medium text-sm md:text-base">
+                  <Shield className="h-4 w-4 md:h-5 md:w-5" /> 
+                  Paiement sécurisé
+                </div>
+                <div className="flex items-center gap-2 text-primary font-medium text-sm md:text-base">
+                  <Star className="h-4 w-4 md:h-5 md:w-5" /> 
+                  Qualité garantie
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Categories Section */}
-        <section className="py-8 md:py-12">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-foreground">
-              Nos Catégories
-            </h2>
-            <Suspense fallback={
-              <div className="flex space-x-4 overflow-x-auto py-4">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div key={index} className="animate-pulse">
-                    <div className="w-20 h-20 bg-gray-200 rounded-full mb-2"></div>
-                    <div className="w-16 h-4 bg-gray-200 rounded"></div>
-                  </div>
-                ))}
-              </div>
-            }>
-              <CategoryCarousel />
-            </Suspense>
+        {/* Categories Carousel - optimisé avec cache */}
+        <div className="sticky top-14 md:top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border/40">
+          <div className="w-full">
+            <CategoryCarousel />
           </div>
-        </section>
+        </div>
 
-        {/* Featured Products */}
-        <Suspense fallback={
-          <section className="py-6 md:py-8">
+        {/* Featured Products Carousel - optimisé */}
+        <div className="w-full">
+          <FeaturedGallery />
+        </div>
+
+        {/* Products by Category - optimisé avec skeleton loading */}
+        {productsLoading || categoriesLoading ? (
+          <section className="py-4 md:py-6">
             <div className="container mx-auto px-4">
-              <div className="mb-6">
-                <div className="h-8 bg-gray-200 rounded w-64 animate-pulse mb-2 mx-auto"></div>
-                <div className="h-4 bg-gray-200 rounded w-96 animate-pulse mx-auto"></div>
+              <div className="mb-4 md:mb-6">
+                <div className="flex justify-between items-center mb-3 md:mb-4">
+                  <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+                  <div className="h-8 bg-gray-200 rounded w-20 animate-pulse"></div>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} className="animate-pulse">
-                    <div className="aspect-square bg-gray-200 rounded-lg mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+                <ProductSkeleton count={8} />
               </div>
             </div>
           </section>
-        }>
-          <FeaturedGallery />
-        </Suspense>
+        ) : (
+          productsByCategory.map(group => (
+            <section key={group.category.id} className="py-4 md:py-6">
+              <div className="container mx-auto px-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                  className="mb-4 md:mb-6"
+                >
+                  <div className="flex justify-between items-center mb-3 md:mb-4">
+                    <h2 className="text-lg md:text-xl font-bold">{group.category.name}</h2>
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => navigate(`/products?category=${group.category.id}`)}
+                      className="text-xs md:text-sm"
+                    >
+                      Voir tout
+                    </Button>
+                  </div>
+                </motion.div>
 
-        {/* Services Section */}
-        <section className="py-12 md:py-16 bg-muted/50">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-foreground">
-              Pourquoi nous choisir ?
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">🚚</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-2 text-foreground">Livraison Rapide</h3>
-                <p className="text-muted-foreground">
-                  Livraison gratuite pour toutes commandes
-                </p>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  transition={{ duration: 0.8 }}
+                  className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6"
+                >
+                  {group.products.map((product, index) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.1 * index }}
+                    >
+                      <ProductCard product={product} />
+                    </motion.div>
+                  ))}
+                </motion.div>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">💎</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-2 text-foreground">Qualité Premium</h3>
-                <p className="text-muted-foreground">
-                  Produits de haute qualité sélectionnés avec soin
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">🎧</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-2 text-foreground">Support 24/7</h3>
-                <p className="text-muted-foreground">
-                  Assistance client disponible à tout moment
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
+          ))
+        )}
       </main>
 
-      <WhatsAppContact phoneNumber="+243123456789" message="Bonjour, je souhaite plus d'informations sur vos produits." />
       <Footer />
-    </>
+      <MobileNavBar />
+      <WhatsAppContact phoneNumber="+243 978 100 940" message="Bonjour, je souhaite passer une commande" />
+    </div>
   );
 };
 

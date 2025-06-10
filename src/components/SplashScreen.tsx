@@ -1,115 +1,163 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Loader2 } from 'lucide-react';
+import { Logo } from '@/components/Logo';
+import { useDataPreloader } from '@/hooks/useOptimizedData';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface SplashScreenProps {
   onComplete: () => void;
 }
 
-const SplashScreen = ({ onComplete }: SplashScreenProps) => {
-  const [progress, setProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState('Initialisation...');
+export default function SplashScreen({ onComplete }: SplashScreenProps) {
+  const [isVisible, setIsVisible] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const { preloadAllData } = useDataPreloader();
+  const { theme } = useTheme();
+
+  // Déterminer le thème effectif (résoudre 'system')
+  const getEffectiveTheme = () => {
+    if (theme === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return theme;
+  };
+
+  const effectiveTheme = getEffectiveTheme();
 
   useEffect(() => {
+    let progressInterval: NodeJS.Timeout;
+
     const loadApp = async () => {
       try {
-        setProgress(10);
-        setCurrentStep('Chargement des données...');
+        // Animation de progression plus rapide
+        progressInterval = setInterval(() => {
+          setLoadingProgress(prev => {
+            const newProgress = prev + 25; // Augmentation plus rapide
+            return newProgress <= 75 ? newProgress : 75; // Ne pas aller à 100% tant que les données ne sont pas chargées
+          });
+        }, 150); // Intervalle plus court
+
+        // Précharger les données
+        await preloadAllData();
         
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Compléter immédiatement la progression
+        setLoadingProgress(100);
         
-        setProgress(40);
-        setCurrentStep('Préparation de l\'interface...');
-        
-        await new Promise(resolve => setTimeout(resolve, 600));
-        
-        setProgress(80);
-        setCurrentStep('Finalisation...');
-        
-        await new Promise(resolve => setTimeout(resolve, 400));
-        
-        setProgress(100);
-        setCurrentStep('Prêt !');
-        
+        // Réduire le temps d'attente avant de masquer le splash screen
         setTimeout(() => {
-          onComplete();
-        }, 500);
-        
+          setIsVisible(false);
+          setTimeout(onComplete, 300); // Animation de sortie plus rapide
+        }, 400); // Temps d'affichage réduit
+
       } catch (error) {
         console.error('Erreur lors du chargement:', error);
-        setCurrentStep('Prêt !');
-        setTimeout(onComplete, 1000);
+        // Continuer même en cas d'erreur
+        setLoadingProgress(100);
+        setTimeout(() => {
+          setIsVisible(false);
+          setTimeout(onComplete, 300);
+        }, 400);
       }
     };
 
     loadApp();
-  }, [onComplete]);
+
+    return () => {
+      if (progressInterval) clearInterval(progressInterval);
+    };
+  }, [onComplete, preloadAllData]);
 
   return (
     <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 z-50 bg-gradient-to-br from-primary via-primary/80 to-secondary flex items-center justify-center"
-        initial={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.8, ease: "easeInOut" }}
-      >
-        <div className="text-center space-y-8 px-4">
+      {isVisible && (
+        <motion.div
+          className={`fixed inset-0 z-50 flex items-center justify-center ${
+            effectiveTheme === 'dark' 
+              ? 'bg-gray-900' 
+              : 'bg-orange-50'
+          }`}
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="relative"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 1.05, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col items-center"
           >
-            <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center shadow-2xl">
-              <ShoppingBag className="w-12 h-12 text-primary" />
+            {/* Container pour l'animation de roulement */}
+            <div className="w-48 h-24 mb-0 relative flex items-center">
+              <motion.div
+                animate={{ 
+                  x: [-96, 168], // Plus large pour permettre la disparition complète
+                  opacity: [0, 1, 1, 1, 0], // Apparition, visible, puis disparition
+                  transition: { 
+                    repeat: Infinity, 
+                    duration: 3, // Durée légèrement plus longue
+                    ease: "linear",
+                    times: [0, 0.2, 0.5, 0.8, 1] // Timing de l'opacity
+                  }
+                }}
+                className="absolute"
+                style={{
+                  left: 0
+                }}
+              >
+                <img
+                  src="/shopping-cart-logo.svg"
+                  alt="BeShopping Logo"
+                  className="w-32 h-32 object-contain"
+                />
+              </motion.div>
             </div>
             
-            <motion.div
-              className="absolute inset-0 border-4 border-white/30 border-t-white rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-            className="space-y-2"
-          >
-            <h1 className="text-4xl md:text-5xl font-bold text-white tracking-wide">
-              BeShopping
-            </h1>
-            <p className="text-white/90 text-lg font-medium">
-              Votre boutique en ligne au Congo
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1, duration: 0.5 }}
-            className="w-64 mx-auto space-y-3"
-          >
-            <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+            <motion.h1 
+              className={`text-2xl font-bold text-primary mb-6 ${
+                effectiveTheme === 'dark' ? 'text-orange-400' : 'text-primary'
+              }`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              BeShopping Congo
+            </motion.h1>
+            
+            {/* Barre de progression adaptée au thème */}
+            <div className={`w-64 h-2 rounded-full mb-4 ${
+              effectiveTheme === 'dark' 
+                ? 'bg-gray-700' 
+                : 'bg-gray-200'
+            }`}>
               <motion.div
-                className="h-full bg-white rounded-full"
+                className={`h-full rounded-full ${
+                  effectiveTheme === 'dark' 
+                    ? 'bg-orange-400' 
+                    : 'bg-primary'
+                }`}
                 initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
+                animate={{ width: `${loadingProgress}%` }}
+                transition={{ duration: 0.2 }}
               />
             </div>
             
-            <div className="flex items-center justify-center space-x-2 text-white/90">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm font-medium">{currentStep}</span>
-            </div>
+            <motion.div 
+              className={`text-sm font-medium ${
+                effectiveTheme === 'dark' 
+                  ? 'text-gray-300' 
+                  : 'text-muted-foreground'
+              }`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              Chargement...
+            </motion.div>
           </motion.div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
-};
-
-export default SplashScreen;
+}
