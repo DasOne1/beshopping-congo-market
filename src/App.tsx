@@ -1,5 +1,4 @@
 
-import { Suspense, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,207 +7,33 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
-import OptimizedSplashScreen from "@/components/OptimizedSplashScreen";
+import SplashScreen from "@/components/SplashScreen";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { MobileNavBar } from "@/components/MobileNavBar";
 import AdminLayout from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
+import Products from "./pages/Products";
+import Categories from "./pages/Categories";
+import ProductDetails from "./pages/ProductDetails";
+import Cart from "./pages/Cart";
+import Favorites from "./pages/Favorites";
+import Contact from "./pages/Contact";
+import AboutUs from "./pages/AboutUs";
+import Account from "./pages/Account";
+import CustomOrder from "./pages/CustomOrder";
 import NotFound from "./pages/NotFound";
 import EmailCustomerAuth from "./pages/EmailCustomerAuth";
 import AdminAuth from "./pages/AdminAuth";
-import { useOptimizedRealtimeSync } from "@/hooks/useOptimizedRealtimeSync";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminCatalog from "./pages/admin/AdminCatalog";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminReports from "./pages/admin/AdminReports";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminProfile from "./pages/admin/AdminProfile";
+import { useState } from "react";
 
-// Lazy components avec code splitting
-import {
-  LazyProducts,
-  LazyCategories,
-  LazyProductDetails,
-  LazyCart,
-  LazyFavorites,
-  LazyContact,
-  LazyAboutUs,
-  LazyAccount,
-  LazyCustomOrder,
-  LazyAdminDashboard,
-  LazyAdminCatalog,
-  LazyAdminOrders,
-  LazyAdminReports,
-  LazyAdminAnalytics,
-  LazyAdminSettings,
-  LazyAdminProfile,
-  LazyLoadingFallback,
-} from "@/components/LazyComponents";
-
-// Configuration optimisée de React Query
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes (remplace cacheTime)
-      refetchOnWindowFocus: false,
-      retry: 1,
-      retryDelay: 500,
-    },
-    mutations: {
-      retry: 1,
-    },
-  },
-});
-
-// Composant principal avec synchronisation temps réel
-const AppContent = () => {
-  useOptimizedRealtimeSync();
-  
-  return (
-    <>
-      <ScrollToTop />
-      <Routes>
-        {/* Routes publiques critiques (chargement immédiat) */}
-        <Route path="/" element={<Index />} />
-        <Route path="/customer-auth" element={<EmailCustomerAuth />} />
-        <Route path="/admin/auth" element={<AdminAuth />} />
-
-        {/* Routes secondaires avec lazy loading */}
-        <Route 
-          path="/products" 
-          element={
-            <Suspense fallback={<LazyLoadingFallback />}>
-              <LazyProducts />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/categories" 
-          element={
-            <Suspense fallback={<LazyLoadingFallback />}>
-              <LazyCategories />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/product/:id" 
-          element={
-            <Suspense fallback={<LazyLoadingFallback />}>
-              <LazyProductDetails />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/cart" 
-          element={
-            <Suspense fallback={<LazyLoadingFallback />}>
-              <LazyCart />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/favorites" 
-          element={
-            <Suspense fallback={<LazyLoadingFallback />}>
-              <LazyFavorites />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/contact" 
-          element={
-            <Suspense fallback={<LazyLoadingFallback />}>
-              <LazyContact />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/about" 
-          element={
-            <Suspense fallback={<LazyLoadingFallback />}>
-              <LazyAboutUs />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/account" 
-          element={
-            <Suspense fallback={<LazyLoadingFallback />}>
-              <LazyAccount />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/custom-order" 
-          element={
-            <Suspense fallback={<LazyLoadingFallback />}>
-              <LazyCustomOrder />
-            </Suspense>
-          } 
-        />
-
-        {/* Routes admin avec lazy loading */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route 
-            path="dashboard" 
-            element={
-              <Suspense fallback={<LazyLoadingFallback />}>
-                <LazyAdminDashboard />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="catalog" 
-            element={
-              <Suspense fallback={<LazyLoadingFallback />}>
-                <LazyAdminCatalog />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="orders" 
-            element={
-              <Suspense fallback={<LazyLoadingFallback />}>
-                <LazyAdminOrders />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="reports" 
-            element={
-              <Suspense fallback={<LazyLoadingFallback />}>
-                <LazyAdminReports />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="analytics" 
-            element={
-              <Suspense fallback={<LazyLoadingFallback />}>
-                <LazyAdminAnalytics />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="settings" 
-            element={
-              <Suspense fallback={<LazyLoadingFallback />}>
-                <LazyAdminSettings />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="profile" 
-            element={
-              <Suspense fallback={<LazyLoadingFallback />}>
-                <LazyAdminProfile />
-              </Suspense>
-            } 
-          />
-        </Route>
-
-        {/* 404 route */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <MobileNavBar />
-    </>
-  );
-};
+const queryClient = new QueryClient();
 
 function App() {
   const [splashComplete, setSplashComplete] = useState(false);
@@ -223,9 +48,43 @@ function App() {
             <BrowserRouter>
               <ThemeProvider>
                 {!splashComplete && (
-                  <OptimizedSplashScreen onComplete={() => setSplashComplete(true)} />
+                  <SplashScreen onComplete={() => setSplashComplete(true)} />
                 )}
-                {splashComplete && <AppContent />}
+                {splashComplete && (
+                  <>
+                    <ScrollToTop />
+                    <Routes>
+                      {/* Public routes */}
+                      <Route path="/" element={<Index />} />
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/categories" element={<Categories />} />
+                      <Route path="/product/:id" element={<ProductDetails />} />
+                      <Route path="/cart" element={<Cart />} />
+                      <Route path="/favorites" element={<Favorites />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/about" element={<AboutUs />} />
+                      <Route path="/account" element={<Account />} />
+                      <Route path="/custom-order" element={<CustomOrder />} />
+                      <Route path="/customer-auth" element={<EmailCustomerAuth />} />
+
+                      {/* Admin routes */}
+                      <Route path="/admin/auth" element={<AdminAuth />} />
+                      <Route path="/admin" element={<AdminLayout />}>
+                        <Route path="dashboard" element={<AdminDashboard />} />
+                        <Route path="catalog" element={<AdminCatalog />} />
+                        <Route path="orders" element={<AdminOrders />} />
+                        <Route path="reports" element={<AdminReports />} />
+                        <Route path="analytics" element={<AdminAnalytics />} />
+                        <Route path="settings" element={<AdminSettings />} />
+                        <Route path="profile" element={<AdminProfile />} />
+                      </Route>
+
+                      {/* 404 route */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                    <MobileNavBar />
+                  </>
+                )}
               </ThemeProvider>
             </BrowserRouter>
           </FavoritesProvider>

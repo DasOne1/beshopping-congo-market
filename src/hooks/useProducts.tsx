@@ -2,7 +2,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import type { Product } from '@/types';
 
 export const useProducts = () => {
   const queryClient = useQueryClient();
@@ -16,7 +15,7 @@ export const useProducts = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Product[];
+      return data;
     },
   });
 
@@ -109,5 +108,3 @@ export const useProducts = () => {
     deleteProduct,
   };
 };
-
-export { Product };
