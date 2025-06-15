@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Truck, Shield, ArrowRight, Star, TrendingUp, Palette } from 'lucide-react';
@@ -57,14 +56,10 @@ const Index = () => {
     });
   }, []);
 
-  // Group products by category with real-time data - include only active and visible products for home page
+  // Group products by category with real-time data - include only active products for home page
   const productsByCategory = categories?.map(category => ({
     category,
-    products: products?.filter(p => 
-      p.category_id === category.id && 
-      p.status === 'active' && 
-      p.is_visible === true
-    ).slice(0, 6) || []
+    products: products?.filter(p => p.category_id === category.id && p.status === 'active').slice(0, 6) || []
   })).filter(group => group.products.length > 0) || [];
 
   return (

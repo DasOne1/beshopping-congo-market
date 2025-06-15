@@ -1,130 +1,135 @@
-
-import React, { useState, useEffect } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Heart, Share2, ShoppingCart, Star, Truck, Shield, RotateCcw, Phone } from 'lucide-react';
+import { Heart, ShoppingCart, Minus, Plus, Share2, ArrowLeft, Star, Truck, Shield, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ProductCard from '@/components/ProductCard';
 import ProductImageCarousel from '@/components/ProductImageCarousel';
-import ProductAttributes from '@/components/ProductAttributes';
 import WhatsAppContact from '@/components/WhatsAppContact';
-import { MobileNavBar } from '@/components/MobileNavBar';
 import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { toast } from '@/components/ui/use-toast';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { toast } from '@/hooks/use-toast';
+import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
 
 const ProductDetails = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: productId } = useParams();
   const navigate = useNavigate();
   const { products, isLoading } = useProducts();
   const { addToCart } = useCart();
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites();
   const { trackEvent } = useAnalytics();
+  const { currentCustomer, isAuthenticated } = useCustomerAuth();
   
   const [quantity, setQuantity] = useState(1);
-  const [selectedColor, setSelectedColor] = useState<string>('');
-  const [selectedSize, setSelectedSize] = useState<string>('');
-
-  const product = products?.find(p => p.id === id);
-  const isFavorite = favorites.some(fav => fav.id === product?.id);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
+  
+  console.log('ProductDetails - productId:', productId);
+  console.log('ProductDetails - products:', products);
+  
+  const product = products?.find(p => p.id === productId);
+  console.log('ProductDetails - found product:', product);
+  
+  const relatedProducts = products?.filter(p => 
+    p.category_id === product?.category_id && 
+    p.id !== productId && 
+    p.status === 'active'
+  ).slice(0, 4) || [];
 
   useEffect(() => {
     if (product) {
-      // Track product view
       trackEvent.mutate({
         event_type: 'view_product',
         product_id: product.id,
         session_id: sessionStorage.getItem('session_id') || 'anonymous',
-        metadata: {
-          product_name: product.name,
-          category: product.category_id,
-          price: product.discounted_price || product.original_price
-        }
+        metadata: { product_name: product.name, price: product.discounted_price || product.original_price }
       });
-
-      // Set default selections
-      if (product.colors && product.colors.length > 0 && !selectedColor) {
-        setSelectedColor(product.colors[0]);
-      }
-      if (product.sizes && product.sizes.length > 0 && !selectedSize) {
-        setSelectedSize(product.sizes[0]);
-      }
     }
-  }, [product, trackEvent, selectedColor, selectedSize]);
+  }, [product, trackEvent]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="bg-gray-200 h-8 w-32 rounded mb-4"></div>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="bg-gray-200 aspect-square rounded-lg"></div>
+              <div className="space-y-4">
+                <div className="bg-gray-200 h-8 rounded"></div>
+                <div className="bg-gray-200 h-4 rounded w-1/2"></div>
+                <div className="bg-gray-200 h-6 rounded w-1/3"></div>
+                <div className="bg-gray-200 h-24 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    console.log('ProductDetails - product not found, redirecting to products');
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <h2 className="text-2xl font-bold mb-4">Chargement du produit...</h2>
+            <p className="text-muted-foreground mb-6">
+              Veuillez patienter pendant que nous chargeons les détails du produit.
+            </p>
+            <Button onClick={() => navigate('/products')}>
+              Retour aux produits
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentPrice = product.discounted_price || product.original_price;
+  const isFav = favorites.includes(product.id);
+
+  const formatPrice = (price: number) => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  };
 
   const handleAddToCart = () => {
-    if (!product) return;
-
-    const cartItem = {
-      ...product,
-      quantity,
-      selectedColor: selectedColor || undefined,
-      selectedSize: selectedSize || undefined,
-    };
-
-    addToCart(cartItem);
-    
-    // Track add to cart event
+    addToCart(product.id, quantity);
     trackEvent.mutate({
       event_type: 'add_to_cart',
       product_id: product.id,
       session_id: sessionStorage.getItem('session_id') || 'anonymous',
-      metadata: {
-        product_name: product.name,
-        quantity,
-        selectedColor,
-        selectedSize,
-        price: product.discounted_price || product.original_price
-      }
+      metadata: { quantity, product_name: product.name, price: currentPrice }
     });
-
     toast({
       title: "Produit ajouté au panier",
-      description: `${product.name} a été ajouté à votre panier`,
+      description: `${quantity} × ${product.name} ajouté au panier`,
     });
-  };
-
-  const handleToggleFavorite = () => {
-    if (!product) return;
-
-    if (isFavorite) {
-      removeFromFavorites(product.id);
-      toast({
-        title: "Retiré des favoris",
-        description: `${product.name} a été retiré de vos favoris`,
-      });
-    } else {
-      addToFavorites(product);
-      toast({
-        title: "Ajouté aux favoris",
-        description: `${product.name} a été ajouté à vos favoris`,
-      });
-    }
   };
 
   const handleShare = async () => {
-    if (navigator.share && product) {
+    if (navigator.share) {
       try {
         await navigator.share({
           title: product.name,
-          text: product.description,
+          text: `Découvrez ${product.name} sur BeShopping Congo`,
           url: window.location.href,
         });
-      } catch (error) {
-        // Fallback to clipboard
-        navigator.clipboard.writeText(window.location.href);
-        toast({
-          title: "Lien copié",
-          description: "Le lien du produit a été copié dans le presse-papiers",
-        });
+      } catch (err) {
+        console.log('Partage annulé');
       }
-    } else if (product) {
+    } else {
       navigator.clipboard.writeText(window.location.href);
       toast({
         title: "Lien copié",
@@ -133,292 +138,253 @@ const ProductDetails = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="pt-16 pb-20 md:pb-8">
-          <div className="container mx-auto px-4 py-8">
-            <div className="animate-pulse space-y-8">
-              <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="aspect-square bg-gray-200 rounded-lg"></div>
-                <div className="space-y-4">
-                  <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-        <MobileNavBar />
-      </div>
-    );
-  }
+  const getWhatsAppMessage = () => {
+    const customerInfo = isAuthenticated && currentCustomer
+      ? `\n\nInformations client:\nNom: ${currentCustomer.name}\nTéléphone: ${currentCustomer.phone}${currentCustomer.email ? `\nEmail: ${currentCustomer.email}` : ''}${currentCustomer.address ? `\nAdresse: ${typeof currentCustomer.address === 'string' ? currentCustomer.address : currentCustomer.address?.address}` : ''}`
+      : '\n\nClient: Anonyme';
 
-  if (!product) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="pt-16 pb-20 md:pb-8">
-          <div className="container mx-auto px-4 py-8 text-center">
-            <h1 className="text-2xl font-bold mb-4">Produit non trouvé</h1>
-            <p className="text-muted-foreground mb-8">Le produit que vous recherchez n'existe pas ou a été supprimé.</p>
-            <Button onClick={() => navigate('/products')}>
-              Retour aux produits
-            </Button>
-          </div>
-        </div>
-        <Footer />
-        <MobileNavBar />
-      </div>
-    );
-  }
+    return `Bonjour! Je suis intéressé par ${product.name} au prix de ${formatPrice(currentPrice)} FC.${customerInfo}\n\nPouvez-vous me donner plus d'informations?`;
+  };
 
-  const finalPrice = product.discounted_price || product.original_price;
-  const discount = product.discount || 0;
+  const handleWhatsAppClick = () => {
+    if (!isAuthenticated) {
+      navigate('/customer-auth', { state: { from: `/product/${productId}` } });
+      return;
+    }
+
+    const message = getWhatsAppMessage();
+    const encodedMessage = encodeURIComponent(message);
+    const url = `https://wa.me/243978100940?text=${encodedMessage}`;
+    
+    // Ouvrir WhatsApp immédiatement
+    window.open(url, '_blank');
+    
+    // Afficher la confirmation après avoir ouvert WhatsApp
+    setOrderDetails({
+      customerName: currentCustomer?.name || 'Anonyme',
+      customerPhone: currentCustomer?.phone || 'Non spécifié',
+      customerAddress: typeof currentCustomer?.address === 'string' 
+        ? currentCustomer.address 
+        : currentCustomer?.address?.address || 'Non spécifiée',
+      orderType: 'whatsapp'
+    });
+    
+    setShowConfirmation(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="pt-16 pb-20 md:pb-8">
-        <div className="container mx-auto px-4 py-4 md:py-8">
-          {/* Breadcrumb */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
-            <Button
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              className="mb-4 p-0 h-auto"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour
-            </Button>
-          </motion.div>
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 mb-6"
+        >
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour
+          </Button>
+        </motion.div>
 
-          {/* Product Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* Product Images */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <ProductImageCarousel 
-                images={product.images || []} 
+        {/* Product Details */}
+        <div className="grid md:grid-cols-2 gap-8 mb-16">
+          {/* Images avec carrousel */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="relative">
+              <ProductImageCarousel
+                images={product.images || []}
                 productName={product.name}
               />
-            </motion.div>
-
-            {/* Product Info */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="space-y-6"
-            >
-              {/* Header */}
-              <div>
-                <div className="flex items-start justify-between mb-2">
-                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    {product.name}
-                  </h1>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleToggleFavorite}
-                      className={isFavorite ? "text-red-500" : ""}
-                    >
-                      <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={handleShare}>
-                      <Share2 className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Brand and SKU */}
-                <div className="flex items-center gap-4 mb-4">
-                  {product.brand && (
-                    <Badge variant="outline">
-                      {product.brand}
-                    </Badge>
-                  )}
-                  {product.sku && (
-                    <span className="text-sm text-muted-foreground">
-                      SKU: {product.sku}
-                    </span>
-                  )}
-                </div>
-
-                {/* Price */}
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-3xl font-bold text-primary">
-                    {finalPrice.toLocaleString()} CDF
-                  </span>
-                  {discount > 0 && (
-                    <>
-                      <span className="text-lg text-muted-foreground line-through">
-                        {product.original_price.toLocaleString()} CDF
-                      </span>
-                      <Badge variant="destructive">
-                        -{discount}%
-                      </Badge>
-                    </>
-                  )}
-                </div>
-
-                {/* Stock Status */}
-                <div className="mb-4">
-                  {product.stock > 0 ? (
-                    <Badge variant="default" className="bg-green-100 text-green-800">
-                      En stock ({product.stock} disponibles)
-                    </Badge>
-                  ) : (
-                    <Badge variant="destructive">
-                      Rupture de stock
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              {/* Description */}
-              {product.description && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Description</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {product.description}
-                  </p>
-                </div>
+              {product.discount && product.discount > 0 && (
+                <Badge className="absolute top-4 left-4 z-10">
+                  -{product.discount}%
+                </Badge>
               )}
-
-              <Separator />
-
-              {/* Color Selection */}
-              {product.colors && product.colors.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Couleur</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {product.colors.map((color) => (
-                      <Button
-                        key={color}
-                        variant={selectedColor === color ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedColor(color)}
-                        className="capitalize"
-                      >
-                        {color}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Size Selection */}
-              {product.sizes && product.sizes.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Taille</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {product.sizes.map((size) => (
-                      <Button
-                        key={size}
-                        variant={selectedSize === size ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedSize(size)}
-                        className="uppercase"
-                      >
-                        {size}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Quantity and Add to Cart */}
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Quantité</h3>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      disabled={quantity <= 1}
-                    >
-                      -
-                    </Button>
-                    <span className="px-4 py-2 border rounded text-center min-w-[60px]">
-                      {quantity}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                      disabled={quantity >= product.stock}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
+              <div className="absolute top-4 right-4 flex gap-2 z-10">
                 <Button
-                  size="lg"
-                  className="w-full"
-                  onClick={handleAddToCart}
-                  disabled={product.stock === 0}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => isFav ? removeFromFavorites(product.id) : addToFavorites(product.id)}
+                  className="bg-white/80 backdrop-blur-sm"
                 >
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  Ajouter au panier
+                  <Heart className={`h-4 w-4 ${isFav ? 'fill-current text-red-500' : ''}`} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleShare}
+                  className="bg-white/80 backdrop-blur-sm"
+                >
+                  <Share2 className="h-4 w-4" />
                 </Button>
               </div>
+            </div>
+          </motion.div>
 
-              {/* Features */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
-                <div className="flex items-center gap-3 text-sm">
-                  <Truck className="h-5 w-5 text-primary" />
-                  <span>Livraison rapide</span>
+          {/* Product Info */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-6"
+          >
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                  <span className="ml-2 text-sm text-muted-foreground">(4.8)</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <Shield className="h-5 w-5 text-primary" />
-                  <span>Paiement sécurisé</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <RotateCcw className="h-5 w-5 text-primary" />
-                  <span>Retour gratuit</span>
+                <Separator orientation="vertical" className="h-4" />
+                <span className="text-sm text-muted-foreground">
+                  {product.popular && product.popular > 0 ? `${product.popular} vendus` : 'Nouveau'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl font-bold text-primary">
+                {formatPrice(currentPrice)} FC
+              </span>
+              {product.discounted_price && (
+                <span className="text-lg text-muted-foreground line-through">
+                  {formatPrice(product.original_price)} FC
+                </span>
+              )}
+            </div>
+
+            <p className="text-muted-foreground leading-relaxed">
+              {product.description}
+            </p>
+
+            {/* Stock Status */}
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${product.stock && product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className={product.stock && product.stock > 0 ? 'text-green-600' : 'text-red-600'}>
+                {product.stock && product.stock > 0 ? `${product.stock} en stock` : 'Rupture de stock'}
+              </span>
+            </div>
+
+            {/* Quantity Selector */}
+            {product.stock && product.stock > 0 && (
+              <div className="flex items-center gap-4">
+                <span className="font-medium">Quantité:</span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="w-12 text-center">{quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuantity(Math.min(product.stock || 1, quantity + 1))}
+                    disabled={quantity >= (product.stock || 1)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-            </motion.div>
-          </div>
+            )}
 
-          {/* Product Attributes */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-12"
-          >
-            <ProductAttributes product={product} />
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                size="lg"
+                className="flex-1"
+                onClick={handleAddToCart}
+                disabled={!product.stock || product.stock <= 0}
+              >
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                Ajouter au panier
+              </Button>
+
+              <WhatsAppContact
+                phoneNumber="243978100940"
+                message={getWhatsAppMessage()}
+                size="lg"
+                className="bg-whatsapp hover:bg-whatsapp-dark text-white border-whatsapp"
+                onCustomClick={handleWhatsAppClick}
+              >
+                WhatsApp
+              </WhatsAppContact>
+            </div>
+
+            {/* Order Confirmation Dialog */}
+            <OrderConfirmationDialog
+              isOpen={showConfirmation}
+              onClose={() => setShowConfirmation(false)}
+              orderDetails={orderDetails}
+            />
+
+            {/* Features */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
+              <div className="flex items-center gap-2 text-sm">
+                <Truck className="h-5 w-5 text-primary" />
+                <span>Livraison rapide</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Shield className="h-5 w-5 text-primary" />
+                <span>Garantie qualité</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <RotateCcw className="h-5 w-5 text-primary" />
+                <span>Retour 7 jours</span>
+              </div>
+            </div>
+
+            {/* Tags */}
+            {product.tags && product.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {product.tags.map((tag, index) => (
+                  <Badge key={index} variant="secondary">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </motion.div>
         </div>
-      </main>
 
-      <Footer />
-      <MobileNavBar />
-      <WhatsAppContact 
-        phoneNumber="+243 978 100 940" 
-        message={`Bonjour, je suis intéressé par le produit: ${product.name}`}
-      />
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-2xl font-bold mb-8">Produits similaires</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {relatedProducts.map((relatedProduct, index) => (
+                <motion.div
+                  key={relatedProduct.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 * index }}
+                >
+                  <ProductCard product={relatedProduct} />
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+        )}
+      </div>
+      <div className="pb-16 md:pb-0">
+        <Footer />
+      </div>
     </div>
   );
 };

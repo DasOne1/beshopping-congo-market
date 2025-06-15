@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
 import { useProducts } from '@/hooks/useProducts';
 import ProductDetailDialog from './ProductDetailDialog';
 import ProductDialog from './ProductDialog';
@@ -17,7 +16,7 @@ interface ProductsSectionProps {
 
 const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
   const navigate = useNavigate();
-  const { products, isLoading, deleteProduct, updateProduct } = useProducts();
+  const { products, isLoading, deleteProduct } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -33,10 +32,6 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
       await deleteProduct.mutateAsync(id);
     }
-  };
-
-  const handleVisibilityToggle = async (id: string, is_visible: boolean) => {
-    await updateProduct.mutateAsync({ id, is_visible: !is_visible });
   };
 
   if (isLoading) {
@@ -56,20 +51,20 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
   }
 
   return (
-    <div className="space-y-4 max-w-full overflow-hidden">
+    <div className="space-y-4">
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 p-4 sm:p-6">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Package className="h-5 w-5" />
             Produits ({filteredProducts.length})
           </CardTitle>
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button onClick={() => setShowCreateDialog(true)} size="sm" className="text-xs sm:text-sm">
+            <Button onClick={() => setShowCreateDialog(true)} size="sm">
               <Plus className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Nouveau produit (Dialog)</span>
               <span className="sm:hidden">Dialog</span>
             </Button>
-            <Button variant="outline" onClick={() => navigate('/admin/catalog/products/new')} size="sm" className="text-xs sm:text-sm">
+            <Button variant="outline" onClick={() => navigate('/admin/catalog/products/new')} size="sm">
               <Plus className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Nouveau produit (Page)</span>
               <span className="sm:hidden">Page</span>
@@ -90,7 +85,6 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                     <TableHead className="min-w-[100px]">SKU</TableHead>
                     <TableHead className="min-w-[120px]">Prix</TableHead>
                     <TableHead className="min-w-[80px]">Stock</TableHead>
-                    <TableHead className="min-w-[100px]">Visible</TableHead>
                     <TableHead className="min-w-[150px]">Caractéristiques</TableHead>
                     <TableHead className="min-w-[100px]">Statut</TableHead>
                     <TableHead className="min-w-[120px]">Actions</TableHead>
@@ -145,12 +139,6 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                         <Badge variant={product.stock > 0 ? 'default' : 'destructive'}>
                           {product.stock}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={product.is_visible}
-                          onCheckedChange={() => handleVisibilityToggle(product.id, product.is_visible)}
-                        />
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
