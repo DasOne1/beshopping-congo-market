@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal, Grid, List, Package } from 'lucide-react';
+import { Search, SlidersHorizontal, Grid, List, Package, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import ProductCard from '@/components/ProductCard';
 import ProductFilters from '@/components/ProductFilters';
 import ProductSkeleton from '@/components/ProductSkeleton';
 import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
 import { Product } from '@/types';
 import { useSearchParams } from 'react-router-dom';
 
@@ -17,19 +18,34 @@ const Products = () => {
   const categoryParam = searchParams.get('category');
   
   const { products, isLoading, refetch } = useProducts();
+  const { categories, isLoading: categoriesLoading } = useCategories();
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [filters, setFilters] = useState({
-    category: categoryParam || '',
-    priceRange: [0, 500000] as [number, number],
-    sortBy: 'newest' as 'newest' | 'price-low' | 'price-high' | 'popular'
-  });
+  const [priceRange, setPriceRange] = useState<number[]>([0, 500000]);
+  const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'all');
+  const [sortBy, setSortBy] = useState<'newest' | 'price-low' | 'price-high' | 'popular'>('newest');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Rafraîchir les données au montage du composant
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  // Fonction pour rafraîchir manuellement
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
+  // Fonction pour effacer les filtres
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setPriceRange([0, 500000]);
+    setSelectedCategory('all');
+    setSortBy('newest');
+  };
 
   const filteredProducts = React.useMemo(() => {
     if (!products) return [];
@@ -39,12 +55,12 @@ const Products = () => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
       
       // Filtre par catégorie
-      const matchesCategory = !filters.category || filters.category === 'all' || 
-        product.category_id === filters.category;
+      const matchesCategory = selectedCategory === 'all' || 
+        product.category_id === selectedCategory;
       
       // Filtre par prix
       const price = product.discounted_price || product.original_price;
-      const matchesPrice = price >= filters.priceRange[0] && price <= filters.priceRange[1];
+      const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
       
       // Vérifier que le produit est actif et visible
       const isActiveAndVisible = product.status === 'active' && product.is_visible;
@@ -53,7 +69,7 @@ const Products = () => {
     });
 
     // Tri
-    switch (filters.sortBy) {
+    switch (sortBy) {
       case 'price-low':
         filtered.sort((a, b) => (a.discounted_price || a.original_price) - (b.discounted_price || b.original_price));
         break;
@@ -70,7 +86,7 @@ const Products = () => {
     }
 
     return filtered;
-  }, [products, searchTerm, filters]);
+  }, [products, searchTerm, selectedCategory, priceRange, sortBy]);
 
   if (isLoading) {
     return (
@@ -99,6 +115,15 @@ const Products = () => {
           </div>
           
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Actualiser
+            </Button>
             <Button
               variant={viewMode === 'grid' ? 'default' : 'outline'}
               size="sm"
@@ -139,23 +164,19 @@ const Products = () => {
         </div>
 
         {/* Filters Panel */}
-        {showFilters && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-8"
-          >
-            <Card>
-              <CardContent className="p-6">
-                <ProductFilters
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                />
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+        <ProductFilters
+          isOpen={showFilters}
+          onClose={() => setShowFilters(false)}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          priceRange={priceRange}
+          setPriceRange={setPriceRange}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          categories={categories || []}
+          isLoading={categoriesLoading}
+          onClearFilters={handleClearFilters}
+        />
 
         {/* Products Grid */}
         {filteredProducts.length === 0 ? (
