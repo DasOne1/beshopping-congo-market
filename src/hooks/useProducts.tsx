@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -24,9 +25,35 @@ export const useProducts = () => {
 
   const createProduct = useMutation({
     mutationFn: async (product: ProductInput) => {
+      const productData = {
+        name: product.name,
+        description: product.description,
+        original_price: product.original_price,
+        discounted_price: product.discounted_price,
+        stock: product.stock,
+        category_id: product.category_id,
+        images: product.images || [],
+        tags: product.tags || [],
+        featured: product.featured || false,
+        weight: product.weight,
+        dimensions: product.dimensions,
+        sku: product.sku,
+        status: product.status || 'active',
+        discount: product.discount,
+        is_visible: product.is_visible ?? true,
+        colors: product.colors || [],
+        sizes: product.sizes || [],
+        gender: product.gender,
+        material: product.material,
+        brand: product.brand,
+        collection: product.collection,
+        season: product.season,
+        care_instructions: product.care_instructions,
+      };
+
       const { data, error } = await supabase
         .from('products')
-        .insert([product])
+        .insert([productData])
         .select()
         .single();
 

@@ -8,6 +8,7 @@ export interface Product {
   discounted_price?: number;
   stock: number;
   category_id: string;
+  subcategory_id?: string;
   images: string[];
   tags: string[];
   featured: boolean;
@@ -18,6 +19,14 @@ export interface Product {
   status: 'active' | 'inactive' | 'draft';
   discount?: number;
   is_visible: boolean;
+  colors?: string[];
+  sizes?: string[];
+  gender?: 'homme' | 'femme' | 'mixte';
+  material?: string;
+  brand?: string;
+  collection?: string;
+  season?: string;
+  care_instructions?: string;
   created_at: string;
   updated_at: string;
 }
@@ -29,6 +38,17 @@ export interface Category {
   slug: string;
   image?: string;
   parent_id?: string;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Subcategory {
+  id: string;
+  name: string;
+  description?: string;
+  slug: string;
+  category_id: string;
   is_visible: boolean;
   created_at: string;
   updated_at: string;

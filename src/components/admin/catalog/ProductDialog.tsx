@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
+import { useSubcategories } from '@/hooks/useSubcategories';
 import ImageUpload from '@/components/ImageUpload';
+import ColorSelector from './ColorSelector';
+import SizeSelector from './SizeSelector';
 import { Product } from '@/types';
 
 interface ProductDialogProps {
@@ -22,6 +26,9 @@ interface ProductDialogProps {
 const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
   const { createProduct, updateProduct } = useProducts();
   const { categories } = useCategories();
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const { subcategories } = useSubcategories(selectedCategoryId);
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -29,13 +36,22 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
     discount: '',
     stock: '',
     category_id: '',
+    subcategory_id: '',
     sku: '',
     weight: '',
     status: 'active' as 'active' | 'inactive' | 'draft',
     is_visible: true,
     featured: false,
     images: [''],
-    tags: ['']
+    tags: [''],
+    colors: [] as string[],
+    sizes: [] as string[],
+    gender: '' as 'homme' | 'femme' | 'mixte' | '',
+    material: '',
+    brand: '',
+    collection: '',
+    season: '',
+    care_instructions: '',
   });
 
   useEffect(() => {
@@ -47,14 +63,24 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
         discount: product.discount?.toString() || '',
         stock: product.stock?.toString() || '',
         category_id: product.category_id || '',
+        subcategory_id: product.subcategory_id || '',
         sku: product.sku || '',
         weight: product.weight?.toString() || '',
         status: product.status || 'active',
         is_visible: product.is_visible ?? true,
         featured: product.featured ?? false,
         images: product.images?.length ? product.images : [''],
-        tags: product.tags?.length ? product.tags : ['']
+        tags: product.tags?.length ? product.tags : [''],
+        colors: product.colors || [],
+        sizes: product.sizes || [],
+        gender: product.gender || '',
+        material: product.material || '',
+        brand: product.brand || '',
+        collection: product.collection || '',
+        season: product.season || '',
+        care_instructions: product.care_instructions || '',
       });
+      setSelectedCategoryId(product.category_id || '');
     } else {
       setFormData({
         name: '',
@@ -63,14 +89,24 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
         discount: '',
         stock: '',
         category_id: '',
+        subcategory_id: '',
         sku: '',
         weight: '',
         status: 'active',
         is_visible: true,
         featured: false,
         images: [''],
-        tags: ['']
+        tags: [''],
+        colors: [],
+        sizes: [],
+        gender: '',
+        material: '',
+        brand: '',
+        collection: '',
+        season: '',
+        care_instructions: '',
       });
+      setSelectedCategoryId('');
     }
   }, [product]);
 
@@ -90,7 +126,9 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
       weight: parseFloat(formData.weight) || null,
       images: formData.images.filter(img => img.trim() !== ''),
       tags: formData.tags.filter(tag => tag.trim() !== ''),
-      category_id: formData.category_id || null
+      category_id: formData.category_id || null,
+      subcategory_id: formData.subcategory_id || null,
+      gender: formData.gender || null,
     };
 
     if (product) {
@@ -102,27 +140,14 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
     onOpenChange(false);
   };
 
-  const addImageField = () => {
-    setFormData(prev => ({ ...prev, images: [...prev.images, ''] }));
-  };
-
-  const removeImageField = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-  };
-
-  const updateImageField = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.map((img, i) => i === index ? value : img)
-    }));
+  const handleCategoryChange = (categoryId: string) => {
+    setFormData(prev => ({ ...prev, category_id: categoryId, subcategory_id: '' }));
+    setSelectedCategoryId(categoryId);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {product ? 'Modifier le produit' : 'Nouveau produit'}
@@ -130,7 +155,7 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
+          {/* Informations de base */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nom *</Label>
@@ -163,8 +188,8 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
             />
           </div>
 
-          {/* Pricing */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Prix et Stock */}
+          <div className="grid grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="price">Prix *</Label>
               <Input
@@ -200,15 +225,26 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
                 required
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="weight">Poids (kg)</Label>
+              <Input
+                id="weight"
+                type="number"
+                step="0.001"
+                value={formData.weight}
+                onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+              />
+            </div>
           </div>
 
-          {/* Category and Details */}
+          {/* Catégories */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="category">Catégorie</Label>
               <Select
                 value={formData.category_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
+                onValueChange={handleCategoryChange}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une catégorie" />
@@ -224,22 +260,126 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="weight">Poids (kg)</Label>
+              <Label htmlFor="subcategory">Sous-catégorie</Label>
+              <Select
+                value={formData.subcategory_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, subcategory_id: value }))}
+                disabled={!selectedCategoryId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une sous-catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subcategories?.map((subcategory) => (
+                    <SelectItem key={subcategory.id} value={subcategory.id}>
+                      {subcategory.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Informations produit */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="gender">Genre</Label>
+              <Select
+                value={formData.gender}
+                onValueChange={(value: 'homme' | 'femme' | 'mixte') => setFormData(prev => ({ ...prev, gender: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner le genre" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="homme">Homme</SelectItem>
+                  <SelectItem value="femme">Femme</SelectItem>
+                  <SelectItem value="mixte">Mixte</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="brand">Marque</Label>
               <Input
-                id="weight"
-                type="number"
-                step="0.001"
-                value={formData.weight}
-                onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+                id="brand"
+                value={formData.brand}
+                onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
+                placeholder="Nom de la marque"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="material">Matériau</Label>
+              <Input
+                id="material"
+                value={formData.material}
+                onChange={(e) => setFormData(prev => ({ ...prev, material: e.target.value }))}
+                placeholder="Coton, Polyester, etc."
               />
             </div>
           </div>
 
-          {/* Images */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="collection">Collection</Label>
+              <Input
+                id="collection"
+                value={formData.collection}
+                onChange={(e) => setFormData(prev => ({ ...prev, collection: e.target.value }))}
+                placeholder="Collection 2024"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="season">Saison</Label>
+              <Select
+                value={formData.season}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, season: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner la saison" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="printemps">Printemps</SelectItem>
+                  <SelectItem value="ete">Été</SelectItem>
+                  <SelectItem value="automne">Automne</SelectItem>
+                  <SelectItem value="hiver">Hiver</SelectItem>
+                  <SelectItem value="toute-saison">Toute saison</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Couleurs */}
+          <ColorSelector
+            colors={formData.colors}
+            onChange={(colors) => setFormData(prev => ({ ...prev, colors }))}
+          />
+
+          {/* Tailles */}
+          <SizeSelector
+            sizes={formData.sizes}
+            onChange={(sizes) => setFormData(prev => ({ ...prev, sizes }))}
+          />
+
+          {/* Instructions d'entretien */}
+          <div className="space-y-2">
+            <Label htmlFor="care_instructions">Instructions d'entretien</Label>
+            <Textarea
+              id="care_instructions"
+              value={formData.care_instructions}
+              onChange={(e) => setFormData(prev => ({ ...prev, care_instructions: e.target.value }))}
+              placeholder="Lavage à 30°C, ne pas repasser, etc."
+              rows={2}
+            />
+          </div>
+
+          {/* Images - section simplifiée */}
           <div className="space-y-4">
             <Label>Images</Label>
             <div className="grid grid-cols-2 gap-4">
-              {formData.images.map((image, index) => (
+              {formData.images.slice(0, 2).map((image, index) => (
                 <ImageUpload
                   key={index}
                   value={image}
@@ -256,63 +396,31 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
                 />
               ))}
             </div>
-            {formData.images.length < 4 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setFormData(prev => ({ ...prev, images: [...prev.images, ''] }))}
-              >
-                Ajouter une image
-              </Button>
-            )}
           </div>
 
-          {/* Tags */}
-          <div className="space-y-4">
+          {/* Tags simplifiés */}
+          <div className="space-y-2">
             <Label>Tags</Label>
-            <div className="flex flex-wrap gap-2">
-              {formData.tags.map((tag, index) => (
-                tag && (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                    {tag}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4 p-0 hover:bg-transparent"
-                      onClick={() => {
-                        const newTags = formData.tags.filter((_, i) => i !== index);
-                        setFormData(prev => ({ ...prev, tags: newTags }));
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                )
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Ajouter un tag"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const input = e.target as HTMLInputElement;
-                    const value = input.value.trim();
-                    if (value && !formData.tags.includes(value)) {
-                      setFormData(prev => ({
-                        ...prev,
-                        tags: [...prev.tags.filter(t => t), value]
-                      }));
-                      input.value = '';
-                    }
+            <Input
+              placeholder="Ajouter des tags séparés par des virgules"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const input = e.target as HTMLInputElement;
+                  const values = input.value.split(',').map(v => v.trim()).filter(v => v);
+                  if (values.length > 0) {
+                    setFormData(prev => ({
+                      ...prev,
+                      tags: [...new Set([...prev.tags.filter(t => t), ...values])]
+                    }));
+                    input.value = '';
                   }
-                }}
-              />
-            </div>
+                }
+              }}
+            />
           </div>
 
-          {/* Status and Visibility */}
+          {/* Statut et visibilité */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="status">Statut</Label>

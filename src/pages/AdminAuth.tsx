@@ -13,6 +13,14 @@ import { SignUpForm } from '@/components/admin/SignUpForm';
 const AdminAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Commenter l'authentification pour accès direct
+  useEffect(() => {
+    // Redirection automatique vers le dashboard admin
+    navigate('/admin/dashboard', { replace: true });
+  }, [navigate]);
+
+  /*
   const { signIn, isAuthenticated, loading: authLoading } = useAdminAuth();
   const { adminUsers, isLoading: isLoadingUsers, createAdminUser, isCreating: isCreatingUser } = useAdminUsers();
   
@@ -91,6 +99,14 @@ const AdminAuth = () => {
           </CardContent>
         </Card>
       </motion.div>
+    </div>
+  );
+  */
+
+  // Affichage temporaire pendant la redirection
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
     </div>
   );
 };
