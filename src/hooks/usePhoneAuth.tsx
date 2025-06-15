@@ -111,6 +111,7 @@ export const usePhoneAuth = () => {
   const signUp = async (data: SignUpData) => {
     setLoading(true);
     try {
+      // Vérifier si le numéro de téléphone existe déjà
       const [existingAuthResult, hashedPassword] = await Promise.all([
         supabase
           .from('customer_auth')
@@ -124,6 +125,7 @@ export const usePhoneAuth = () => {
         throw new Error('Un compte avec ce numéro de téléphone existe déjà');
       }
 
+      // Créer le client et l'authentification
       const [customerResult, authResult] = await Promise.all([
         supabase
           .from('customers')
@@ -139,7 +141,7 @@ export const usePhoneAuth = () => {
           .from('customer_auth')
           .insert([{
             customer_id: null,
-            email: data.phone,
+            email: data.phone, // Utiliser le téléphone comme identifiant
             password_hash: hashedPassword,
             email_verified: true
           }])
@@ -150,6 +152,7 @@ export const usePhoneAuth = () => {
       if (customerResult.error) throw customerResult.error;
       if (authResult.error) throw authResult.error;
 
+      // Lier l'authentification au client
       await supabase
         .from('customer_auth')
         .update({ customer_id: customerResult.data.id })
@@ -183,11 +186,12 @@ export const usePhoneAuth = () => {
   const signIn = async (phone: string, password: string) => {
     setLoading(true);
     try {
+      // Rechercher par numéro de téléphone dans customer_auth
       const [authResult, customerResult] = await Promise.all([
         supabase
           .from('customer_auth')
           .select('*')
-          .eq('email', phone)
+          .eq('email', phone) // email stocke le numéro de téléphone
           .single(),
         supabase
           .from('customers')

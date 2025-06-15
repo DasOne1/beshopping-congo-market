@@ -22,7 +22,7 @@ import AboutUs from "./pages/AboutUs";
 import Account from "./pages/Account";
 import CustomOrder from "./pages/CustomOrder";
 import NotFound from "./pages/NotFound";
-import EmailCustomerAuth from "./pages/EmailCustomerAuth";
+import PhoneCustomerAuth from "./pages/PhoneCustomerAuth";
 import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCatalog from "./pages/admin/AdminCatalog";
@@ -65,7 +65,7 @@ function App() {
                       <Route path="/about" element={<AboutUs />} />
                       <Route path="/account" element={<Account />} />
                       <Route path="/custom-order" element={<CustomOrder />} />
-                      <Route path="/customer-auth" element={<EmailCustomerAuth />} />
+                      <Route path="/customer-auth" element={<PhoneCustomerAuth />} />
 
                       {/* Admin routes */}
                       <Route path="/admin/auth" element={<AdminAuth />} />
