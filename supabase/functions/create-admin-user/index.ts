@@ -16,45 +16,73 @@ serve(async (req) => {
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
+      { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // 1. Authenticate the requesting user
-    const userClient = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-        { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
-    );
-    const { data: { user } } = await userClient.auth.getUser();
+    const { email, password, fullName, role } = await req.json();
 
-    if (!user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 401,
-        });
-    }
-
-    // 2. Check if the requesting user is an admin
-    const { data: adminProfile, error: adminError } = await supabaseAdmin
+    const { count, error: countError } = await supabaseAdmin
       .from("admin_profiles")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
+      .select('id', { count: 'exact', head: true });
 
-    if (adminError || !adminProfile || adminProfile.role !== 'admin') {
-      return new Response(JSON.stringify({ error: "Forbidden: Not an admin" }), {
+    if (countError) {
+      console.error("Error counting admin profiles:", countError);
+      return new Response(JSON.stringify({ error: "Database error" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 403,
+        status: 500,
       });
     }
 
-    // 3. Create the new user
-    const { email, password, fullName, role } = await req.json();
+    let isAllowed = false;
+
+    if (count === 0) {
+      if (role !== 'admin') {
+         return new Response(JSON.stringify({ error: "The first user must have the 'admin' role." }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+         });
+      }
+      isAllowed = true;
+    } else {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Unauthorized: Missing token" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 401,
+        });
+      }
+      
+      const userClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+          { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await userClient.auth.getUser();
+
+      if (!user) {
+          return new Response(JSON.stringify({ error: "Unauthorized: Invalid token" }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 401,
+          });
+      }
+
+      const { data: adminProfile, error: adminError } = await supabaseAdmin
+        .from("admin_profiles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!adminError && adminProfile && adminProfile.role === 'admin') {
+        isAllowed = true;
+      }
+    }
+    
+    if (!isAllowed) {
+        return new Response(JSON.stringify({ error: "Forbidden: Not an admin or permission denied" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403,
+        });
+    }
 
     if (!email || !password || !fullName || !role) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -66,7 +94,7 @@ serve(async (req) => {
     const { data: newUser, error: creationError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Auto-confirms email
+      email_confirm: true,
       user_metadata: { full_name: fullName },
     });
 
@@ -78,7 +106,6 @@ serve(async (req) => {
       });
     }
 
-    // 4. Create the admin profile for the new user
     const { error: profileError } = await supabaseAdmin
       .from("admin_profiles")
       .insert({
@@ -90,8 +117,6 @@ serve(async (req) => {
       });
 
     if (profileError) {
-        // If profile creation fails, we should probably delete the auth user
-        // to avoid orphaned users.
         await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
         console.error("Profile creation error:", profileError);
         return new Response(JSON.stringify({ error: profileError.message }), {
@@ -111,3 +136,4 @@ serve(async (req) => {
     });
   }
 });
+

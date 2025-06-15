@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -23,11 +22,14 @@ async function fetchAdminUsers(): Promise<AdminProfile[]> {
 async function createAdminUser(userData: AdminCreationData) {
   const { data: { session } } = await supabase.auth.getSession();
 
+  const headers: { [key: string]: string } = {};
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+
   const response = await supabase.functions.invoke('create-admin-user', {
     body: userData,
-     headers: {
-        Authorization: `Bearer ${session?.access_token}`,
-    }
+    headers,
   });
 
   if (response.error) {
