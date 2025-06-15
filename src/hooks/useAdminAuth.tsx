@@ -133,6 +133,7 @@ export const useAdminAuth = () => {
           data: {
             full_name: fullName,
           },
+          emailRedirectTo: `${window.location.origin}/admin/auth`,
         },
       });
 
@@ -140,7 +141,7 @@ export const useAdminAuth = () => {
 
       toast({
         title: "Compte administrateur créé",
-        description: "Votre compte a été créé avec succès",
+        description: "Veuillez vérifier votre boîte de réception pour confirmer votre e-mail.",
       });
     } catch (error: any) {
       console.error('Admin sign up error:', error);
