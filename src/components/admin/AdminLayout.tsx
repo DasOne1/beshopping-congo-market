@@ -22,8 +22,10 @@ const AdminLayout = () => {
             </div>
           )}
           {/* Main content */}
-          <main className={`flex-1 min-w-0 ${!isMobile ? 'md:ml-64' : ''} max-w-full px-0 sm:px-2 md:px-6 py-6 animate-fade-in`}>
-            <Outlet />
+          <main className={`flex-1 min-w-0 ${!isMobile ? 'md:ml-64' : ''} max-w-full px-2 sm:px-4 md:px-6 py-4 animate-fade-in overflow-x-hidden ${isMobile ? 'pb-20' : 'pb-6'}`}>
+            <div className="max-w-full overflow-x-hidden">
+              <Outlet />
+            </div>
           </main>
         </div>
         {/* Navigation mobile uniquement */}
