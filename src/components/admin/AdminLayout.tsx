@@ -1,25 +1,25 @@
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import AdminHeader from './AdminHeader';
 import AdminSidebar from './AdminSidebar';
 import AdminMobileNav from './AdminMobileNav';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const AdminLayout = () => {
-  // Authentification temporairement désactivée pour permettre l'accès
-  // const { isAuthenticated, loading } = useAdminAuth();
+  const { isAuthenticated, loading } = useAdminAuth();
 
-  // if (loading) {
-  //   return (
-  //     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-  //       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-  //     </div>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
-  // if (!isAuthenticated) {
-  //   return <Navigate to="/admin/auth" replace />;
-  // }
+  if (!isAuthenticated) {
+    return <Navigate to="/admin/auth" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full max-w-full overflow-x-hidden">

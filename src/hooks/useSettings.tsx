@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,11 +9,29 @@ export interface AppSettings {
   company_name: string;
   company_email: string;
   company_phone: string;
-  company_address: any;
+  company_address: {
+    street: string;
+    city: string;
+    country: string;
+  };
   currency: string;
   tax_rate: number;
   shipping_fee: number;
   free_shipping_threshold: number;
+  site_url?: string;
+  site_description?: string;
+  language?: string;
+  timezone?: string;
+  enable_order_confirmation?: boolean;
+  enable_shipment_notification?: boolean;
+  enable_newsletter?: boolean;
+  enable_2fa?: boolean;
+  enable_login_logging?: boolean;
+  enable_auto_logout?: boolean;
+  theme?: 'light' | 'dark' | 'auto';
+  primary_color?: string;
+  logo_url?: string;
+  favicon_url?: string;
 }
 
 export const useSettings = () => {
@@ -30,9 +49,11 @@ export const useSettings = () => {
       // Transform settings array into object
       const settingsObj: any = {};
       data?.forEach(setting => {
-        settingsObj[setting.key] = typeof setting.value === 'string' 
-          ? JSON.parse(setting.value) 
-          : setting.value;
+        try {
+          settingsObj[setting.key] = JSON.parse(setting.value as any);
+        } catch (e) {
+          settingsObj[setting.key] = setting.value;
+        }
       });
 
       return settingsObj as AppSettings;
@@ -48,12 +69,14 @@ export const useSettings = () => {
         .eq('key', key)
         .single();
 
+      const valueToStore = JSON.stringify(value);
+
       if (existingSetting) {
         // Mettre à jour le setting existant
         const { data, error } = await supabase
           .from('settings')
           .update({
-            value: JSON.stringify(value),
+            value: valueToStore,
             updated_at: new Date().toISOString()
           })
           .eq('key', key)
@@ -68,7 +91,7 @@ export const useSettings = () => {
           .from('settings')
           .insert({
             key,
-            value: JSON.stringify(value),
+            value: valueToStore,
             updated_at: new Date().toISOString()
           })
           .select()
@@ -78,12 +101,9 @@ export const useSettings = () => {
         return data;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      toast({
-        title: "Paramètre mis à jour",
-        description: "Le paramètre a été mis à jour avec succès",
-      });
+      // Ne pas afficher de toast ici car on le fait après la sauvegarde de tous les paramètres.
     },
     onError: (error: any) => {
       console.error('Error updating setting:', error);
@@ -105,6 +125,20 @@ export const useSettings = () => {
       tax_rate: 0,
       shipping_fee: 5000,
       free_shipping_threshold: 50000,
+      site_url: 'https://beshopping.com',
+      site_description: 'Votre boutique en ligne de confiance',
+      language: 'fr',
+      timezone: 'Africa/Lubumbasi',
+      enable_order_confirmation: true,
+      enable_shipment_notification: true,
+      enable_newsletter: false,
+      enable_2fa: false,
+      enable_login_logging: true,
+      enable_auto_logout: true,
+      theme: 'light',
+      primary_color: '#3b82f6',
+      logo_url: '',
+      favicon_url: '',
     },
     isLoading,
     updateSetting,

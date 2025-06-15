@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCachedCategories } from '@/hooks/useCachedCategories';
 import { useCategories } from '@/hooks/useCategories';
 import CategoryDetailDialog from './CategoryDetailDialog';
+import { Switch } from '@/components/ui/switch';
 
 interface CategoriesSectionProps {
   searchTerm: string;
@@ -17,7 +18,7 @@ interface CategoriesSectionProps {
 const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
   const navigate = useNavigate();
   const { categories, isLoading } = useCachedCategories();
-  const { deleteCategory } = useCategories();
+  const { deleteCategory, updateCategory } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
 
@@ -29,6 +30,10 @@ const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) {
       await deleteCategory.mutateAsync(id);
     }
+  };
+  
+  const handleVisibilityToggle = async (id: string, is_visible: boolean) => {
+    await updateCategory.mutateAsync({ id, is_visible: !is_visible });
   };
 
   if (isLoading) {
@@ -114,9 +119,10 @@ const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={category.is_visible ? 'default' : 'secondary'}>
-                          {category.is_visible ? 'Visible' : 'Masquée'}
-                        </Badge>
+                        <Switch
+                          checked={category.is_visible}
+                          onCheckedChange={() => handleVisibilityToggle(category.id, category.is_visible)}
+                        />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

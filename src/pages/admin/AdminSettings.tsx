@@ -1,6 +1,7 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,22 +11,70 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings, Store, Mail, Globe, Shield, Palette, Database } from 'lucide-react';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettings, AppSettings } from '@/hooks/useSettings';
+import { toast } from '@/components/ui/use-toast';
+import _ from 'lodash';
 
 const AdminSettings = () => {
-  const { settings, updateSetting } = useSettings();
-  const [loading, setLoading] = useState(false);
+  const { settings: initialSettings, updateSetting, isLoading: isLoadingSettings } = useSettings();
+  const [settings, setSettings] = useState<Partial<AppSettings>>(initialSettings);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSettingUpdate = async (key: string, value: any) => {
-    setLoading(true);
+  useEffect(() => {
+    setSettings(initialSettings);
+  }, [initialSettings]);
+
+  const handleFieldChange = (key: keyof AppSettings, value: any) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+  
+  const handleAddressChange = (field: 'street' | 'city' | 'country', value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      company_address: {
+        ...prev.company_address,
+        [field]: value,
+      }
+    }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    const changes: Promise<any>[] = [];
+    
+    for (const key in settings) {
+      if (!_.isEqual((settings as any)[key], (initialSettings as any)[key])) {
+        changes.push(updateSetting.mutateAsync({ key, value: (settings as any)[key] }));
+      }
+    }
+
+    if (changes.length === 0) {
+      toast({ title: 'Aucune modification', description: 'Aucun paramètre n\'a été modifié.' });
+      setIsSaving(false);
+      return;
+    }
+
     try {
-      await updateSetting.mutateAsync({ key, value });
+      await Promise.all(changes);
+      toast({
+        title: 'Paramètres sauvegardés',
+        description: 'Vos modifications ont été enregistrées avec succès.'
+      });
     } catch (error) {
-      console.error('Error updating setting:', error);
+      console.error('Failed to save settings:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de sauvegarder les modifications.',
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
+  
+  if (isLoadingSettings && !Object.keys(settings).length) {
+    return <div>Chargement des paramètres...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -45,7 +94,7 @@ const AdminSettings = () => {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
           <TabsTrigger value="general">Général</TabsTrigger>
           <TabsTrigger value="store">Boutique</TabsTrigger>
           <TabsTrigger value="email">Email</TabsTrigger>
@@ -64,13 +113,13 @@ const AdminSettings = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="siteName">Nom du site</Label>
                     <Input
                       id="siteName"
-                      defaultValue={settings.company_name}
-                      onBlur={(e) => handleSettingUpdate('company_name', e.target.value)}
+                      value={settings.company_name || ''}
+                      onChange={(e) => handleFieldChange('company_name', e.target.value)}
                     />
                   </div>
                   
@@ -79,7 +128,8 @@ const AdminSettings = () => {
                     <Input
                       id="siteUrl"
                       placeholder="https://votre-site.com"
-                      defaultValue="https://beshopping.com"
+                      value={settings.site_url || ''}
+                      onChange={(e) => handleFieldChange('site_url', e.target.value)}
                     />
                   </div>
                 </div>
@@ -89,14 +139,15 @@ const AdminSettings = () => {
                   <Textarea
                     id="description"
                     placeholder="Description de votre boutique..."
-                    defaultValue="Votre boutique en ligne de confiance"
+                    value={settings.site_description || ''}
+                    onChange={(e) => handleFieldChange('site_description', e.target.value)}
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="language">Langue par défaut</Label>
-                    <Select defaultValue="fr">
+                    <Select value={settings.language || 'fr'} onValueChange={(v) => handleFieldChange('language', v)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -109,7 +160,7 @@ const AdminSettings = () => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="timezone">Fuseau horaire</Label>
-                    <Select defaultValue="Africa/Lubumbasi">
+                    <Select value={settings.timezone || 'Africa/Lubumbasi'} onValueChange={(v) => handleFieldChange('timezone', v)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -136,12 +187,12 @@ const AdminSettings = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="currency">Devise</Label>
                     <Select 
-                      defaultValue={settings.currency}
-                      onValueChange={(value) => handleSettingUpdate('currency', value)}
+                      value={settings.currency || 'CDF'}
+                      onValueChange={(value) => handleFieldChange('currency', value)}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -162,21 +213,21 @@ const AdminSettings = () => {
                       min="0"
                       max="100"
                       step="0.01"
-                      defaultValue={settings.tax_rate * 100}
-                      onBlur={(e) => handleSettingUpdate('tax_rate', parseFloat(e.target.value) / 100)}
+                      value={(settings.tax_rate || 0) * 100}
+                      onChange={(e) => handleFieldChange('tax_rate', parseFloat(e.target.value) / 100)}
                     />
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="shippingFee">Frais de livraison</Label>
                     <Input
                       id="shippingFee"
                       type="number"
                       min="0"
-                      defaultValue={settings.shipping_fee}
-                      onBlur={(e) => handleSettingUpdate('shipping_fee', parseFloat(e.target.value))}
+                      value={settings.shipping_fee || 0}
+                      onChange={(e) => handleFieldChange('shipping_fee', parseFloat(e.target.value))}
                     />
                   </div>
                   
@@ -186,19 +237,31 @@ const AdminSettings = () => {
                       id="freeShipping"
                       type="number"
                       min="0"
-                      defaultValue={settings.free_shipping_threshold}
-                      onBlur={(e) => handleSettingUpdate('free_shipping_threshold', parseFloat(e.target.value))}
+                      value={settings.free_shipping_threshold || 0}
+                      onChange={(e) => handleFieldChange('free_shipping_threshold', parseFloat(e.target.value))}
                     />
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="address">Adresse de la boutique</Label>
-                  <Textarea
-                    id="address"
-                    placeholder="Adresse complète de votre boutique..."
-                    defaultValue={`${settings.company_address?.street || ''}, ${settings.company_address?.city || ''}`}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                    <Label htmlFor="addressStreet">Rue</Label>
+                    <Input
+                      id="addressStreet"
+                      placeholder="Av. des Cliniques"
+                      value={settings.company_address?.street || ''}
+                      onChange={(e) => handleAddressChange('street', e.target.value)}
+                    />
+                   </div>
+                   <div className="space-y-2">
+                    <Label htmlFor="addressCity">Ville</Label>
+                    <Input
+                      id="addressCity"
+                      placeholder="Lubumbashi"
+                      value={settings.company_address?.city || ''}
+                      onChange={(e) => handleAddressChange('city', e.target.value)}
+                    />
+                   </div>
                 </div>
               </CardContent>
             </Card>
@@ -216,14 +279,14 @@ const AdminSettings = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="fromEmail">Email expéditeur</Label>
                     <Input
                       id="fromEmail"
                       type="email"
-                      defaultValue={settings.company_email}
-                      onBlur={(e) => handleSettingUpdate('company_email', e.target.value)}
+                      value={settings.company_email || ''}
+                      onChange={(e) => handleFieldChange('company_email', e.target.value)}
                     />
                   </div>
                   
@@ -231,7 +294,9 @@ const AdminSettings = () => {
                     <Label htmlFor="fromName">Nom expéditeur</Label>
                     <Input
                       id="fromName"
-                      defaultValue={settings.company_name}
+                      value={settings.company_name || ''}
+                      readOnly
+                      className="bg-gray-100 dark:bg-gray-800"
                     />
                   </div>
                 </div>
@@ -239,26 +304,38 @@ const AdminSettings = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="orderConfirmation">Confirmation de commande</Label>
+                      <Label htmlFor="orderConfirmation" className="cursor-pointer">Confirmation de commande</Label>
                       <p className="text-sm text-gray-500">Envoyer un email de confirmation après chaque commande</p>
                     </div>
-                    <Switch id="orderConfirmation" defaultChecked />
+                    <Switch 
+                      id="orderConfirmation" 
+                      checked={!!settings.enable_order_confirmation}
+                      onCheckedChange={(checked) => handleFieldChange('enable_order_confirmation', checked)}
+                    />
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="shipmentNotification">Notification d'expédition</Label>
+                      <Label htmlFor="shipmentNotification" className="cursor-pointer">Notification d'expédition</Label>
                       <p className="text-sm text-gray-500">Informer le client quand sa commande est expédiée</p>
                     </div>
-                    <Switch id="shipmentNotification" defaultChecked />
+                    <Switch 
+                      id="shipmentNotification" 
+                      checked={!!settings.enable_shipment_notification}
+                      onCheckedChange={(checked) => handleFieldChange('enable_shipment_notification', checked)}
+                    />
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="newsletter">Newsletter</Label>
+                      <Label htmlFor="newsletter" className="cursor-pointer">Newsletter</Label>
                       <p className="text-sm text-gray-500">Permettre l'inscription à la newsletter</p>
                     </div>
-                    <Switch id="newsletter" />
+                    <Switch 
+                      id="newsletter" 
+                      checked={!!settings.enable_newsletter}
+                      onCheckedChange={(checked) => handleFieldChange('enable_newsletter', checked)}
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -280,26 +357,39 @@ const AdminSettings = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="twoFactor">Authentification à deux facteurs</Label>
+                      <Label htmlFor="twoFactor" className="cursor-pointer">Authentification à deux facteurs</Label>
                       <p className="text-sm text-gray-500">Sécuriser l'accès administrateur avec 2FA</p>
                     </div>
-                    <Switch id="twoFactor" />
+                    <Switch 
+                      id="twoFactor" 
+                      checked={!!settings.enable_2fa}
+                      onCheckedChange={(checked) => handleFieldChange('enable_2fa', checked)}
+                      disabled
+                    />
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="loginLogging">Journal des connexions</Label>
+                      <Label htmlFor="loginLogging" className="cursor-pointer">Journal des connexions</Label>
                       <p className="text-sm text-gray-500">Enregistrer toutes les tentatives de connexion</p>
                     </div>
-                    <Switch id="loginLogging" defaultChecked />
+                    <Switch 
+                      id="loginLogging" 
+                      checked={!!settings.enable_login_logging}
+                      onCheckedChange={(checked) => handleFieldChange('enable_login_logging', checked)}
+                    />
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="autoLogout">Déconnexion automatique</Label>
+                      <Label htmlFor="autoLogout" className="cursor-pointer">Déconnexion automatique</Label>
                       <p className="text-sm text-gray-500">Déconnecter après 30 minutes d'inactivité</p>
                     </div>
-                    <Switch id="autoLogout" defaultChecked />
+                    <Switch 
+                      id="autoLogout" 
+                      checked={!!settings.enable_auto_logout}
+                      onCheckedChange={(checked) => handleFieldChange('enable_auto_logout', checked)}
+                    />
                   </div>
                 </div>
                 
@@ -310,7 +400,7 @@ const AdminSettings = () => {
                       <span className="text-sm">Dernière sauvegarde</span>
                       <span className="text-sm text-gray-500">Il y a 2 heures</span>
                     </div>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" disabled>
                       <Database className="h-4 w-4 mr-2" />
                       Créer une sauvegarde maintenant
                     </Button>
@@ -334,7 +424,7 @@ const AdminSettings = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="theme">Thème</Label>
-                  <Select defaultValue="light">
+                  <Select value={settings.theme || 'light'} onValueChange={(v) => handleFieldChange('theme', v)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -348,22 +438,22 @@ const AdminSettings = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="primaryColor">Couleur principale</Label>
-                  <div className="flex gap-2">
-                    <Input type="color" defaultValue="#3b82f6" className="w-20" />
-                    <Input defaultValue="#3b82f6" className="flex-1" />
+                  <div className="flex items-center gap-2">
+                    <Input type="color" value={settings.primary_color || '#3b82f6'} onChange={(e) => handleFieldChange('primary_color', e.target.value)} className="w-16 h-10 p-1" />
+                    <Input value={settings.primary_color || '#3b82f6'} onChange={(e) => handleFieldChange('primary_color', e.target.value)} className="flex-1" />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="logo">Logo</Label>
-                  <Input type="file" accept="image/*" />
-                  <p className="text-sm text-gray-500">Formats acceptés: PNG, JPG, SVG (max 2MB)</p>
+                  <Input type="file" accept="image/*" disabled />
+                  <p className="text-sm text-gray-500">Fonctionnalité d'upload bientôt disponible.</p>
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="favicon">Favicon</Label>
-                  <Input type="file" accept="image/*" />
-                  <p className="text-sm text-gray-500">Format recommandé: ICO ou PNG 32x32px</p>
+                  <Input type="file" accept="image/*" disabled />
+                  <p className="text-sm text-gray-500">Fonctionnalité d'upload bientôt disponible.</p>
                 </div>
               </CardContent>
             </Card>
@@ -372,9 +462,9 @@ const AdminSettings = () => {
       </Tabs>
 
       {/* Save Button */}
-      <div className="flex justify-end">
-        <Button disabled={loading}>
-          {loading ? 'Sauvegarde...' : 'Sauvegarder les modifications'}
+      <div className="flex justify-end sticky bottom-0 bg-white dark:bg-gray-900 py-4 px-6 border-t">
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? 'Sauvegarde...' : 'Sauvegarder les modifications'}
         </Button>
       </div>
     </div>
