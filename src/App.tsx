@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,6 +30,8 @@ import AdminReports from "./pages/admin/AdminReports";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminProfile from "./pages/admin/AdminProfile";
+import AdminProductForm from "./pages/admin/AdminProductForm";
+import AdminCategoryForm from "./pages/admin/AdminCategoryForm";
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -72,6 +73,10 @@ function App() {
                       <Route path="/admin" element={<AdminLayout />}>
                         <Route path="dashboard" element={<AdminDashboard />} />
                         <Route path="catalog" element={<AdminCatalog />} />
+                        <Route path="catalog/products/new" element={<AdminProductForm />} />
+                        <Route path="catalog/products/:id/edit" element={<AdminProductForm />} />
+                        <Route path="catalog/categories/new" element={<AdminCategoryForm />} />
+                        <Route path="catalog/categories/:id/edit" element={<AdminCategoryForm />} />
                         <Route path="orders" element={<AdminOrders />} />
                         <Route path="reports" element={<AdminReports />} />
                         <Route path="analytics" element={<AdminAnalytics />} />

@@ -1,15 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, Edit, Trash2, Plus, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Eye, EyeOff, Package, Search } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProducts } from '@/hooks/useProducts';
-import { useCategories } from '@/hooks/useCategories';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import ProductDialog from './ProductDialog';
 import ProductDetailDialog from './ProductDetailDialog';
 
 interface ProductsSectionProps {
@@ -17,223 +14,171 @@ interface ProductsSectionProps {
 }
 
 const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
-  const { products, isLoading, updateProduct, deleteProduct } = useProducts();
-  const { categories } = useCategories();
+  const navigate = useNavigate();
+  const { products, isLoading, deleteProduct } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
 
-  const filteredProducts = products?.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
-    const matchesCategory = categoryFilter === 'all' || product.category_id === categoryFilter;
-    
-    return matchesSearch && matchesStatus && matchesCategory;
-  }) || [];
+  const filteredProducts = products?.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
-  const toggleVisibility = async (product: any) => {
-    await updateProduct.mutateAsync({
-      id: product.id,
-      is_visible: !product.is_visible
-    });
-  };
-
-  const handleDelete = async (productId: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
-      await deleteProduct.mutateAsync(productId);
+      await deleteProduct.mutateAsync(id);
     }
   };
 
-  const getCategoryName = (categoryId: string) => {
-    const category = categories?.find(cat => cat.id === categoryId);
-    return category?.name || 'Sans catégorie';
-  };
-
   if (isLoading) {
-    return <div className="flex justify-center p-8">Chargement...</div>;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Produits
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">Chargement des produits...</div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="flex gap-2">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="active">Actif</SelectItem>
-              <SelectItem value="inactive">Inactif</SelectItem>
-              <SelectItem value="draft">Brouillon</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Catégorie" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les catégories</SelectItem>
-              {categories?.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau produit
-        </Button>
-      </div>
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Produits ({filteredProducts.length})
+          </CardTitle>
+          <Button onClick={() => navigate('/admin/catalog/products/new')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau produit
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Aucun produit trouvé
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Prix</TableHead>
+                    <TableHead>Stock</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProducts.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {product.images?.[0] && (
+                            <img
+                              src={product.images[0]}
+                              alt={product.name}
+                              className="w-10 h-10 rounded object-cover"
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium">{product.name}</div>
+                            {product.featured && (
+                              <Badge variant="secondary" className="text-xs">
+                                Vedette
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{product.sku || '-'}</TableCell>
+                      <TableCell>
+                        <div>
+                          {product.discounted_price ? (
+                            <>
+                              <span className="font-medium">
+                                {product.discounted_price.toLocaleString()} CDF
+                              </span>
+                              <span className="text-sm text-muted-foreground line-through ml-2">
+                                {product.original_price.toLocaleString()} CDF
+                              </span>
+                            </>
+                          ) : (
+                            <span className="font-medium">
+                              {product.original_price.toLocaleString()} CDF
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={product.stock > 0 ? 'default' : 'destructive'}>
+                          {product.stock}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            product.status === 'active' ? 'default' :
+                            product.status === 'inactive' ? 'secondary' : 'outline'
+                          }
+                        >
+                          {product.status === 'active' ? 'Actif' :
+                           product.status === 'inactive' ? 'Inactif' : 'Brouillon'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setShowDetailDialog(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/admin/catalog/products/${product.id}/edit`)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(product.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Products Table */}
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Produit</TableHead>
-              <TableHead>Prix</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Catégorie</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Créé le</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredProducts.map((product) => (
-              <TableRow 
-                key={product.id} 
-                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
-                onClick={() => {
-                  setSelectedProduct(product);
-                  setIsDetailDialogOpen(true);
-                }}
-              >
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    {product.images?.[0] && (
-                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                        <img 
-                          src={product.images[0]} 
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-sm text-gray-500">{product.sku || 'Sans SKU'}</p>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <p className="font-medium">{formatCurrency(product.original_price)}</p>
-                    {product.discount > 0 && (
-                      <p className="text-sm text-green-600">
-                        -{product.discount}% ({formatCurrency(product.discounted_price || 0)})
-                      </p>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={product.stock > 0 ? 'default' : 'destructive'}>
-                    {product.stock}
-                  </Badge>
-                </TableCell>
-                <TableCell>{getCategoryName(product.category_id)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={
-                      product.status === 'active' ? 'default' : 
-                      product.status === 'inactive' ? 'destructive' : 'secondary'
-                    }>
-                      {product.status === 'active' ? 'Actif' : 
-                       product.status === 'inactive' ? 'Inactif' : 'Brouillon'}
-                    </Badge>
-                    {product.is_visible ? (
-                      <Eye className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>{formatDate(product.created_at)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedProduct(product);
-                        setIsCreateDialogOpen(true);
-                      }}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleVisibility(product);
-                      }}
-                    >
-                      {product.is_visible ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(product.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Dialogs */}
-      <ProductDialog
-        product={selectedProduct}
-        open={isCreateDialogOpen}
-        onOpenChange={(open) => {
-          setIsCreateDialogOpen(open);
-          if (!open) setSelectedProduct(null);
-        }}
-      />
-      
-      <ProductDetailDialog
-        product={selectedProduct}
-        open={isDetailDialogOpen}
-        onOpenChange={(open) => {
-          setIsDetailDialogOpen(open);
-          if (!open) setSelectedProduct(null);
-        }}
-      />
-    </div>
+      {selectedProduct && (
+        <ProductDetailDialog
+          product={selectedProduct}
+          open={showDetailDialog}
+          onOpenChange={setShowDetailDialog}
+        />
+      )}
+    </>
   );
 };
 

@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { useProducts } from '@/hooks/useProducts';
-import { useCategories } from '@/hooks/useCategories';
+import { useCachedCategories } from '@/hooks/useCachedCategories';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { Product } from '@/types';
 
@@ -22,7 +22,7 @@ const Products = () => {
   const searchQuery = searchParams.get('search') || '';
   
   const { products, isLoading: productsLoading } = useProducts();
-  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { categories, isLoading: categoriesLoading, getAllCategoryIds } = useCachedCategories();
   const { trackEvent } = useAnalytics();
 
   const [searchTerm, setSearchTerm] = useState(searchQuery);
@@ -56,12 +56,17 @@ const Products = () => {
       product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesCategory = selectedCategory === 'all' || product.category_id === selectedCategory;
+    // Amélioration : inclure les produits des sous-catégories
+    let matchesCategory = selectedCategory === 'all';
+    if (!matchesCategory && selectedCategory) {
+      const categoryIds = getAllCategoryIds(selectedCategory);
+      matchesCategory = categoryIds.includes(product.category_id || '');
+    }
     
     const price = product.discounted_price || product.original_price;
     const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
     
-    const matchesStatus = product.status === 'active';
+    const matchesStatus = product.status === 'active' && product.is_visible;
     
     return matchesSearch && matchesCategory && matchesPrice && matchesStatus;
   });

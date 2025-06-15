@@ -1,13 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, Edit, Trash2, Plus, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Eye, EyeOff, FolderOpen } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useCachedCategories } from '@/hooks/useCachedCategories';
 import { useCategories } from '@/hooks/useCategories';
-import { useProducts } from '@/hooks/useProducts';
-import { formatDate } from '@/lib/utils';
-import CategoryDialog from './CategoryDialog';
 import CategoryDetailDialog from './CategoryDetailDialog';
 
 interface CategoriesSectionProps {
@@ -15,172 +15,154 @@ interface CategoriesSectionProps {
 }
 
 const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
-  const { categories, isLoading, updateCategory, deleteCategory } = useCategories();
-  const { products } = useProducts();
+  const navigate = useNavigate();
+  const { categories, isLoading } = useCachedCategories();
+  const { deleteCategory } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
 
   const filteredCategories = categories?.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    category.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    category.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  const getProductCount = (categoryId: string) => {
-    return products?.filter(product => product.category_id === categoryId).length || 0;
-  };
-
-  const toggleVisibility = async (category: any) => {
-    await updateCategory.mutateAsync({
-      id: category.id,
-      is_visible: !category.is_visible
-    });
-  };
-
-  const handleDelete = async (categoryId: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) {
-      await deleteCategory.mutateAsync(categoryId);
+      await deleteCategory.mutateAsync(id);
     }
   };
 
   if (isLoading) {
-    return <div className="flex justify-center p-8">Chargement...</div>;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FolderOpen className="h-5 w-5" />
+            Catégories
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">Chargement des catégories...</div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header Actions */}
-      <div className="flex justify-end">
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle catégorie
-        </Button>
-      </div>
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <FolderOpen className="h-5 w-5" />
+            Catégories ({filteredCategories.length})
+          </CardTitle>
+          <Button onClick={() => navigate('/admin/catalog/categories/new')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle catégorie
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {filteredCategories.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Aucune catégorie trouvée
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Parent</TableHead>
+                    <TableHead>Enfants</TableHead>
+                    <TableHead>Visible</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCategories.map((category) => (
+                    <TableRow key={category.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {category.image && (
+                            <img
+                              src={category.image}
+                              alt={category.name}
+                              className="w-10 h-10 rounded object-cover"
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium">{category.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              /{category.slug}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {category.parent ? (
+                          <Badge variant="outline">{category.parent.name}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {category.children && category.children.length > 0 ? (
+                          <Badge variant="secondary">
+                            {category.children.length} enfant(s)
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={category.is_visible ? 'default' : 'secondary'}>
+                          {category.is_visible ? 'Visible' : 'Masquée'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedCategory(category);
+                              setShowDetailDialog(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/admin/catalog/categories/${category.id}/edit`)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(category.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Categories Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCategories.map((category) => (
-          <Card key={category.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{category.name}</CardTitle>
-                <div className="flex items-center gap-2">
-                  {category.is_visible ? (
-                    <Eye className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              {category.image && (
-                <div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100">
-                  <img 
-                    src={category.image} 
-                    alt={category.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              
-              {category.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                  {category.description}
-                </p>
-              )}
-              
-              <div className="flex items-center justify-between">
-                <Badge variant={category.parent_id ? "secondary" : "default"}>
-                  {category.parent_id ? "Sous-catégorie" : "Catégorie principale"}
-                </Badge>
-                <span className="text-sm text-gray-500">
-                  {getProductCount(category.id)} produits
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-xs text-gray-400">
-                  {formatDate(category.created_at)}
-                </span>
-                
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedCategory(category);
-                      setIsDetailDialogOpen(true);
-                    }}
-                  >
-                    <FolderOpen className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedCategory(category);
-                      setIsCreateDialogOpen(true);
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleVisibility(category);
-                    }}
-                  >
-                    {category.is_visible ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(category.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Dialogs */}
-      <CategoryDialog
-        category={selectedCategory}
-        open={isCreateDialogOpen}
-        onOpenChange={(open) => {
-          setIsCreateDialogOpen(open);
-          if (!open) setSelectedCategory(null);
-        }}
-      />
-      
-      <CategoryDetailDialog
-        category={selectedCategory}
-        open={isDetailDialogOpen}
-        onOpenChange={(open) => {
-          setIsDetailDialogOpen(open);
-          if (!open) setSelectedCategory(null);
-        }}
-      />
-    </div>
+      {selectedCategory && (
+        <CategoryDetailDialog
+          category={selectedCategory}
+          open={showDetailDialog}
+          onOpenChange={setShowDetailDialog}
+        />
+      )}
+    </>
   );
 };
 
