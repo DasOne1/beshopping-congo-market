@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield } from 'lucide-react';
@@ -45,6 +45,14 @@ const AdminAuth = () => {
 
   const globalLoading = authLoading || isLoadingUsers;
   const needsSetup = !globalLoading && adminUsers && adminUsers.length === 0;
+
+  console.log('AdminAuth state:', {
+    authLoading,
+    isLoadingUsers,
+    globalLoading,
+    adminUsers,
+    needsSetup,
+  });
 
   if (globalLoading && !isCreatingUser) {
     return (
