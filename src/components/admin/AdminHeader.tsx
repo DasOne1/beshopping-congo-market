@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Settings, Moon, Sun, Bell, User, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,25 @@ import { Badge } from '@/components/ui/badge';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
+import { Logo } from '@/components/Logo';
+import { Download } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+
+const downloadDemoReport = () => {
+  // Simulate report download; in prod, fetch from api and download blob as pdf
+  const blob = new Blob(
+    ['Rapport téléchargé à ' + new Date().toLocaleString()],
+    { type: "text/plain" }
+  );
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "rapport_Admin_BeShopping.txt";
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success("Rapport téléchargé avec succès !");
+};
 
 const AdminHeader = () => {
   const { adminProfile, signOut } = useAdminAuth();
@@ -26,22 +44,26 @@ const AdminHeader = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
-      <div className="flex items-center justify-between h-16 px-3 md:px-6 max-w-full">
-        {/* Logo et titre */}
-        <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-sm">BS</span>
-            </div>
-            <h1 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white hidden sm:block truncate">
-              BeShopping Admin
-            </h1>
-          </div>
+    <header className="fixed top-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm backdrop-blur-[8px]">
+      <div className="flex items-center justify-between px-4 md:px-8 h-16 max-w-full">
+        <div className="flex gap-2 items-center min-w-0 flex-1">
+          <Logo size="small" className="mr-2" asLink={true} />
+          <h1 className="text-lg md:text-2xl font-extrabold text-gradient tracking-tight hidden sm:block truncate">
+            BeShopping <span className="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">Admin</span>
+          </h1>
         </div>
 
-        {/* Actions header */}
-        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={downloadDemoReport}
+            className="flex items-center gap-2 font-semibold text-primary border-primary-foreground hover:bg-primary/10 transition-all"
+            title="Télécharger le rapport"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Rapport</span>
+          </Button>
           {/* Toggle thème */}
           <Button variant="ghost" size="sm" onClick={toggleTheme}>
             {theme === 'dark' ? (
@@ -50,7 +72,6 @@ const AdminHeader = () => {
               <Moon className="h-4 w-4" />
             )}
           </Button>
-
           {/* Notifications */}
           <Button variant="ghost" size="sm" className="relative">
             <Bell className="h-4 w-4" />
@@ -58,7 +79,6 @@ const AdminHeader = () => {
               3
             </Badge>
           </Button>
-
           {/* Paramètres */}
           <Button 
             variant="ghost" 
@@ -68,7 +88,6 @@ const AdminHeader = () => {
           >
             <Settings className="h-4 w-4" />
           </Button>
-
           {/* Menu profil */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

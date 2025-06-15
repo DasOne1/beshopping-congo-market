@@ -1,53 +1,34 @@
 
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import AdminHeader from './AdminHeader';
-import AdminSidebar from './AdminSidebar';
-import AdminMobileNav from './AdminMobileNav';
+import React from "react";
+import { Outlet } from "react-router-dom";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import AdminHeader from "./AdminHeader";
+import AdminSidebarMenu from "./AdminSidebarMenu";
+import AdminMobileNav from "./AdminMobileNav";
 
+// Auth désactivé pour la dev UX, à réactiver si besoin
 const AdminLayout = () => {
-  // Commenté temporairement pour accès direct
-  // const { isAuthenticated, loading } = useAdminAuth();
-
-  /*
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/admin/auth" replace />;
-  }
-  */
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full max-w-full overflow-x-hidden">
-      {/* Header */}
-      <AdminHeader />
-      
-      {/* Layout principal */}
-      <div className="flex w-full">
-        {/* Sidebar desktop */}
-        <div className="hidden md:block">
-          <AdminSidebar />
-        </div>
-        
-        {/* Contenu principal */}
-        <main className="flex-1 md:ml-64 pt-16 pb-20 md:pb-6 w-full min-w-0">
-          <div className="p-3 md:p-6 max-w-full">
-            <Outlet />
+    <SidebarProvider>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/40 to-blue-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 w-full flex flex-col">
+        <AdminHeader />
+        <div className="flex w-full pt-16">
+          {/* Sidebar desktop (shadcn) */}
+          <div className="hidden md:block z-30">
+            <AdminSidebarMenu />
           </div>
-        </main>
+          {/* Main content */}
+          <main className="flex-1 min-w-0 md:ml-64 max-w-full px-0 sm:px-2 md:px-6 py-6 animate-fade-in">
+            <SidebarTrigger className="block md:hidden mb-4" />
+            <Outlet />
+          </main>
+        </div>
+        {/* Navigation mobile */}
+        <div className="md:hidden">
+          <AdminMobileNav />
+        </div>
       </div>
-      
-      {/* Navigation mobile */}
-      <div className="md:hidden">
-        <AdminMobileNav />
-      </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
