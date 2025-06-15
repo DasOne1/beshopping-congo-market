@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Grid3X3, List, Filter, Search } from 'lucide-react';
+import { Grid3X3, List, Filter, Search, RefreshCw } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
@@ -21,7 +21,7 @@ const Products = () => {
   const selectedCategoryId = searchParams.get('category');
   const searchQuery = searchParams.get('search') || '';
   
-  const { products, isLoading: productsLoading } = useProducts();
+  const { products, isLoading: productsLoading, refetch } = useProducts();
   const { categories, isLoading: categoriesLoading, getAllCategoryIds } = useCachedCategories();
   const { trackEvent } = useAnalytics();
 
@@ -32,7 +32,21 @@ const Products = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 12;
+
+  // Fonction de rafraîchissement manuel
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      console.log('Produits rafraîchis manuellement');
+    } catch (error) {
+      console.error('Erreur lors du rafraîchissement:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Ajouter un effet pour scroller vers le haut lors du changement de page
   useEffect(() => {
@@ -118,10 +132,24 @@ const Products = () => {
       <main className="container mx-auto px-4 py-6 pt-20 md:pt-24">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">Nos Produits</h1>
-          <p className="text-muted-foreground">
-            Découvrez notre sélection de produits de qualité
-          </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">Nos Produits</h1>
+              <p className="text-muted-foreground">
+                Découvrez notre sélection de produits de qualité
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Actualiser
+            </Button>
+          </div>
         </div>
 
         {/* Sticky Controls */}
@@ -201,6 +229,7 @@ const Products = () => {
                   <ProductCard 
                     product={product} 
                     viewMode={viewMode}
+                    showAllAttributes={false}
                   />
                 </div>
               ))}

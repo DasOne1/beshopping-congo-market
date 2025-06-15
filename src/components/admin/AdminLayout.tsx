@@ -1,32 +1,37 @@
 
 import React from "react";
 import { Outlet } from "react-router-dom";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import AdminHeader from "./AdminHeader";
 import AdminSidebarMenu from "./AdminSidebarMenu";
 import AdminMobileNav from "./AdminMobileNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-// Auth désactivé pour la dev UX, à réactiver si besoin
 const AdminLayout = () => {
+  const isMobile = useIsMobile();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/40 to-blue-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 w-full flex flex-col">
         <AdminHeader />
         <div className="flex w-full pt-16">
-          {/* Sidebar desktop (shadcn) */}
-          <div className="hidden md:block z-30">
-            <AdminSidebarMenu />
-          </div>
+          {/* Sidebar desktop uniquement */}
+          {!isMobile && (
+            <div className="z-30">
+              <AdminSidebarMenu />
+            </div>
+          )}
           {/* Main content */}
-          <main className="flex-1 min-w-0 md:ml-64 max-w-full px-0 sm:px-2 md:px-6 py-6 animate-fade-in">
-            <SidebarTrigger className="block md:hidden mb-4" />
+          <main className={`flex-1 min-w-0 ${!isMobile ? 'md:ml-64' : ''} max-w-full px-0 sm:px-2 md:px-6 py-6 animate-fade-in`}>
             <Outlet />
           </main>
         </div>
-        {/* Navigation mobile */}
-        <div className="md:hidden">
-          <AdminMobileNav />
-        </div>
+        {/* Navigation mobile uniquement */}
+        {isMobile && (
+          <div className="md:hidden">
+            <AdminMobileNav />
+          </div>
+        )}
       </div>
     </SidebarProvider>
   );

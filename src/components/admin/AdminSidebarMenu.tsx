@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useLocation, NavLink } from "react-router-dom";
-import { Package, LayoutDashboard, ShoppingCart, BarChart3, TrendingUp, Settings, LogOut } from "lucide-react";
+import { Package, LayoutDashboard, ShoppingCart, BarChart3, TrendingUp, Settings } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Logo } from "@/components/Logo";
 
@@ -16,12 +16,13 @@ const adminMenu = [
 
 export default function AdminSidebarMenu() {
   const location = useLocation();
+  
   return (
     <Sidebar variant="sidebar">
       <SidebarContent>
         <SidebarGroup>
           <div className="flex flex-col items-center py-6">
-            <Logo size="small" className="mb-2" />
+            <Logo size="medium" className="mb-3" />
             <span className="font-bold text-xl text-primary text-center leading-none">BeShopping</span>
             <span className="text-xs text-muted-foreground mt-1">Admin</span>
           </div>
