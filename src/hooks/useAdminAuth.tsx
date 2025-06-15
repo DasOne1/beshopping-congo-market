@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -25,20 +26,32 @@ export const useAdminAuth = () => {
 
   const checkAdminProfile = useCallback(async (user: User) => {
     try {
+      console.log('Checking admin profile for user:', user.id, user.email);
+      
       const { data: profile, error } = await supabase
         .from('admin_profiles')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
-      if (error || !profile) {
-        console.error('Admin profile not found:', error);
+      console.log('Admin profile query result:', { profile, error });
+
+      if (error) {
+        console.error('Error fetching admin profile:', error);
         setAdminProfile(null);
         setIsAuthenticated(false);
         return false;
       }
 
+      if (!profile) {
+        console.log('No admin profile found for user:', user.email);
+        setAdminProfile(null);
+        setIsAuthenticated(false);
+        return false;
+      }
+
+      console.log('Admin profile found:', profile);
       setAdminProfile(profile);
       setIsAuthenticated(true);
       
@@ -60,6 +73,7 @@ export const useAdminAuth = () => {
   useEffect(() => {
     // Vérifier la session existante
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email);
       if (session?.user) {
         setUser(session.user);
         checkAdminProfile(session.user).finally(() => setLoading(false));
@@ -91,20 +105,28 @@ export const useAdminAuth = () => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
+      console.log('Attempting admin sign in for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase auth error:', error);
+        throw error;
+      }
 
       if (data.user) {
+        console.log('User signed in successfully:', data.user.email);
         const isAdmin = await checkAdminProfile(data.user);
         if (!isAdmin) {
+          console.log('User is not an admin, signing out');
           await supabase.auth.signOut();
           throw new Error("Accès non autorisé - Compte administrateur requis");
         }
         
+        console.log('Admin sign in successful');
         toast({
           title: "Connexion réussie",
           description: "Bienvenue dans l'interface d'administration",
