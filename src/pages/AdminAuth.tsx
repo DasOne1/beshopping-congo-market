@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -7,16 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const AdminAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, isAuthenticated, loading } = useAdminAuth();
+  const { signIn, isAuthenticated, loading } = useAdminAuth();
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [signupData, setSignupData] = useState({ email: '', password: '', fullName: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,21 +34,6 @@ const AdminAuth = () => {
       await signIn(loginData.email, loginData.password);
     } catch (error) {
       console.error('Login error:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-
-    try {
-      setIsSubmitting(true);
-      await signUp(signupData.email, signupData.password, signupData.fullName);
-      setSignupData({ email: '', password: '', fullName: '' });
-    } catch (error) {
-      console.error('Signup error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -82,145 +64,65 @@ const AdminAuth = () => {
               Administration BeShopping
             </CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-300">
-              Interface d'administration sécurisée
+              Veuillez vous connecter pour continuer
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Connexion</TabsTrigger>
-                <TabsTrigger value="signup">Inscription</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email administrateur</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="admin@beshopping.com"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                      className="bg-white dark:bg-gray-700"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Mot de passe</Label>
-                    <div className="relative">
-                      <Input
-                        id="login-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={loginData.password}
-                        onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                        required
-                        className="bg-white dark:bg-gray-700 pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-gray-400" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700" 
-                    disabled={isSubmitting}
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-email">Email administrateur</Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder="admin@beshopping.com"
+                  value={loginData.email}
+                  onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                  className="bg-white dark:bg-gray-700"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="login-password">Mot de passe</Label>
+                <div className="relative">
+                  <Input
+                    id="login-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={loginData.password}
+                    onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                    required
+                    className="bg-white dark:bg-gray-700 pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
                   >
-                    {isSubmitting ? (
-                      <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Connexion...
-                      </div>
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-400" />
                     ) : (
-                      'Se connecter'
+                      <Eye className="h-4 w-4 text-gray-400" />
                     )}
                   </Button>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Nom complet</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="Votre nom complet"
-                      value={signupData.fullName}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, fullName: e.target.value }))}
-                      required
-                      className="bg-white dark:bg-gray-700"
-                    />
+                </div>
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700" 
+                disabled={isSubmitting || loading}
+              >
+                {isSubmitting || loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Connexion...
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email administrateur</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="admin@beshopping.com"
-                      value={signupData.email}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                      className="bg-white dark:bg-gray-700"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Mot de passe</Label>
-                    <div className="relative">
-                      <Input
-                        id="signup-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={signupData.password}
-                        onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
-                        required
-                        minLength={6}
-                        className="bg-white dark:bg-gray-700 pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-gray-400" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700" 
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Création...
-                      </div>
-                    ) : (
-                      'Créer un compte admin'
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+                ) : (
+                  'Se connecter'
+                )}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </motion.div>

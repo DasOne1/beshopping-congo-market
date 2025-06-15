@@ -123,39 +123,6 @@ export const useAdminAuth = () => {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-          emailRedirectTo: `${window.location.origin}/admin/auth`,
-        },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Compte administrateur créé",
-        description: "Veuillez vérifier votre boîte de réception pour confirmer votre e-mail.",
-      });
-    } catch (error: any) {
-      console.error('Admin sign up error:', error);
-      toast({
-        title: "Erreur lors de la création",
-        description: error.message || "Une erreur est survenue",
-        variant: "destructive",
-      });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -185,7 +152,6 @@ export const useAdminAuth = () => {
     loading,
     isAuthenticated,
     signIn,
-    signUp,
     signOut,
   };
 };

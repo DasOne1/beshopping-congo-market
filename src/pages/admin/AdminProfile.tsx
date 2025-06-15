@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,41 +10,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { User, Shield, Clock, Users, Edit, Trash2, Plus, Eye } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { formatDate } from '@/lib/utils';
+import { useAdminUsers } from '@/hooks/useAdminUsers';
+import { AdminUserDialog } from '@/components/admin/AdminUserDialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const AdminProfile = () => {
   const { adminProfile } = useAdminAuth();
   const [isEditing, setIsEditing] = useState(false);
-
-  // Données de démonstration pour les autres admins
-  const adminUsers = [
-    {
-      id: '1',
-      full_name: 'Jean Dupont',
-      email: 'jean@beshopping.com',
-      role: 'admin',
-      is_active: true,
-      last_login: '2024-01-15T10:30:00Z',
-      created_at: '2024-01-01T00:00:00Z'
-    },
-    {
-      id: '2',
-      full_name: 'Marie Martin',
-      email: 'marie@beshopping.com',
-      role: 'moderator',
-      is_active: true,
-      last_login: '2024-01-14T15:45:00Z',
-      created_at: '2024-01-05T00:00:00Z'
-    },
-    {
-      id: '3',
-      full_name: 'Pierre Durand',
-      email: 'pierre@beshopping.com',
-      role: 'admin',
-      is_active: false,
-      last_login: '2024-01-10T09:15:00Z',
-      created_at: '2024-01-03T00:00:00Z'
-    }
-  ];
+  const { adminUsers, isLoading, createAdminUser, isCreating } = useAdminUsers();
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
 
   const handleProfileUpdate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +35,14 @@ const AdminProfile = () => {
 
     const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.user;
     return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const handleCreateUser = (data: any) => {
+    createAdminUser(data, {
+        onSuccess: () => {
+            setIsUserDialogOpen(false);
+        }
+    });
   };
 
   return (
@@ -216,10 +197,12 @@ const AdminProfile = () => {
                   <Users className="h-5 w-5" />
                   Utilisateurs administrateurs
                 </span>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nouvel admin
-                </Button>
+                {adminProfile?.role === 'admin' && (
+                  <Button onClick={() => setIsUserDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nouvel admin
+                  </Button>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -235,44 +218,54 @@ const AdminProfile = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {adminUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>
-                              {user.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{user.full_name}</p>
-                            <p className="text-sm text-gray-500">{user.email}</p>
+                  {isLoading ? (
+                    Array.from({ length: 3 }).map((_, index) => (
+                      <TableRow key={index}>
+                        <TableCell colSpan={6}>
+                          <Skeleton className="h-8 w-full" />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    adminUsers?.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback>
+                                {user.full_name?.split(' ').map(n => n[0]).join('').toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{user.full_name}</p>
+                              <p className="text-sm text-gray-500">{user.email}</p>
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
-                      <TableCell>
-                        <Badge variant={user.is_active ? 'default' : 'destructive'}>
-                          {user.is_active ? 'Actif' : 'Inactif'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{formatDate(user.last_login)}</TableCell>
-                      <TableCell>{formatDate(user.created_at)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell>
+                          <Badge variant={user.is_active ? 'default' : 'destructive'}>
+                            {user.is_active ? 'Actif' : 'Inactif'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{user.last_login ? formatDate(user.last_login) : 'Jamais'}</TableCell>
+                        <TableCell>{formatDate(user.created_at)}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -326,6 +319,12 @@ const AdminProfile = () => {
           </Card>
         </TabsContent>
       </Tabs>
+       <AdminUserDialog 
+          isOpen={isUserDialogOpen}
+          onOpenChange={setIsUserDialogOpen}
+          onSubmit={handleCreateUser}
+          isCreating={isCreating}
+        />
     </div>
   );
 };
