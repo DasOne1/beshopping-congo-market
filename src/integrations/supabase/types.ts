@@ -359,64 +359,91 @@ export type Database = {
       }
       products: {
         Row: {
+          brand: string | null
+          care_instructions: string | null
           category_id: string | null
+          collection: string | null
+          colors: string[] | null
           created_at: string
           description: string | null
           dimensions: Json | null
           discount: number | null
           discounted_price: number | null
           featured: boolean | null
+          gender: string | null
           id: string
           images: string[] | null
           is_visible: boolean
+          material: string | null
           name: string
           original_price: number
           popular: number | null
+          season: string | null
+          sizes: string[] | null
           sku: string | null
           status: string | null
           stock: number
+          subcategory_id: string | null
           tags: string[] | null
           updated_at: string
           weight: number | null
         }
         Insert: {
+          brand?: string | null
+          care_instructions?: string | null
           category_id?: string | null
+          collection?: string | null
+          colors?: string[] | null
           created_at?: string
           description?: string | null
           dimensions?: Json | null
           discount?: number | null
           discounted_price?: number | null
           featured?: boolean | null
+          gender?: string | null
           id?: string
           images?: string[] | null
           is_visible?: boolean
+          material?: string | null
           name: string
           original_price: number
           popular?: number | null
+          season?: string | null
+          sizes?: string[] | null
           sku?: string | null
           status?: string | null
           stock?: number
+          subcategory_id?: string | null
           tags?: string[] | null
           updated_at?: string
           weight?: number | null
         }
         Update: {
+          brand?: string | null
+          care_instructions?: string | null
           category_id?: string | null
+          collection?: string | null
+          colors?: string[] | null
           created_at?: string
           description?: string | null
           dimensions?: Json | null
           discount?: number | null
           discounted_price?: number | null
           featured?: boolean | null
+          gender?: string | null
           id?: string
           images?: string[] | null
           is_visible?: boolean
+          material?: string | null
           name?: string
           original_price?: number
           popular?: number | null
+          season?: string | null
+          sizes?: string[] | null
           sku?: string | null
           status?: string | null
           stock?: number
+          subcategory_id?: string | null
           tags?: string[] | null
           updated_at?: string
           weight?: number | null
@@ -425,6 +452,13 @@ export type Database = {
           {
             foreignKeyName: "products_category_id_fkey"
             columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_subcategory_id_fkey"
+            columns: ["subcategory_id"]
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]

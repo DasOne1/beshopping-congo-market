@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, X } from 'lucide-react';
@@ -12,7 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
+import { useSubcategories } from '@/hooks/useSubcategories';
 import ImageUpload from '@/components/ImageUpload';
+import ColorSelector from '@/components/admin/catalog/ColorSelector';
+import SizeSelector from '@/components/admin/catalog/SizeSelector';
 import { Product } from '@/types';
 
 const AdminProductForm = () => {
@@ -22,6 +24,8 @@ const AdminProductForm = () => {
   
   const { products, createProduct, updateProduct } = useProducts();
   const { categories } = useCategories();
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const { subcategories } = useSubcategories(selectedCategoryId);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -30,13 +34,22 @@ const AdminProductForm = () => {
     discount: '',
     stock: '',
     category_id: '',
+    subcategory_id: '',
     sku: '',
     weight: '',
     status: 'active' as 'active' | 'inactive' | 'draft',
     is_visible: true,
     featured: false,
     images: [''],
-    tags: ['']
+    tags: [''],
+    colors: [] as string[],
+    sizes: [] as string[],
+    gender: '' as 'homme' | 'femme' | 'mixte' | '',
+    material: '',
+    brand: '',
+    collection: '',
+    season: '',
+    care_instructions: '',
   });
 
   useEffect(() => {
@@ -50,14 +63,24 @@ const AdminProductForm = () => {
           discount: product.discount?.toString() || '',
           stock: product.stock?.toString() || '',
           category_id: product.category_id || '',
+          subcategory_id: product.subcategory_id || '',
           sku: product.sku || '',
           weight: product.weight?.toString() || '',
           status: product.status || 'active',
           is_visible: product.is_visible ?? true,
           featured: product.featured ?? false,
           images: product.images?.length ? product.images : [''],
-          tags: product.tags?.length ? product.tags : ['']
+          tags: product.tags?.length ? product.tags : [''],
+          colors: product.colors || [],
+          sizes: product.sizes || [],
+          gender: product.gender || '',
+          material: product.material || '',
+          brand: product.brand || '',
+          collection: product.collection || '',
+          season: product.season || '',
+          care_instructions: product.care_instructions || '',
         });
+        setSelectedCategoryId(product.category_id || '');
       }
     }
   }, [isEdit, products, id]);
@@ -78,7 +101,9 @@ const AdminProductForm = () => {
       weight: parseFloat(formData.weight) || null,
       images: formData.images.filter(img => img.trim() !== ''),
       tags: formData.tags.filter(tag => tag.trim() !== ''),
-      category_id: formData.category_id || null
+      category_id: formData.category_id || null,
+      subcategory_id: formData.subcategory_id || null,
+      gender: formData.gender || null,
     };
 
     try {
@@ -107,6 +132,11 @@ const AdminProductForm = () => {
       ...prev,
       tags: prev.tags.filter((_, i) => i !== index)
     }));
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    setFormData(prev => ({ ...prev, category_id: categoryId, subcategory_id: '' }));
+    setSelectedCategoryId(categoryId);
   };
 
   return (
@@ -239,6 +269,115 @@ const AdminProductForm = () => {
 
               <Card>
                 <CardHeader>
+                  <CardTitle>Caractéristiques du produit</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="gender">Genre</Label>
+                      <Select
+                        value={formData.gender}
+                        onValueChange={(value: 'homme' | 'femme' | 'mixte') => setFormData(prev => ({ ...prev, gender: value }))}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Sélectionner le genre" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="homme">Homme</SelectItem>
+                          <SelectItem value="femme">Femme</SelectItem>
+                          <SelectItem value="mixte">Mixte</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="brand">Marque</Label>
+                      <Input
+                        id="brand"
+                        value={formData.brand}
+                        onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
+                        placeholder="Nom de la marque"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="material">Matériau</Label>
+                      <Input
+                        id="material"
+                        value={formData.material}
+                        onChange={(e) => setFormData(prev => ({ ...prev, material: e.target.value }))}
+                        placeholder="Coton, Polyester, etc."
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="collection">Collection</Label>
+                      <Input
+                        id="collection"
+                        value={formData.collection}
+                        onChange={(e) => setFormData(prev => ({ ...prev, collection: e.target.value }))}
+                        placeholder="Collection 2024"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="season">Saison</Label>
+                      <Select
+                        value={formData.season}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, season: value }))}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Sélectionner la saison" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="printemps">Printemps</SelectItem>
+                          <SelectItem value="ete">Été</SelectItem>
+                          <SelectItem value="automne">Automne</SelectItem>
+                          <SelectItem value="hiver">Hiver</SelectItem>
+                          <SelectItem value="toute-saison">Toute saison</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="care_instructions">Instructions d'entretien</Label>
+                    <Textarea
+                      id="care_instructions"
+                      value={formData.care_instructions}
+                      onChange={(e) => setFormData(prev => ({ ...prev, care_instructions: e.target.value }))}
+                      placeholder="Lavage à 30°C, ne pas repasser, etc."
+                      rows={3}
+                      className="mt-1"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Couleurs et Tailles</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <ColorSelector
+                    colors={formData.colors}
+                    onChange={(colors) => setFormData(prev => ({ ...prev, colors }))}
+                  />
+                  
+                  <SizeSelector
+                    sizes={formData.sizes}
+                    onChange={(sizes) => setFormData(prev => ({ ...prev, sizes }))}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
                   <CardTitle>Images</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -324,23 +463,45 @@ const AdminProductForm = () => {
                 <CardHeader>
                   <CardTitle>Catégorie</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Label htmlFor="category">Catégorie</Label>
-                  <Select
-                    value={formData.category_id}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Sélectionner une catégorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="category">Catégorie</Label>
+                    <Select
+                      value={formData.category_id}
+                      onValueChange={handleCategoryChange}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Sélectionner une catégorie" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories?.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="subcategory">Sous-catégorie</Label>
+                    <Select
+                      value={formData.subcategory_id}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, subcategory_id: value }))}
+                      disabled={!selectedCategoryId}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Sélectionner une sous-catégorie" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {subcategories?.map((subcategory) => (
+                          <SelectItem key={subcategory.id} value={subcategory.id}>
+                            {subcategory.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </CardContent>
               </Card>
 

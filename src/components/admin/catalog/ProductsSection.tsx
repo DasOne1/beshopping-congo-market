@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useProducts } from '@/hooks/useProducts';
 import ProductDetailDialog from './ProductDetailDialog';
+import ProductDialog from './ProductDialog';
 
 interface ProductsSectionProps {
   searchTerm: string;
@@ -18,10 +19,13 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
   const { products, isLoading, deleteProduct } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const filteredProducts = products?.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+    product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.brand?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const handleDelete = async (id: string) => {
@@ -54,10 +58,16 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
             <Package className="h-5 w-5" />
             Produits ({filteredProducts.length})
           </CardTitle>
-          <Button onClick={() => navigate('/admin/catalog/products/new')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau produit
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau produit (Dialog)
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/admin/catalog/products/new')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau produit (Page)
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {filteredProducts.length === 0 ? (
@@ -69,10 +79,11 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nom</TableHead>
+                    <TableHead>Produit</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Prix</TableHead>
                     <TableHead>Stock</TableHead>
+                    <TableHead>Caractéristiques</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -91,8 +102,12 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                           )}
                           <div>
                             <div className="font-medium">{product.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {product.brand && <span className="mr-2">🏷️ {product.brand}</span>}
+                              {product.gender && <span>👤 {product.gender}</span>}
+                            </div>
                             {product.featured && (
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge variant="secondary" className="text-xs mt-1">
                                 Vedette
                               </Badge>
                             )}
@@ -124,6 +139,27 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        <div className="space-y-1">
+                          {product.colors && product.colors.length > 0 && (
+                            <div className="text-xs">
+                              🎨 {product.colors.slice(0, 3).join(', ')}
+                              {product.colors.length > 3 && '...'}
+                            </div>
+                          )}
+                          {product.sizes && product.sizes.length > 0 && (
+                            <div className="text-xs">
+                              📏 {product.sizes.slice(0, 3).join(', ')}
+                              {product.sizes.length > 3 && '...'}
+                            </div>
+                          )}
+                          {product.material && (
+                            <div className="text-xs">
+                              🧵 {product.material}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <Badge
                           variant={
                             product.status === 'active' ? 'default' :
@@ -149,7 +185,10 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/admin/catalog/products/${product.id}/edit`)}
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setShowEditDialog(true);
+                            }}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -178,6 +217,22 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
           onOpenChange={setShowDetailDialog}
         />
       )}
+
+      {selectedProduct && (
+        <ProductDialog
+          product={selectedProduct}
+          open={showEditDialog}
+          onOpenChange={(open) => {
+            setShowEditDialog(open);
+            if (!open) setSelectedProduct(null);
+          }}
+        />
+      )}
+
+      <ProductDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+      />
     </>
   );
 };
