@@ -30,7 +30,11 @@ const downloadDemoReport = () => {
   a.download = "rapport_Admin_BeShopping.txt";
   a.click();
   URL.revokeObjectURL(url);
-  toast.success("Rapport téléchargé avec succès !");
+  
+  toast({
+    title: "Succès",
+    description: "Rapport téléchargé avec succès !",
+  });
 };
 
 const AdminHeader = () => {
