@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Settings, Moon, Sun, Bell, User, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,28 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { Logo } from '@/components/Logo';
+import { Download } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+
+const downloadDemoReport = () => {
+  // Simulate report download; in prod, fetch from api and download blob as pdf
+  const blob = new Blob(
+    ['Rapport téléchargé à ' + new Date().toLocaleString()],
+    { type: "text/plain" }
+  );
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "rapport_Admin_BeShopping.txt";
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  toast({
+    title: "Succès",
+    description: "Rapport téléchargé avec succès !",
+  });
+};
 
 const AdminHeader = () => {
   const { adminProfile, signOut } = useAdminAuth();
@@ -37,6 +58,16 @@ const AdminHeader = () => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={downloadDemoReport}
+            className="flex items-center gap-2 font-semibold text-primary border-primary-foreground hover:bg-primary/10 transition-all"
+            title="Télécharger le rapport"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Rapport</span>
+          </Button>
           {/* Toggle thème */}
           <Button variant="ghost" size="sm" onClick={toggleTheme}>
             {theme === 'dark' ? (

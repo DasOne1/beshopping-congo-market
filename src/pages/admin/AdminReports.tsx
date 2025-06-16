@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,10 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, TrendingUp, Users, Package, ShoppingCart, Filter } from 'lucide-react';
+import { Download, FileText, TrendingUp, Users, Package, ShoppingCart, Filter } from 'lucide-react';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { toast } from '@/hooks/use-toast';
 import AdminLoader from '@/components/admin/AdminLoader';
 
 const AdminReports = () => {
@@ -27,96 +25,14 @@ const AdminReports = () => {
     { value: 'orders', label: 'Rapport commandes', icon: ShoppingCart }
   ];
 
-  const generatePDFReport = () => {
-    const reportData = {
-      type: reportType,
-      dateRange,
-      startDate,
-      endDate,
-      stats,
-      recentOrders: recentOrders?.slice(0, 10),
-      topProducts: topProducts?.slice(0, 10),
-      generatedAt: new Date().toLocaleString('fr-FR')
-    };
-
-    const pdfContent = `
-RAPPORT BESHOPPING - ${reportTypes.find(r => r.value === reportType)?.label.toUpperCase()}
-Généré le: ${reportData.generatedAt}
-Période: ${dateRange === 'custom' ? `${startDate} - ${endDate}` : dateRange}
-
-=== STATISTIQUES GÉNÉRALES ===
-Revenus totaux: ${formatCurrency(stats?.totalRevenue || 0)}
-Commandes totales: ${stats?.totalOrders || 0}
-Commandes aujourd'hui: ${stats?.todayOrders || 0}
-
-${reportType === 'orders' && recentOrders ? `
-=== COMMANDES RÉCENTES ===
-${recentOrders.slice(0, 10).map(order => 
-  `${order.order_number} - ${order.customer_name} - ${formatCurrency(order.total_amount)} - ${order.status}`
-).join('\n')}
-` : ''}
-
-${reportType === 'products' && topProducts ? `
-=== PRODUITS LES PLUS VENDUS ===
-${topProducts.slice(0, 10).map(product => 
-  `${product.product_name} - Qté: ${product.total_quantity} - Revenus: ${formatCurrency(product.total_revenue)}`
-).join('\n')}
-` : ''}
-
----
-Rapport généré par BeShopping Admin
-    `.trim();
-
-    const blob = new Blob([pdfContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `rapport_${reportType}_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Rapport PDF généré",
-      description: "Le rapport a été téléchargé avec succès",
-    });
+  const handleExportPDF = () => {
+    console.log('Export PDF...');
+    // Logique d'export PDF à implémenter
   };
 
-  const generateCSVReport = () => {
-    let csvContent = '';
-    
-    if (reportType === 'orders' && recentOrders) {
-      csvContent = 'Numéro,Client,Montant,Statut,Date\n';
-      csvContent += recentOrders.slice(0, 100).map(order => 
-        `"${order.order_number}","${order.customer_name}","${order.total_amount}","${order.status}","${formatDate(order.created_at)}"`
-      ).join('\n');
-    } else if (reportType === 'products' && topProducts) {
-      csvContent = 'Produit,Quantité vendue,Revenus,Nb commandes\n';
-      csvContent += topProducts.slice(0, 100).map(product => 
-        `"${product.product_name}","${product.total_quantity}","${product.total_revenue}","${product.order_count}"`
-      ).join('\n');
-    } else {
-      csvContent = 'Type,Valeur\n';
-      csvContent += `"Revenus totaux","${stats?.totalRevenue || 0}"\n`;
-      csvContent += `"Commandes totales","${stats?.totalOrders || 0}"\n`;
-      csvContent += `"Commandes aujourd'hui","${stats?.todayOrders || 0}"\n`;
-    }
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `rapport_${reportType}_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Rapport CSV généré",
-      description: "Le rapport a été téléchargé avec succès",
-    });
+  const handleExportCSV = () => {
+    console.log('Export CSV...');
+    // Logique d'export CSV à implémenter
   };
 
   if (isLoading) {
@@ -124,23 +40,24 @@ Rapport généré par BeShopping Admin
   }
 
   return (
-    <div className="space-y-4 p-4 pb-24 md:pb-6 max-w-full overflow-x-hidden">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white truncate">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Rapports
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+          <p className="text-gray-600 dark:text-gray-400">
             Générez et exportez des rapports détaillés
           </p>
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" onClick={generateCSVReport} size="sm">
+          <Button variant="outline" onClick={handleExportCSV}>
+            <Download className="h-4 w-4 mr-2" />
             CSV
           </Button>
-          <Button onClick={generatePDFReport} size="sm">
+          <Button onClick={handleExportPDF}>
             <FileText className="h-4 w-4 mr-2" />
             PDF
           </Button>
@@ -150,15 +67,15 @@ Rapport généré par BeShopping Admin
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
+          <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
             Filtres
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Label htmlFor="reportType" className="text-sm">Type de rapport</Label>
+              <Label htmlFor="reportType">Type de rapport</Label>
               <Select value={reportType} onValueChange={setReportType}>
                 <SelectTrigger>
                   <SelectValue />
@@ -170,7 +87,7 @@ Rapport généré par BeShopping Admin
                       <SelectItem key={type.value} value={type.value}>
                         <div className="flex items-center gap-2">
                           <Icon className="h-4 w-4" />
-                          <span className="truncate">{type.label}</span>
+                          {type.label}
                         </div>
                       </SelectItem>
                     );
@@ -180,7 +97,7 @@ Rapport généré par BeShopping Admin
             </div>
             
             <div>
-              <Label htmlFor="dateRange" className="text-sm">Période</Label>
+              <Label htmlFor="dateRange">Période</Label>
               <Select value={dateRange} onValueChange={setDateRange}>
                 <SelectTrigger>
                   <SelectValue />
@@ -199,7 +116,7 @@ Rapport généré par BeShopping Admin
             {dateRange === 'custom' && (
               <>
                 <div>
-                  <Label htmlFor="startDate" className="text-sm">Date de début</Label>
+                  <Label htmlFor="startDate">Date de début</Label>
                   <Input
                     id="startDate"
                     type="date"
@@ -209,7 +126,7 @@ Rapport généré par BeShopping Admin
                 </div>
                 
                 <div>
-                  <Label htmlFor="endDate" className="text-sm">Date de fin</Label>
+                  <Label htmlFor="endDate">Date de fin</Label>
                   <Input
                     id="endDate"
                     type="date"
@@ -224,40 +141,40 @@ Rapport généré par BeShopping Admin
       </Card>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="min-w-0">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium truncate">Revenus totaux</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <CardTitle className="text-sm font-medium">Revenus totaux</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold">{formatCurrency(stats?.totalRevenue || 0)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(stats?.totalRevenue || 0)}</div>
             <p className="text-xs text-muted-foreground">
               +20.1% par rapport au mois dernier
             </p>
           </CardContent>
         </Card>
         
-        <Card className="min-w-0">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium truncate">Commandes</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <CardTitle className="text-sm font-medium">Commandes</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold">{stats?.totalOrders || 0}</div>
+            <div className="text-2xl font-bold">{stats?.totalOrders || 0}</div>
             <p className="text-xs text-muted-foreground">
               +180.1% par rapport au mois dernier
             </p>
           </CardContent>
         </Card>
         
-        <Card className="min-w-0">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium truncate">Produits vendus</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <CardTitle className="text-sm font-medium">Produits vendus</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold">
+            <div className="text-2xl font-bold">
               {topProducts?.reduce((sum, product) => sum + product.total_quantity, 0) || 0}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -266,13 +183,13 @@ Rapport généré par BeShopping Admin
           </CardContent>
         </Card>
         
-        <Card className="min-w-0">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium truncate">Taux de conversion</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <CardTitle className="text-sm font-medium">Taux de conversion</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold">2.4%</div>
+            <div className="text-2xl font-bold">2.4%</div>
             <p className="text-xs text-muted-foreground">
               +0.4% par rapport au mois dernier
             </p>
@@ -281,123 +198,115 @@ Rapport généré par BeShopping Admin
       </div>
 
       {/* Report Content */}
-      <div className="min-w-0 overflow-x-auto">
-        {reportType === 'sales' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Rapport des ventes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[100px]">Date</TableHead>
-                      <TableHead className="min-w-[100px]">Commandes</TableHead>
-                      <TableHead className="min-w-[120px]">Revenus</TableHead>
-                      <TableHead className="min-w-[140px]">Moyenne par commande</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>{formatDate(new Date().toISOString())}</TableCell>
-                      <TableCell>{stats?.todayOrders || 0}</TableCell>
-                      <TableCell>{formatCurrency(stats?.totalRevenue || 0)}</TableCell>
-                      <TableCell>
-                        {formatCurrency(stats?.totalOrders ? (stats.totalRevenue / stats.totalOrders) : 0)}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      {reportType === 'sales' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Rapport des ventes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Commandes</TableHead>
+                  <TableHead>Revenus</TableHead>
+                  <TableHead>Moyenne par commande</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>{formatDate(new Date().toISOString())}</TableCell>
+                  <TableCell>{stats?.todayOrders || 0}</TableCell>
+                  <TableCell>{formatCurrency(stats?.totalRevenue || 0)}</TableCell>
+                  <TableCell>
+                    {formatCurrency(stats?.totalOrders ? (stats.totalRevenue / stats.totalOrders) : 0)}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
-        {reportType === 'products' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Produits les plus vendus</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[200px]">Produit</TableHead>
-                      <TableHead className="min-w-[120px]">Quantité vendue</TableHead>
-                      <TableHead className="min-w-[120px]">Revenus</TableHead>
-                      <TableHead className="min-w-[120px]">Nb commandes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {topProducts?.map((product, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{product.product_name}</TableCell>
-                        <TableCell>{product.total_quantity}</TableCell>
-                        <TableCell>{formatCurrency(product.total_revenue)}</TableCell>
-                        <TableCell>{product.order_count}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      {reportType === 'products' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Produits les plus vendus</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Produit</TableHead>
+                  <TableHead>Quantité vendue</TableHead>
+                  <TableHead>Revenus</TableHead>
+                  <TableHead>Nb commandes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {topProducts?.map((product, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{product.product_name}</TableCell>
+                    <TableCell>{product.total_quantity}</TableCell>
+                    <TableCell>{formatCurrency(product.total_revenue)}</TableCell>
+                    <TableCell>{product.order_count}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
-        {reportType === 'orders' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Commandes récentes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[120px]">Numéro</TableHead>
-                      <TableHead className="min-w-[150px]">Client</TableHead>
-                      <TableHead className="min-w-[120px]">Montant</TableHead>
-                      <TableHead className="min-w-[100px]">Statut</TableHead>
-                      <TableHead className="min-w-[120px]">Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentOrders?.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.order_number}</TableCell>
-                        <TableCell>{order.customer_name}</TableCell>
-                        <TableCell>{formatCurrency(order.total_amount)}</TableCell>
-                        <TableCell>
-                          <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>
-                            {order.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatDate(order.created_at)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      {reportType === 'orders' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Commandes récentes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Numéro</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Montant</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentOrders?.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.order_number}</TableCell>
+                    <TableCell>{order.customer_name}</TableCell>
+                    <TableCell>{formatCurrency(order.total_amount)}</TableCell>
+                    <TableCell>
+                      <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatDate(order.created_at)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
-        {reportType === 'customers' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Analyse des clients</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-gray-500">Rapport clients en cours de développement</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      {reportType === 'customers' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Analyse des clients</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-gray-500">Rapport clients en cours de développement</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

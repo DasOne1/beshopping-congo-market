@@ -51,27 +51,25 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
   }
 
   return (
-    <div className="space-y-4">
+    <>
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-          <CardTitle className="flex items-center gap-2 text-lg">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
             Produits ({filteredProducts.length})
           </CardTitle>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button onClick={() => setShowCreateDialog(true)} size="sm">
+          <div className="flex gap-2">
+            <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Nouveau produit (Dialog)</span>
-              <span className="sm:hidden">Dialog</span>
+              Nouveau produit (Dialog)
             </Button>
-            <Button variant="outline" onClick={() => navigate('/admin/catalog/products/new')} size="sm">
+            <Button variant="outline" onClick={() => navigate('/admin/catalog/products/new')}>
               <Plus className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Nouveau produit (Page)</span>
-              <span className="sm:hidden">Page</span>
+              Nouveau produit (Page)
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0 sm:p-6">
+        <CardContent>
           {filteredProducts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Aucun produit trouvé
@@ -81,13 +79,13 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-[200px]">Produit</TableHead>
-                    <TableHead className="min-w-[100px]">SKU</TableHead>
-                    <TableHead className="min-w-[120px]">Prix</TableHead>
-                    <TableHead className="min-w-[80px]">Stock</TableHead>
-                    <TableHead className="min-w-[150px]">Caractéristiques</TableHead>
-                    <TableHead className="min-w-[100px]">Statut</TableHead>
-                    <TableHead className="min-w-[120px]">Actions</TableHead>
+                    <TableHead>Produit</TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Prix</TableHead>
+                    <TableHead>Stock</TableHead>
+                    <TableHead>Caractéristiques</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -99,11 +97,11 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                             <img
                               src={product.images[0]}
                               alt={product.name}
-                              className="w-10 h-10 rounded object-cover flex-shrink-0"
+                              className="w-10 h-10 rounded object-cover"
                             />
                           )}
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium truncate">{product.name}</div>
+                          <div>
+                            <div className="font-medium">{product.name}</div>
                             <div className="text-sm text-muted-foreground">
                               {product.brand && <span className="mr-2">🏷️ {product.brand}</span>}
                               {product.gender && <span>👤 {product.gender}</span>}
@@ -124,9 +122,9 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                               <span className="font-medium">
                                 {product.discounted_price.toLocaleString()} CDF
                               </span>
-                              <div className="text-sm text-muted-foreground line-through">
+                              <span className="text-sm text-muted-foreground line-through ml-2">
                                 {product.original_price.toLocaleString()} CDF
-                              </div>
+                              </span>
                             </>
                           ) : (
                             <span className="font-medium">
@@ -173,7 +171,7 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -235,7 +233,7 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
       />
-    </div>
+    </>
   );
 };
 

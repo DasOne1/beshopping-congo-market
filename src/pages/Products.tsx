@@ -1,208 +1,311 @@
-
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal, Grid, List, Package, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Grid3X3, List, Filter, Search, RefreshCw } from 'lucide-react';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-import ProductFilters from '@/components/ProductFilters';
 import ProductSkeleton from '@/components/ProductSkeleton';
+import ProductFilters from '@/components/ProductFilters';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { useProducts } from '@/hooks/useProducts';
-import { useCategories } from '@/hooks/useCategories';
+import { useCachedCategories } from '@/hooks/useCachedCategories';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { Product } from '@/types';
-import { useSearchParams } from 'react-router-dom';
 
 const Products = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const categoryParam = searchParams.get('category');
+  const selectedCategoryId = searchParams.get('category');
+  const searchQuery = searchParams.get('search') || '';
   
-  const { products, isLoading, refetch } = useProducts();
-  const { categories, isLoading: categoriesLoading } = useCategories();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const { products, isLoading: productsLoading, refetch } = useProducts();
+  const { categories, isLoading: categoriesLoading, getAllCategoryIds } = useCachedCategories();
+  const { trackEvent } = useAnalytics();
+
+  const [searchTerm, setSearchTerm] = useState(searchQuery);
+  const [priceRange, setPriceRange] = useState([0, 1000000]);
+  const [sortBy, setSortBy] = useState('newest');
+  const [selectedCategory, setSelectedCategory] = useState(selectedCategoryId || 'all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [priceRange, setPriceRange] = useState<number[]>([0, 500000]);
-  const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'all');
-  const [sortBy, setSortBy] = useState<'newest' | 'price-low' | 'price-high' | 'popular'>('newest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const itemsPerPage = 12;
 
-  // Rafraîchir les données au montage du composant
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
-
-  // Fonction pour rafraîchir manuellement
-  const handleManualRefresh = async () => {
+  // Fonction de rafraîchissement manuel
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    await refetch();
-    setTimeout(() => setIsRefreshing(false), 1000);
+    try {
+      await refetch();
+      console.log('Produits rafraîchis manuellement');
+    } catch (error) {
+      console.error('Erreur lors du rafraîchissement:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  // Fonction pour effacer les filtres
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setPriceRange([0, 500000]);
-    setSelectedCategory('all');
-    setSortBy('newest');
-  };
+  // Ajouter un effet pour scroller vers le haut lors du changement de page
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
 
-  const filteredProducts = React.useMemo(() => {
-    if (!products) return [];
+  useEffect(() => {
+    if (selectedCategoryId) {
+      setSelectedCategory(selectedCategoryId);
+    }
+  }, [selectedCategoryId]);
+
+  useEffect(() => {
+    if (searchQuery) {
+      setSearchTerm(searchQuery);
+    }
+  }, [searchQuery]);
+
+  const filteredProducts = (products as Product[]).filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    let filtered = products.filter((product: Product) => {
-      // Recherche par nom
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      // Filtre par catégorie
-      const matchesCategory = selectedCategory === 'all' || 
-        product.category_id === selectedCategory;
-      
-      // Filtre par prix
-      const price = product.discounted_price || product.original_price;
-      const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
-      
-      // Vérifier que le produit est actif et visible
-      const isActiveAndVisible = product.status === 'active' && product.is_visible;
-      
-      return matchesSearch && matchesCategory && matchesPrice && isActiveAndVisible;
-    });
+    // Amélioration : inclure les produits des sous-catégories
+    let matchesCategory = selectedCategory === 'all';
+    if (!matchesCategory && selectedCategory) {
+      const categoryIds = getAllCategoryIds(selectedCategory);
+      matchesCategory = categoryIds.includes(product.category_id || '');
+    }
+    
+    const price = product.discounted_price || product.original_price;
+    const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
+    
+    const matchesStatus = product.status === 'active' && product.is_visible;
+    
+    return matchesSearch && matchesCategory && matchesPrice && matchesStatus;
+  });
 
-    // Tri
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case 'price-low':
-        filtered.sort((a, b) => (a.discounted_price || a.original_price) - (b.discounted_price || b.original_price));
-        break;
+        return (a.discounted_price || a.original_price) - (b.discounted_price || b.original_price);
       case 'price-high':
-        filtered.sort((a, b) => (b.discounted_price || b.original_price) - (a.discounted_price || a.original_price));
-        break;
+        return (b.discounted_price || b.original_price) - (a.discounted_price || a.original_price);
+      case 'name':
+        return a.name.localeCompare(b.name);
       case 'popular':
-        filtered.sort((a, b) => (b.popular || 0) - (a.popular || 0));
-        break;
-      case 'newest':
+        return (b.popular || 0) - (a.popular || 0);
       default:
-        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        break;
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
     }
+  });
 
-    return filtered;
-  }, [products, searchTerm, selectedCategory, priceRange, sortBy]);
+  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
+  const paginatedProducts = sortedProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background pb-20 md:pb-8">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <ProductSkeleton key={i} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('all');
+    setPriceRange([0, 1000000]);
+    setSortBy('newest');
+    setCurrentPage(1);
+    navigate('/products');
+  };
+
+  const handleProductClick = (productId: string) => {
+    trackEvent.mutate({
+      event_type: 'view_product',
+      product_id: productId,
+      session_id: sessionStorage.getItem('session_id') || 'anonymous'
+    });
+  };
+
+  const isLoading = productsLoading || categoriesLoading;
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-8">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <main className="container mx-auto px-4 py-6 pt-20 md:pt-24">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Nos Produits</h1>
-            <p className="text-muted-foreground mt-2">
-              Découvrez notre collection complète ({filteredProducts.length} produits)
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2">
+        <div className="mb-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">Nos Produits</h1>
+              <p className="text-muted-foreground">
+                Découvrez notre sélection de produits de qualité
+              </p>
+            </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={handleManualRefresh}
+              onClick={handleRefresh}
               disabled={isRefreshing}
+              className="flex items-center gap-2"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               Actualiser
             </Button>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Rechercher des produits..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+        {/* Sticky Controls */}
+        <div className="sticky top-16 md:top-20 z-40 bg-background/95 backdrop-blur-sm border-b pb-4 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4 w-full sm:w-auto relative">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsFiltersOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                Filtres
+              </Button>
+              
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {isLoading ? 'Chargement...' : `${sortedProducts.length} produit(s)`}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="sort" className="text-sm">Trier par:</Label>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Plus récent</SelectItem>
+                    <SelectItem value="popular">Popularité</SelectItem>
+                    <SelectItem value="price-low">Prix croissant</SelectItem>
+                    <SelectItem value="price-high">Prix décroissant</SelectItem>
+                    <SelectItem value="name">Nom A-Z</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex border rounded-md">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="rounded-r-none"
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="rounded-l-none"
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           </div>
-          
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className="md:w-auto"
-          >
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Filtres
-          </Button>
         </div>
 
-        {/* Filters Panel */}
+        {/* Products Grid/List */}
+        {isLoading ? (
+          <div className={viewMode === 'grid' 
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
+            : "space-y-4"
+          }>
+            <ProductSkeleton count={12} />
+          </div>
+        ) : paginatedProducts.length > 0 ? (
+          <>
+            <div className={viewMode === 'grid' 
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
+              : "space-y-4"
+            }>
+              {paginatedProducts.map(product => (
+                <div key={product.id} onClick={() => handleProductClick(product.id)}>
+                  <ProductCard 
+                    product={product} 
+                    viewMode={viewMode}
+                    showAllAttributes={false}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const pageNumber = i + 1;
+                      return (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(pageNumber)}
+                            isActive={currentPage === pageNumber}
+                            className="cursor-pointer"
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-16">
+            <div className="w-24 h-24 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
+              <Search className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Aucun produit trouvé</h3>
+            <p className="text-muted-foreground mb-4">
+              Essayez de modifier vos critères de recherche ou explorez d'autres catégories.
+            </p>
+            <Button onClick={clearFilters}>
+              Effacer les filtres
+            </Button>
+          </div>
+        )}
+
+        {/* Filters Sidebar */}
         <ProductFilters
-          isOpen={showFilters}
-          onClose={() => setShowFilters(false)}
+          isOpen={isFiltersOpen}
+          onClose={() => setIsFiltersOpen(false)}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           priceRange={priceRange}
           setPriceRange={setPriceRange}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
-          categories={categories || []}
-          isLoading={categoriesLoading}
-          onClearFilters={handleClearFilters}
+          categories={categories}
+          isLoading={isLoading}
+          onClearFilters={clearFilters}
         />
-
-        {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
-          <div className="text-center py-16">
-            <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">Aucun produit trouvé</h3>
-            <p className="text-muted-foreground">
-              Essayez de modifier vos filtres ou votre recherche
-            </p>
-          </div>
-        ) : (
-          <div className={`grid gap-6 ${
-            viewMode === 'grid' 
-              ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-              : 'grid-cols-1'
-          }`}>
-            {filteredProducts.map((product) => (
-              <ProductCard 
-                key={product.id} 
-                product={product} 
-                viewMode={viewMode}
-                showAllAttributes={viewMode === 'list'}
-              />
-            ))}
-          </div>
-        )}
+      </main>
+      
+      <div className="pb-16 md:pb-0">
+        <Footer />
       </div>
     </div>
   );
