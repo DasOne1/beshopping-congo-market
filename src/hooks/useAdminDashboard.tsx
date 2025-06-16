@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
@@ -12,6 +11,9 @@ export interface DashboardStats {
   todayOrders: number;
   monthlyOrders: number;
   yearlyOrders: number;
+  totalCustomers: number;
+  totalProducts: number;
+  activeOrders: number;
 }
 
 export interface RecentOrder {
@@ -43,17 +45,29 @@ export const useAdminDashboard = () => {
       // Récupérer toutes les commandes
       const { data: allOrders, error: ordersError } = await supabase
         .from('orders')
-        .select('id, total_amount, status, created_at');
+        .select('id, total_amount, status, created_at, customer_name, order_number');
 
       if (ordersError) throw ordersError;
-
       const orders = allOrders || [];
+
+      // Récupérer tous les clients
+      const { data: allCustomers } = await supabase
+        .from('customers')
+        .select('id');
+      const totalCustomers = allCustomers?.length || 0;
+
+      // Récupérer tous les produits
+      const { data: allProducts } = await supabase
+        .from('products')
+        .select('id');
+      const totalProducts = allProducts?.length || 0;
 
       // Calculer les statistiques
       const totalOrders = orders.length;
       const pendingOrders = orders.filter(o => o.status === 'pending').length;
       const processingOrders = orders.filter(o => o.status === 'confirmed' || o.status === 'shipped').length;
       const completedOrders = orders.filter(o => o.status === 'delivered').length;
+      const activeOrders = processingOrders; // alias for dashboard
       const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total_amount), 0);
 
       const todayOrders = orders.filter(o => {
@@ -80,6 +94,9 @@ export const useAdminDashboard = () => {
         todayOrders,
         monthlyOrders,
         yearlyOrders,
+        totalCustomers,
+        totalProducts,
+        activeOrders,
       };
     },
   });
@@ -110,7 +127,6 @@ export const useAdminDashboard = () => {
 
       // Grouper par produit et calculer les totaux
       const productMap = new Map<string, TopProduct>();
-      
       (data || []).forEach(item => {
         const existing = productMap.get(item.product_name);
         if (existing) {

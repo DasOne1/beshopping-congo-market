@@ -16,6 +16,7 @@ import ImageUpload from '@/components/ImageUpload';
 import ColorSelector from '@/components/admin/catalog/ColorSelector';
 import SizeSelector from '@/components/admin/catalog/SizeSelector';
 import { Product } from '@/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const AdminProductForm = () => {
   const navigate = useNavigate();
@@ -52,6 +53,8 @@ const AdminProductForm = () => {
     care_instructions: '',
   });
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     if (isEdit && products && id) {
       const product = products.find((p: Product) => p.id === id);
@@ -87,26 +90,26 @@ const AdminProductForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const price = parseFloat(formData.original_price) || 0;
-    const discount = parseFloat(formData.discount) || 0;
-    const discounted_price = discount > 0 ? price * (1 - discount / 100) : null;
-    
-    const productData = {
-      ...formData,
-      original_price: price,
-      discount: discount,
-      discounted_price,
-      stock: parseInt(formData.stock) || 0,
-      weight: parseFloat(formData.weight) || null,
-      images: formData.images.filter(img => img.trim() !== ''),
-      tags: formData.tags.filter(tag => tag.trim() !== ''),
-      category_id: formData.category_id || null,
-      subcategory_id: formData.subcategory_id || null,
-      gender: formData.gender || null,
-    };
-
+    setLoading(true);
     try {
+      const price = parseFloat(formData.original_price) || 0;
+      const discount = parseFloat(formData.discount) || 0;
+      const discounted_price = discount > 0 ? price * (1 - discount / 100) : null;
+      
+      const productData = {
+        ...formData,
+        original_price: price,
+        discount: discount,
+        discounted_price,
+        stock: parseInt(formData.stock) || 0,
+        weight: parseFloat(formData.weight) || null,
+        images: formData.images.filter(img => img.trim() !== ''),
+        tags: formData.tags.filter(tag => tag.trim() !== ''),
+        category_id: formData.category_id || null,
+        subcategory_id: formData.subcategory_id || null,
+        gender: formData.gender || null,
+      };
+
       if (isEdit && id) {
         await updateProduct.mutateAsync({ id, ...productData });
       } else {
@@ -115,6 +118,8 @@ const AdminProductForm = () => {
       navigate('/admin/catalog');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -157,9 +162,9 @@ const AdminProductForm = () => {
               {isEdit ? 'Modifier le produit' : 'Nouveau produit'}
             </h1>
           </div>
-          <Button form="product-form" type="submit" className="flex items-center gap-2">
-            <Save className="h-4 w-4" />
-            <span className="hidden sm:inline">Sauvegarder</span>
+          <Button type="submit" disabled={loading} className="flex items-center gap-2">
+            {loading && <span className="loader mr-2" />}
+            Sauvegarder
           </Button>
         </div>
       </div>
@@ -441,10 +446,10 @@ const AdminProductForm = () => {
 
                   <div className="flex items-center justify-between">
                     <Label htmlFor="visible">Visible</Label>
-                    <Switch
+                    <Checkbox
                       id="visible"
                       checked={formData.is_visible}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_visible: checked }))}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_visible: checked as boolean }))}
                     />
                   </div>
 

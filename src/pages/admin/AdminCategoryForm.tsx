@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -12,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCategories } from '@/hooks/useCategories';
 import ImageUpload from '@/components/ImageUpload';
 import { Category } from '@/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const AdminCategoryForm = () => {
   const navigate = useNavigate();
@@ -27,6 +27,8 @@ const AdminCategoryForm = () => {
     parent_id: '',
     is_visible: true
   });
+
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isEdit && categories && id) {
@@ -45,14 +47,14 @@ const AdminCategoryForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const categoryData = {
-      ...formData,
-      slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-      parent_id: formData.parent_id === 'none' ? null : formData.parent_id
-    };
-
+    setLoading(true);
     try {
+      const categoryData = {
+        ...formData,
+        slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
+        parent_id: formData.parent_id === 'none' ? null : formData.parent_id
+      };
+
       if (isEdit && id) {
         await updateCategory.mutateAsync({ id, ...categoryData });
       } else {
@@ -61,6 +63,8 @@ const AdminCategoryForm = () => {
       navigate('/admin/catalog');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -84,9 +88,9 @@ const AdminCategoryForm = () => {
               {isEdit ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
             </h1>
           </div>
-          <Button form="category-form" type="submit" className="flex items-center gap-2">
-            <Save className="h-4 w-4" />
-            <span className="hidden sm:inline">Sauvegarder</span>
+          <Button type="submit" disabled={loading} className="flex items-center gap-2">
+            {loading && <span className="loader mr-2" />}
+            Sauvegarder
           </Button>
         </div>
       </div>
@@ -169,10 +173,10 @@ const AdminCategoryForm = () => {
 
                   <div className="flex items-center justify-between">
                     <Label htmlFor="visible">Visible</Label>
-                    <Switch
+                    <Checkbox
                       id="visible"
                       checked={formData.is_visible}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_visible: checked }))}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_visible: checked as boolean }))}
                     />
                   </div>
                 </CardContent>
