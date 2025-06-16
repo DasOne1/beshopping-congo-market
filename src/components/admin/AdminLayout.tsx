@@ -12,26 +12,24 @@ const AdminLayout = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/40 to-blue-50 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 w-full flex flex-col">
-        <AdminHeader />
-        <div className="flex w-full pt-16">
-          {/* Sidebar desktop uniquement */}
-          {!isMobile && (
-            <div className="z-30">
-              <AdminSidebarMenu />
-            </div>
-          )}
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full flex">
+        {/* Sidebar desktop uniquement */}
+        {!isMobile && <AdminSidebarMenu />}
+        
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
+          <AdminHeader />
+          
           {/* Main content */}
-          <main className={`flex-1 min-w-0 ${!isMobile ? 'md:ml-64' : ''} max-w-full px-0 sm:px-2 md:px-6 py-6 animate-fade-in`}>
-            <Outlet />
+          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
+            <div className="max-w-7xl mx-auto">
+              <Outlet />
+            </div>
           </main>
         </div>
+        
         {/* Navigation mobile uniquement */}
-        {isMobile && (
-          <div className="md:hidden">
-            <AdminMobileNav />
-          </div>
-        )}
+        {isMobile && <AdminMobileNav />}
       </div>
     </SidebarProvider>
   );

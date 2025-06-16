@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Settings, Moon, Sun, Bell, User, ShoppingBag } from 'lucide-react';
+import { Settings, Moon, Sun, Bell, User, ShoppingBag, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu,
@@ -14,33 +15,15 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { Logo } from '@/components/Logo';
-import { Download } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-
-const downloadDemoReport = () => {
-  // Simulate report download; in prod, fetch from api and download blob as pdf
-  const blob = new Blob(
-    ['Rapport téléchargé à ' + new Date().toLocaleString()],
-    { type: "text/plain" }
-  );
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "rapport_Admin_BeShopping.txt";
-  a.click();
-  URL.revokeObjectURL(url);
-  
-  toast({
-    title: "Succès",
-    description: "Rapport téléchargé avec succès !",
-  });
-};
+import { useSidebar } from '@/components/ui/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const AdminHeader = () => {
   const { adminProfile, signOut } = useAdminAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const { toggleSidebar } = useSidebar();
+  const isMobile = useIsMobile();
 
   const handleSignOut = async () => {
     await signOut();
@@ -48,67 +31,68 @@ const AdminHeader = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm backdrop-blur-[8px]">
-      <div className="flex items-center justify-between px-4 md:px-8 h-16 max-w-full">
-        <div className="flex gap-2 items-center min-w-0 flex-1">
-          <Logo size="small" className="mr-2" asLink={true} />
-          <h1 className="text-lg md:text-2xl font-extrabold text-gradient tracking-tight hidden sm:block truncate">
-            BeShopping <span className="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">Admin</span>
-          </h1>
+    <header className="sticky top-0 z-50 w-full border-b bg-white/95 dark:bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-900/60">
+      <div className="flex h-16 items-center px-4 md:px-6">
+        {/* Left section */}
+        <div className="flex items-center gap-3">
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="h-8 w-8 p-0"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          )}
+          
+          <div className="flex items-center gap-2">
+            <Logo size="small" className="h-7 w-7" />
+            <div className="hidden sm:block">
+              <h1 className="text-lg font-semibold">Admin Dashboard</h1>
+              <p className="text-xs text-muted-foreground">BeShopping</p>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={downloadDemoReport}
-            className="flex items-center gap-2 font-semibold text-primary border-primary-foreground hover:bg-primary/10 transition-all"
-            title="Télécharger le rapport"
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Rapport</span>
-          </Button>
-          {/* Toggle thème */}
-          <Button variant="ghost" size="sm" onClick={toggleTheme}>
+        {/* Right section */}
+        <div className="ml-auto flex items-center gap-2">
+          {/* Theme toggle */}
+          <Button variant="ghost" size="sm" onClick={toggleTheme} className="h-8 w-8 p-0">
             {theme === 'dark' ? (
               <Sun className="h-4 w-4" />
             ) : (
               <Moon className="h-4 w-4" />
             )}
           </Button>
+          
           {/* Notifications */}
-          <Button variant="ghost" size="sm" className="relative">
+          <Button variant="ghost" size="sm" className="relative h-8 w-8 p-0">
             <Bell className="h-4 w-4" />
             <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 text-[10px] p-0 flex items-center justify-center">
               3
             </Badge>
           </Button>
-          {/* Paramètres */}
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => navigate('/admin/settings')}
-            className="hidden sm:flex"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-          {/* Menu profil */}
+          
+          {/* Profile menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="flex items-center gap-1 md:gap-2 min-w-0">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <User className="h-4 w-4 text-white" />
+              <Button variant="ghost" className="relative h-8 rounded-full">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center">
+                    <User className="h-4 w-4 text-white" />
+                  </div>
+                  <span className="hidden md:block text-sm font-medium">
+                    {adminProfile?.full_name || 'Admin'}
+                  </span>
                 </div>
-                <span className="hidden md:block text-sm font-medium truncate max-w-[100px]">
-                  {adminProfile?.full_name}
-                </span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent className="w-56" align="end">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium truncate">{adminProfile?.full_name}</p>
-                  <p className="text-xs text-gray-500 truncate">{adminProfile?.email}</p>
+                  <p className="text-sm font-medium">{adminProfile?.full_name}</p>
+                  <p className="text-xs text-muted-foreground">{adminProfile?.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

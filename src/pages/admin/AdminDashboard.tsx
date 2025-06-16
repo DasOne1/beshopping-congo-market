@@ -6,11 +6,17 @@ import {
   Truck, 
   CheckCircle, 
   DollarSign,
-  TrendingUp} from 'lucide-react';
+  TrendingUp,
+  Users,
+  Package,
+  ArrowUpRight,
+  ArrowDownRight
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { formatCurrency } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 const AdminDashboard = () => {
   const { stats, recentOrders, topProducts, isLoading } = useAdminDashboard();
@@ -19,7 +25,7 @@ const AdminDashboard = () => {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
           ))}
         </div>
@@ -29,79 +35,86 @@ const AdminDashboard = () => {
 
   const statsCards = [
     {
-      title: 'Total Commandes',
+      title: 'Commandes Totales',
       value: stats?.totalOrders || 0,
       change: '+12%',
+      changeType: 'positive',
       icon: ShoppingCart,
       color: 'blue',
     },
     {
-      title: 'En Attente',
-      value: stats?.pendingOrders || 0,
-      change: '+5%',
-      icon: Clock,
-      color: 'yellow',
-    },
-    {
-      title: 'En Cours',
-      value: stats?.processingOrders || 0,
-      change: '+8%',
-      icon: Truck,
-      color: 'orange',
-    },
-    {
-      title: 'Terminées',
-      value: stats?.completedOrders || 0,
-      change: '+15%',
-      icon: CheckCircle,
+      title: 'Revenus du Mois',
+      value: formatCurrency(stats?.totalRevenue || 0),
+      change: '+8.2%',
+      changeType: 'positive',
+      icon: DollarSign,
       color: 'green',
     },
-  ];
-
-  const periodStats = [
     {
-      title: 'Revenus Total',
-      value: formatCurrency(stats?.totalRevenue || 0),
-      icon: DollarSign,
-      color: 'emerald',
-    },
-    {
-      title: "Aujourd'hui",
-      value: stats?.todayOrders || 0,
-      subtitle: 'commandes',
-      icon: TrendingUp,
-      color: 'blue',
-    },
-    {
-      title: 'Ce Mois',
-      value: stats?.monthlyOrders || 0,
-      subtitle: 'commandes',
-      icon: TrendingUp,
+      title: 'Clients Actifs',
+      value: stats?.totalCustomers || 0,
+      change: '+3.1%',
+      changeType: 'positive',
+      icon: Users,
       color: 'purple',
     },
     {
-      title: 'Cette Année',
-      value: stats?.yearlyOrders || 0,
-      subtitle: 'commandes',
+      title: 'Produits en Stock',
+      value: stats?.totalProducts || 0,
+      change: '-2.4%',
+      changeType: 'negative',
+      icon: Package,
+      color: 'orange',
+    },
+  ];
+
+  const orderStats = [
+    {
+      title: 'En Attente',
+      value: stats?.pendingOrders || 0,
+      icon: Clock,
+      color: 'yellow',
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900/10',
+      iconColor: 'text-yellow-600 dark:text-yellow-400',
+    },
+    {
+      title: 'En Traitement',
+      value: stats?.processingOrders || 0,
+      icon: Truck,
+      color: 'blue',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/10',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+    },
+    {
+      title: 'Expédiées',
+      value: stats?.activeOrders || 0,
       icon: TrendingUp,
       color: 'indigo',
+      bgColor: 'bg-indigo-50 dark:bg-indigo-900/10',
+      iconColor: 'text-indigo-600 dark:text-indigo-400',
+    },
+    {
+      title: 'Livrées',
+      value: stats?.completedOrders || 0,
+      icon: CheckCircle,
+      color: 'green',
+      bgColor: 'bg-green-50 dark:bg-green-900/10',
+      iconColor: 'text-green-600 dark:text-green-400',
     },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Dashboard Administrateur
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
           Vue d'ensemble de votre boutique BeShopping
         </p>
       </div>
 
-      {/* Statistiques principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Main Stats */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {statsCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -111,21 +124,28 @@ const AdminDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card>
+              <Card className="relative overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
                     {stat.title}
                   </CardTitle>
-                  <Icon className={`h-4 w-4 text-${stat.color}-600`} />
+                  <div className={`rounded-lg p-2 bg-${stat.color}-50 dark:bg-${stat.color}-900/10`}>
+                    <Icon className={`h-4 w-4 text-${stat.color}-600 dark:text-${stat.color}-400`} />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground">
-                    <span className={`text-${stat.color}-600`}>
+                  <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                    {stat.changeType === 'positive' ? (
+                      <ArrowUpRight className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <ArrowDownRight className="h-3 w-3 text-red-500" />
+                    )}
+                    <span className={stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}>
                       {stat.change}
-                    </span>{' '}
-                    par rapport au mois dernier
-                  </p>
+                    </span>
+                    <span>par rapport au mois dernier</span>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -133,9 +153,9 @@ const AdminDashboard = () => {
         })}
       </div>
 
-      {/* Statistiques par période */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {periodStats.map((stat, index) => {
+      {/* Order Status Cards */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {orderStats.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <motion.div
@@ -149,15 +169,15 @@ const AdminDashboard = () => {
                   <CardTitle className="text-sm font-medium">
                     {stat.title}
                   </CardTitle>
-                  <Icon className={`h-4 w-4 text-${stat.color}-600`} />
+                  <div className={`rounded-lg p-2 ${stat.bgColor}`}>
+                    <Icon className={`h-4 w-4 ${stat.iconColor}`} />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
-                  {stat.subtitle && (
-                    <p className="text-xs text-muted-foreground">
-                      {stat.subtitle}
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    commandes {stat.title.toLowerCase()}
+                  </p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -165,28 +185,33 @@ const AdminDashboard = () => {
         })}
       </div>
 
-      {/* Commandes récentes et produits populaires */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Commandes récentes */}
+      {/* Bottom Section */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Orders */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
         >
           <Card>
-            <CardHeader>
-              <CardTitle>Commandes Récentes</CardTitle>
-              <CardDescription>
-                Les 10 dernières commandes reçues
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Commandes Récentes</CardTitle>
+                <CardDescription>
+                  Les dernières commandes reçues
+                </CardDescription>
+              </div>
+              <Button variant="outline" size="sm">
+                Voir tout
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {recentOrders?.slice(0, 5).map((order) => (
-                  <div key={order.id} className="flex items-center justify-between">
-                    <div className="flex flex-col">
+                  <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="space-y-1">
                       <p className="text-sm font-medium">{order.customer_name}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {order.order_number}
                       </p>
                     </div>
@@ -208,41 +233,41 @@ const AdminDashboard = () => {
           </Card>
         </motion.div>
 
-        {/* Produits populaires */}
+        {/* Top Products */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.6 }}
         >
           <Card>
-            <CardHeader>
-              <CardTitle>Produits les Plus Commandés</CardTitle>
-              <CardDescription>
-                Top 5 des produits par quantité vendue
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Produits Populaires</CardTitle>
+                <CardDescription>
+                  Top produits par ventes
+                </CardDescription>
+              </div>
+              <Button variant="outline" size="sm">
+                Voir tout
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {topProducts?.slice(0, 5).map((product, index) => (
-                  <div key={product.product_name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                          {index + 1}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <p className="text-sm font-medium">{product.product_name}</p>
-                        <p className="text-xs text-gray-500">
-                          {product.order_count} commandes
-                        </p>
-                      </div>
+                  <div key={product.product_name} className="flex items-center gap-4 p-3 border rounded-lg">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/10">
+                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                        {index + 1}
+                      </span>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium">{product.product_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {product.total_quantity} vendus • {product.order_count} commandes
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium">{product.total_quantity} vendus</p>
-                      <p className="text-xs text-gray-500">
-                        {formatCurrency(product.total_revenue)}
-                      </p>
+                      <p className="text-sm font-medium">{formatCurrency(product.total_revenue)}</p>
                     </div>
                   </div>
                 ))}

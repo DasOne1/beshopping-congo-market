@@ -2,7 +2,17 @@
 import React from "react";
 import { useLocation, NavLink } from "react-router-dom";
 import { Package, LayoutDashboard, ShoppingCart, BarChart3, TrendingUp, Settings } from "lucide-react";
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarGroup, 
+  SidebarGroupContent, 
+  SidebarGroupLabel, 
+  SidebarMenu, 
+  SidebarMenuButton, 
+  SidebarMenuItem,
+  SidebarHeader
+} from "@/components/ui/sidebar";
 import { Logo } from "@/components/Logo";
 
 const adminMenu = [
@@ -18,17 +28,24 @@ export default function AdminSidebarMenu() {
   const location = useLocation();
   
   return (
-    <Sidebar variant="sidebar">
-      <SidebarContent>
-        <SidebarGroup>
-          <div className="flex flex-col items-center py-6">
-            <Logo size="medium" className="mb-3" />
-            <span className="font-bold text-xl text-primary text-center leading-none">BeShopping</span>
-            <span className="text-xs text-muted-foreground mt-1">Admin</span>
+    <Sidebar className="border-r">
+      <SidebarHeader className="border-b px-6 py-4">
+        <div className="flex items-center gap-3">
+          <Logo size="medium" className="h-8 w-8" />
+          <div>
+            <h2 className="text-lg font-semibold">BeShopping</h2>
+            <p className="text-xs text-muted-foreground">Administration</p>
           </div>
-          <SidebarGroupLabel className="text-xs font-medium uppercase tracking-wider text-gray-500 mt-2 mb-1">Navigation</SidebarGroupLabel>
+        </div>
+      </SidebarHeader>
+      
+      <SidebarContent className="px-3 py-4">
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            Navigation
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {adminMenu.map((item) => (
                 <SidebarMenuItem key={item.name}>
                   <NavLink to={item.href} end>
@@ -36,11 +53,11 @@ export default function AdminSidebarMenu() {
                       <SidebarMenuButton
                         asChild
                         isActive={isActive}
-                        className="transition-all"
+                        className="w-full justify-start gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent/50 data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
                       >
-                        <div className="flex items-center gap-2">
-                          <item.icon className="h-5 w-5" />
-                          <span>{item.name}</span>
+                        <div className="flex items-center gap-3">
+                          <item.icon className="h-4 w-4" />
+                          <span className="font-medium">{item.name}</span>
                         </div>
                       </SidebarMenuButton>
                     )}
