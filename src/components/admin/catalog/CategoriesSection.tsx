@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Trash2, Plus, FolderOpen } from 'lucide-react';
@@ -9,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCachedCategories } from '@/hooks/useCachedCategories';
 import { useCategories } from '@/hooks/useCategories';
 import CategoryDetailDialog from './CategoryDetailDialog';
-import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface CategoriesSectionProps {
   searchTerm: string;
@@ -119,9 +118,10 @@ const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Switch
+                        <Checkbox
                           checked={category.is_visible}
                           onCheckedChange={() => handleVisibilityToggle(category.id, category.is_visible)}
+                          aria-label="Toggle visibility"
                         />
                       </TableCell>
                       <TableCell>

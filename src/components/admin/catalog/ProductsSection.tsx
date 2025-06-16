@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Trash2, Plus, Package } from 'lucide-react';
@@ -9,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useProducts } from '@/hooks/useProducts';
 import ProductDetailDialog from './ProductDetailDialog';
 import ProductDialog from './ProductDialog';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ProductsSectionProps {
   searchTerm: string;
@@ -34,6 +34,10 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
     }
   };
 
+  const handleVisibilityToggle = async (id: string, currentVisibility: boolean) => {
+    // Implement the logic to toggle product visibility
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -53,17 +57,17 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
             Produits ({filteredProducts.length})
           </CardTitle>
-          <div className="flex gap-2">
-            <Button onClick={() => setShowCreateDialog(true)}>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Nouveau produit (Dialog)
             </Button>
-            <Button variant="outline" onClick={() => navigate('/admin/catalog/products/new')}>
+            <Button variant="outline" onClick={() => navigate('/admin/catalog/products/new')} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Nouveau produit (Page)
             </Button>
@@ -85,6 +89,7 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                     <TableHead>Stock</TableHead>
                     <TableHead>Caractéristiques</TableHead>
                     <TableHead>Statut</TableHead>
+                    <TableHead>Visible</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -169,6 +174,13 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                           {product.status === 'active' ? 'Actif' :
                            product.status === 'inactive' ? 'Inactif' : 'Brouillon'}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Checkbox
+                          checked={product.is_visible}
+                          onCheckedChange={() => handleVisibilityToggle(product.id, product.is_visible)}
+                          aria-label="Toggle visibility"
+                        />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
