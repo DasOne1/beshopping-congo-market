@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -21,7 +20,7 @@ const AdminLayout = () => {
           <AdminHeader />
           
           {/* Main content */}
-          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
+          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto pb-20 md:pb-8">
             <div className="max-w-7xl mx-auto">
               <Outlet />
             </div>
