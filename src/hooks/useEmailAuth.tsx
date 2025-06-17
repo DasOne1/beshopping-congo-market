@@ -29,22 +29,23 @@ interface SignUpData {
 
 export const useEmailAuth = () => {
   const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(() => {
-    // Initialiser l'état avec les données du localStorage si disponibles
     const customerId = localStorage.getItem('customer_id');
     const sessionToken = localStorage.getItem('customer_session_token');
     const customerData = localStorage.getItem('customer_data');
     if (customerId && sessionToken && customerData) {
-      return JSON.parse(customerData);
+      try {
+        return JSON.parse(customerData);
+      } catch {
+        return null;
+      }
     }
     return null;
   });
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // Initialiser l'état d'authentification avec les données du localStorage
     return !!localStorage.getItem('customer_session_token');
   });
 
-  // Vérifier la session au chargement et lors du retour en ligne
   useEffect(() => {
     const verifySession = async () => {
       const sessionToken = localStorage.getItem('customer_session_token');
@@ -55,7 +56,6 @@ export const useEmailAuth = () => {
       }
 
       try {
-        // Si on est hors ligne, utiliser les données en cache
         if (!navigator.onLine) {
           const cachedData = localStorage.getItem('customer_data');
           if (cachedData) {
@@ -65,7 +65,6 @@ export const useEmailAuth = () => {
           }
         }
 
-        // Si on est en ligne, vérifier avec le serveur
         const { data: customerData, error: customerError } = await supabase
           .from('customers')
           .select('*')
@@ -75,10 +74,8 @@ export const useEmailAuth = () => {
         if (!customerError && customerData) {
           setCurrentCustomer(customerData);
           setIsAuthenticated(true);
-          // Mettre à jour les données en cache
           localStorage.setItem('customer_data', JSON.stringify(customerData));
         } else {
-          // Si les données ne sont pas valides, nettoyer le localStorage
           localStorage.removeItem('customer_session_token');
           localStorage.removeItem('customer_id');
           localStorage.removeItem('customer_data');
@@ -87,7 +84,6 @@ export const useEmailAuth = () => {
         }
       } catch (error) {
         console.error('Erreur lors de la vérification de session:', error);
-        // En cas d'erreur de connexion, utiliser les données en cache
         const cachedData = localStorage.getItem('customer_data');
         if (cachedData) {
           setCurrentCustomer(JSON.parse(cachedData));
@@ -98,17 +94,24 @@ export const useEmailAuth = () => {
 
     verifySession();
 
-    // Écouter les changements d'état de connexion
     const handleOnline = () => {
       verifySession();
     };
 
     window.addEventListener('online', handleOnline);
+    window.addEventListener('beforeunload', () => {
+      // Persister les données avant fermeture
+      if (currentCustomer && isAuthenticated) {
+        localStorage.setItem('customer_data', JSON.stringify(currentCustomer));
+        localStorage.setItem('customer_session_token', localStorage.getItem('customer_session_token') || '');
+        localStorage.setItem('customer_id', currentCustomer.id);
+      }
+    });
 
     return () => {
       window.removeEventListener('online', handleOnline);
     };
-  }, []);
+  }, [currentCustomer, isAuthenticated]);
 
   const generateSessionToken = useCallback(() => {
     const timestamp = Date.now().toString(36);

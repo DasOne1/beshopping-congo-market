@@ -21,11 +21,13 @@ export const useAuth = () => {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Sauvegarder la session dans localStorage pour persistance
+        // Persister la session
         if (session) {
           localStorage.setItem('supabase.auth.session', JSON.stringify(session));
+          localStorage.setItem('supabase.auth.user', JSON.stringify(session.user));
         } else {
           localStorage.removeItem('supabase.auth.session');
+          localStorage.removeItem('supabase.auth.user');
         }
       }
     );
@@ -33,23 +35,43 @@ export const useAuth = () => {
     // THEN check for existing session
     const initializeAuth = async () => {
       try {
-        // Vérifier d'abord dans localStorage
+        // Vérifier d'abord dans localStorage pour une restauration rapide
         const savedSession = localStorage.getItem('supabase.auth.session');
-        if (savedSession) {
+        const savedUser = localStorage.getItem('supabase.auth.user');
+        
+        if (savedSession && savedUser) {
           console.log('📱 Session trouvée dans localStorage');
+          try {
+            const sessionData = JSON.parse(savedSession);
+            const userData = JSON.parse(savedUser);
+            setSession(sessionData);
+            setUser(userData);
+          } catch (error) {
+            console.error('Erreur parsing session locale:', error);
+            localStorage.removeItem('supabase.auth.session');
+            localStorage.removeItem('supabase.auth.user');
+          }
         }
 
-        // Récupérer la session actuelle depuis Supabase
+        // Récupérer et valider la session depuis Supabase
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('❌ Erreur lors de la récupération de la session:', error);
           localStorage.removeItem('supabase.auth.session');
+          localStorage.removeItem('supabase.auth.user');
+          setSession(null);
+          setUser(null);
+        } else {
+          console.log('✅ Session validée:', session?.user?.email || 'Aucune session');
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session) {
+            localStorage.setItem('supabase.auth.session', JSON.stringify(session));
+            localStorage.setItem('supabase.auth.user', JSON.stringify(session.user));
+          }
         }
-        
-        console.log('✅ Session récupérée:', session?.user?.email || 'Aucune session');
-        setSession(session);
-        setUser(session?.user ?? null);
       } catch (error) {
         console.error('❌ Erreur d\'initialisation de l\'authentification:', error);
       } finally {
@@ -145,6 +167,7 @@ export const useAuth = () => {
 
       // Nettoyer le localStorage
       localStorage.removeItem('supabase.auth.session');
+      localStorage.removeItem('supabase.auth.user');
       
       console.log('✅ Déconnexion réussie');
       toast({

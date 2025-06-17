@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +33,11 @@ export const usePhoneAuth = () => {
     const sessionToken = localStorage.getItem('customer_session_token');
     const customerData = localStorage.getItem('customer_data');
     if (customerId && sessionToken && customerData) {
-      return JSON.parse(customerData);
+      try {
+        return JSON.parse(customerData);
+      } catch {
+        return null;
+      }
     }
     return null;
   });
@@ -96,11 +99,19 @@ export const usePhoneAuth = () => {
     };
 
     window.addEventListener('online', handleOnline);
+    window.addEventListener('beforeunload', () => {
+      // Persister les données avant fermeture
+      if (currentCustomer && isAuthenticated) {
+        localStorage.setItem('customer_data', JSON.stringify(currentCustomer));
+        localStorage.setItem('customer_session_token', localStorage.getItem('customer_session_token') || '');
+        localStorage.setItem('customer_id', currentCustomer.id);
+      }
+    });
 
     return () => {
       window.removeEventListener('online', handleOnline);
     };
-  }, []);
+  }, [currentCustomer, isAuthenticated]);
 
   const generateSessionToken = useCallback(() => {
     const timestamp = Date.now().toString(36);

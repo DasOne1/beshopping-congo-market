@@ -36,7 +36,6 @@ const Products = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 12;
 
-  // Fonction de rafraîchissement manuel
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -49,7 +48,6 @@ const Products = () => {
     }
   };
 
-  // Ajouter un effet pour scroller vers le haut lors du changement de page
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
@@ -67,7 +65,6 @@ const Products = () => {
   }, [searchQuery]);
 
   const filteredProducts = (products as Product[]).filter(product => {
-    // Vérifier que le produit est visible et actif
     if (!product.is_visible || product.status !== 'active') {
       return false;
     }
@@ -76,12 +73,17 @@ const Products = () => {
       product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.tags && product.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
     
-    // Amélioration : inclure les produits des sous-catégories
+    // Amélioration du filtrage par catégorie pour inclure les sous-catégories
     let matchesCategory = selectedCategory === 'all';
     if (!matchesCategory && selectedCategory) {
+      // Obtenir tous les IDs de catégories (parent + enfants)
       const categoryIds = getAllCategoryIds(selectedCategory);
+      
+      // Vérifier si le produit appartient à la catégorie sélectionnée ou ses sous-catégories
       matchesCategory = categoryIds.includes(product.category_id || '') || 
-                      (product.subcategory_id && categoryIds.includes(product.subcategory_id));
+                      (product.subcategory_id && categoryIds.includes(product.subcategory_id)) ||
+                      product.category_id === selectedCategory ||
+                      product.subcategory_id === selectedCategory;
     }
     
     const price = product.discounted_price || product.original_price;
