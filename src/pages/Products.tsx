@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Grid3X3, List, Filter, Search, RefreshCw } from 'lucide-react';
@@ -66,23 +67,27 @@ const Products = () => {
   }, [searchQuery]);
 
   const filteredProducts = (products as Product[]).filter(product => {
+    // Vérifier que le produit est visible et actif
+    if (!product.is_visible || product.status !== 'active') {
+      return false;
+    }
+
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      (product.tags && product.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
     
     // Amélioration : inclure les produits des sous-catégories
     let matchesCategory = selectedCategory === 'all';
     if (!matchesCategory && selectedCategory) {
       const categoryIds = getAllCategoryIds(selectedCategory);
-      matchesCategory = categoryIds.includes(product.category_id || '');
+      matchesCategory = categoryIds.includes(product.category_id || '') || 
+                      (product.subcategory_id && categoryIds.includes(product.subcategory_id));
     }
     
     const price = product.discounted_price || product.original_price;
     const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
     
-    const matchesStatus = product.status === 'active' && product.is_visible;
-    
-    return matchesSearch && matchesCategory && matchesPrice && matchesStatus;
+    return matchesSearch && matchesCategory && matchesPrice;
   });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {

@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -6,10 +7,12 @@ import { Heart, ShoppingCart, Minus, Plus, Share2, ArrowLeft, Star, Truck, Shiel
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import ProductImageCarousel from '@/components/ProductImageCarousel';
+import ProductAttributes from '@/components/ProductAttributes';
 import WhatsAppContact from '@/components/WhatsAppContact';
 import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
@@ -41,7 +44,8 @@ const ProductDetails = () => {
   const relatedProducts = products?.filter(p => 
     p.category_id === product?.category_id && 
     p.id !== productId && 
-    p.status === 'active'
+    p.status === 'active' &&
+    p.is_visible === true // S'assurer que les produits associés sont visibles
   ).slice(0, 4) || [];
 
   useEffect(() => {
@@ -268,14 +272,14 @@ const ProductDetails = () => {
 
             {/* Stock Status */}
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${product.stock && product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span className={product.stock && product.stock > 0 ? 'text-green-600' : 'text-red-600'}>
-                {product.stock && product.stock > 0 ? `${product.stock} en stock` : 'Rupture de stock'}
+              <div className={`w-2 h-2 rounded-full ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className={product.stock > 0 ? 'text-green-600' : 'text-red-600'}>
+                {product.stock > 0 ? `${product.stock} en stock` : 'Rupture de stock'}
               </span>
             </div>
 
             {/* Quantity Selector */}
-            {product.stock && product.stock > 0 && (
+            {product.stock > 0 && (
               <div className="flex items-center gap-4">
                 <span className="font-medium">Quantité:</span>
                 <div className="flex items-center gap-2">
@@ -358,6 +362,31 @@ const ProductDetails = () => {
             )}
           </motion.div>
         </div>
+
+        {/* Product Information Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-16"
+        >
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="details">Détails du produit</TabsTrigger>
+              <TabsTrigger value="description">Description complète</TabsTrigger>
+            </TabsList>
+            <TabsContent value="details" className="mt-6">
+              <ProductAttributes product={product} />
+            </TabsContent>
+            <TabsContent value="description" className="mt-6">
+              <div className="prose max-w-none">
+                <p className="text-muted-foreground leading-relaxed">
+                  {product.description || "Aucune description détaillée disponible pour ce produit."}
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (

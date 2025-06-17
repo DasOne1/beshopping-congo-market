@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -47,6 +46,7 @@ export const useProducts = () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .eq('is_visible', true) // Filtrer seulement les produits visibles côté client
         .order('created_at', { ascending: false });
 
       if (error) {

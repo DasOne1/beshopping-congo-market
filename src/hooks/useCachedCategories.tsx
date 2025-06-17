@@ -18,6 +18,7 @@ export const useCachedCategories = () => {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
+        .eq('is_visible', true) // Filtrer seulement les catégories visibles côté client
         .order('name', { ascending: true });
 
       if (error) throw error;
@@ -63,7 +64,7 @@ export const useCachedCategories = () => {
 
     const getAllIds = (cat: ExtendedCategory): string[] => {
       let ids = [cat.id];
-      if (cat.children) {
+      if (cat.children && cat.children.length > 0) {
         cat.children.forEach(child => {
           ids = ids.concat(getAllIds(child));
         });
