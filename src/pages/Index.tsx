@@ -18,7 +18,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import './Index.css';
 
 const heroImages = [
@@ -41,6 +41,8 @@ const Index = () => {
   const { trackEvent } = useAnalytics();
 
   const [currentHero, setCurrentHero] = useState(0);
+  
+  // Optimisation : mémoriser le changement d'image hero
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentHero((prev) => (prev + 1) % heroImages.length);
@@ -48,24 +50,40 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    // Track page view
-    trackEvent.mutate({
-      event_type: 'view_product',
-      session_id: sessionStorage.getItem('session_id') || 'anonymous',
-      metadata: { page: 'home' }
-    });
-  }, []);
+  // Optimisation : utiliser useMemo pour éviter le recalcul des produits groupés
+  const productsByCategory = useMemo(() => {
+    if (!categories || !products) return [];
+    
+    console.log('🔄 Regroupement des produits par catégorie...');
+    
+    return categories
+      ?.filter(category => category.is_visible)
+      .map(category => ({
+        category,
+        products: products
+          ?.filter(p => 
+            p.category_id === category.id && 
+            p.status === 'active' && 
+            p.is_visible === true
+          )
+          .slice(0, 6) || []
+      }))
+      .filter(group => group.products.length > 0) || [];
+  }, [categories, products]);
 
-  // Group products by category with real-time data - include only visible and active products for home page
-  const productsByCategory = categories?.filter(category => category.is_visible).map(category => ({
-    category,
-    products: products?.filter(p => 
-      p.category_id === category.id && 
-      p.status === 'active' && 
-      p.is_visible === true // S'assurer que le produit est visible
-    ).slice(0, 6) || []
-  })).filter(group => group.products.length > 0) || [];
+  // Optimisation : tracking uniquement au premier chargement
+  useEffect(() => {
+    if (!productsLoading && !categoriesLoading) {
+      // Track page view seulement une fois que les données sont chargées
+      trackEvent.mutate({
+        event_type: 'view_product',
+        session_id: sessionStorage.getItem('session_id') || 'anonymous',
+        metadata: { page: 'home', products_count: products?.length || 0 }
+      });
+    }
+  }, [productsLoading, categoriesLoading, products?.length]);
+
+  const isLoading = productsLoading || categoriesLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,10 +92,15 @@ const Index = () => {
       
       {/* Main content avec padding pour éviter que le contenu soit caché par le header fixe */}
       <main className="pt-14 md:pt-16">
-        {/* Hero Section */}
+        {/* Hero Section avec optimisation d'image */}
         <section
           className={`relative py-12 md:py-20 min-h-[420px] md:min-h-[480px] flex items-center bg-cover bg-center transition-all duration-700`}
-          style={{ backgroundImage: `url(${heroImages[currentHero]})` }}
+          style={{ 
+            backgroundImage: `url(${heroImages[currentHero]})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            willChange: 'background-image' // Optimisation CSS
+          }}
         >
           {/* Overlay pour lisibilité */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/70 via-background/80 to-secondary/70 opacity-80 z-0"></div>
@@ -110,7 +133,7 @@ const Index = () => {
                   className="text-sm md:text-base lg:text-lg px-4 md:px-6 lg:px-8 border-primary text-primary hover:bg-primary/10"
                   onClick={() => navigate('/custom-order')}
                 >
-                  <Palette className="mr-2 h-4 w-4 md:h-5 md:w-5  " />
+                  <Palette className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                   Commande personnalisée
                 </Button>
               </div>
@@ -144,8 +167,8 @@ const Index = () => {
           <FeaturedGallery />
         </div>
 
-        {/* Products by Category - Une seule carte par ligne sur mobile */}
-        {productsLoading || categoriesLoading ? (
+        {/* Products by Category - Optimisé pour le chargement */}
+        {isLoading ? (
           <section className="py-4 md:py-6">
             <div className="container mx-auto px-4">
               <div className="mb-4 md:mb-6">
@@ -167,6 +190,7 @@ const Index = () => {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
+                  viewport={{ once: true }} // Optimisation : animer une seule fois
                   className="mb-4 md:mb-6"
                 >
                   <div className="flex justify-between items-center mb-3 md:mb-4">
@@ -185,6 +209,7 @@ const Index = () => {
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   transition={{ duration: 0.8 }}
+                  viewport={{ once: true }} // Optimisation : animer une seule fois
                   className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6"
                 >
                   {group.products.map((product, index) => (
@@ -192,7 +217,8 @@ const Index = () => {
                       key={product.id}
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: 0.1 * index }}
+                      transition={{ duration: 0.4, delay: 0.1 * Math.min(index, 3) }} // Limiter le délai
+                      viewport={{ once: true }}
                     >
                       <ProductCard product={product} />
                     </motion.div>

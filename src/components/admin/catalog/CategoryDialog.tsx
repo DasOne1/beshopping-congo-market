@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -18,6 +19,7 @@ interface CategoryDialogProps {
 
 const CategoryDialog = ({ category, open, onOpenChange }: CategoryDialogProps) => {
   const { categories, createCategory, updateCategory } = useCategories();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -48,20 +50,27 @@ const CategoryDialog = ({ category, open, onOpenChange }: CategoryDialogProps) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    const categoryData = {
-      ...formData,
-      slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-      parent_id: formData.parent_id === 'none' ? null : formData.parent_id
-    };
+    try {
+      const categoryData = {
+        ...formData,
+        slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
+        parent_id: formData.parent_id === 'none' ? null : formData.parent_id
+      };
 
-    if (category) {
-      await updateCategory.mutateAsync({ id: category.id, ...categoryData });
-    } else {
-      await createCategory.mutateAsync(categoryData);
+      if (category) {
+        await updateCategory.mutateAsync({ id: category.id, ...categoryData });
+      } else {
+        await createCategory.mutateAsync(categoryData);
+      }
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+    } finally {
+      setIsLoading(false);
     }
-    
-    onOpenChange(false);
   };
 
   const parentCategories = categories?.filter(cat => !cat.parent_id) || [];
@@ -138,11 +147,23 @@ const CategoryDialog = ({ category, open, onOpenChange }: CategoryDialogProps) =
           </div>
           
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
               Annuler
             </Button>
-            <Button type="submit">
-              {category ? 'Modifier' : 'Créer'}
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  {category ? 'Modification...' : 'Création...'}
+                </div>
+              ) : (
+                category ? 'Modifier' : 'Créer'
+              )}
             </Button>
           </div>
         </form>

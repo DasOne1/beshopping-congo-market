@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState, useEffect } from 'react';
@@ -6,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { useCustomers } from '@/hooks/useCustomers';
 
 interface CustomerDialogProps {
@@ -17,6 +17,7 @@ interface CustomerDialogProps {
 
 const CustomerDialog = ({ customer, open, onOpenChange }: CustomerDialogProps) => {
   const { createCustomer, updateCustomer } = useCustomers();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,19 +48,26 @@ const CustomerDialog = ({ customer, open, onOpenChange }: CustomerDialogProps) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    const customerData = {
-      ...formData,
-      address: formData.address ? { address: formData.address } : null
-    };
+    try {
+      const customerData = {
+        ...formData,
+        address: formData.address ? { address: formData.address } : null
+      };
 
-    if (customer) {
-      await updateCustomer.mutateAsync({ id: customer.id, ...customerData });
-    } else {
-      await createCustomer.mutateAsync(customerData);
+      if (customer) {
+        await updateCustomer.mutateAsync({ id: customer.id, ...customerData });
+      } else {
+        await createCustomer.mutateAsync(customerData);
+      }
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+    } finally {
+      setIsLoading(false);
     }
-    
-    onOpenChange(false);
   };
 
   return (
@@ -127,11 +135,23 @@ const CustomerDialog = ({ customer, open, onOpenChange }: CustomerDialogProps) =
           </div>
           
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
               Annuler
             </Button>
-            <Button type="submit">
-              {customer ? 'Modifier' : 'Créer'}
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  {customer ? 'Modification...' : 'Création...'}
+                </div>
+              ) : (
+                customer ? 'Modifier' : 'Créer'
+              )}
             </Button>
           </div>
         </form>

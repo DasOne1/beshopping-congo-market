@@ -14,7 +14,7 @@ export const useCachedCategories = () => {
   const { data: categories = [], isLoading } = useQuery<ExtendedCategory[]>({
     queryKey: ['categories-with-relationships'],
     queryFn: async () => {
-      console.log('Chargement des catégories avec relations...');
+      console.log('📂 Chargement des catégories avec relations...');
       const { data, error } = await supabase
         .from('categories')
         .select('*')
@@ -46,12 +46,15 @@ export const useCachedCategories = () => {
         }
       });
 
-      console.log('Catégories avec relations chargées:', categoriesMap.size);
+      console.log('✅ Catégories avec relations chargées:', categoriesMap.size);
       return Array.from(categoriesMap.values());
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
     refetchOnWindowFocus: false,
+    refetchOnMount: false, // Éviter les refetch inutiles
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const getCategoryWithChildren = (categoryId: string): ExtendedCategory | null => {

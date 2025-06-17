@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -12,7 +13,7 @@ export const useProducts = () => {
 
   // Configuration de la synchronisation en temps réel pour les produits
   useEffect(() => {
-    console.log('Configuration de la synchronisation en temps réel pour les produits...');
+    console.log('⚡ Configuration de la synchronisation en temps réel pour les produits...');
     
     const channel = supabase
       .channel('products-realtime')
@@ -24,9 +25,9 @@ export const useProducts = () => {
           table: 'products'
         },
         (payload) => {
-          console.log('Changement détecté dans les produits:', payload);
+          console.log('🔄 Changement détecté dans les produits:', payload);
           
-          // Invalider le cache pour forcer un rechargement
+          // Invalider seulement les caches nécessaires
           queryClient.invalidateQueries({ queryKey: ['products'] });
           queryClient.invalidateQueries({ queryKey: ['preload-data'] });
         }
@@ -34,7 +35,7 @@ export const useProducts = () => {
       .subscribe();
 
     return () => {
-      console.log('Nettoyage du canal de synchronisation produits...');
+      console.log('🧹 Nettoyage du canal de synchronisation produits...');
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
@@ -42,23 +43,28 @@ export const useProducts = () => {
   const { data: products = [], isLoading, refetch } = useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: async () => {
-      console.log('Récupération des produits depuis la base de données...');
+      console.log('📦 Récupération des produits depuis la base de données...');
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .eq('is_visible', true) // Filtrer seulement les produits visibles côté client
+        .eq('status', 'active') // Seulement les produits actifs
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Erreur lors de la récupération des produits:', error);
+        console.error('❌ Erreur lors de la récupération des produits:', error);
         throw error;
       }
       
-      console.log('Produits récupérés:', data?.length || 0);
+      console.log('✅ Produits récupérés:', data?.length || 0);
       return data as Product[];
     },
-    staleTime: 1000 * 30, // 30 secondes
-    refetchInterval: 1000 * 60, // Refetch toutes les minutes
+    staleTime: 1000 * 60 * 2, // 2 minutes - données considérées comme fraîches
+    gcTime: 1000 * 60 * 10, // 10 minutes - cache en mémoire
+    refetchOnWindowFocus: false, // Éviter les refetch inutiles
+    refetchOnMount: false, // Éviter les refetch inutiles au montage
+    retry: 3, // Retry automatique en cas d'erreur réseau
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 
   const createProduct = useMutation({
@@ -99,6 +105,7 @@ export const useProducts = () => {
       return data as Product;
     },
     onSuccess: () => {
+      // Optimisation : mise à jour ciblée du cache
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['preload-data'] });
       toast({
@@ -127,8 +134,15 @@ export const useProducts = () => {
       if (error) throw error;
       return data as Product;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+    onSuccess: (updatedProduct) => {
+      // Optimisation : mise à jour ciblée plutôt qu'invalidation complète
+      queryClient.setQueryData(['products'], (oldData: Product[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(product => 
+          product.id === updatedProduct.id ? updatedProduct : product
+        );
+      });
+      
       queryClient.invalidateQueries({ queryKey: ['preload-data'] });
       toast({
         title: "Produit mis à jour",
@@ -154,8 +168,13 @@ export const useProducts = () => {
       if (error) throw error;
       return id;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+    onSuccess: (deletedId) => {
+      // Optimisation : suppression ciblée du cache
+      queryClient.setQueryData(['products'], (oldData: Product[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.filter(product => product.id !== deletedId);
+      });
+      
       queryClient.invalidateQueries({ queryKey: ['preload-data'] });
       toast({
         title: "Produit supprimé",

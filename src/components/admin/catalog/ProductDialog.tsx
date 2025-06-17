@@ -21,6 +21,7 @@ interface ProductDialogProps {
 const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
   const { createProduct, updateProduct } = useProducts();
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -114,32 +115,39 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    const price = parseFloat(formData.original_price) || 0;
-    const discount = parseFloat(formData.discount) || 0;
-    const discounted_price = discount > 0 ? price * (1 - discount / 100) : null;
-    
-    const productData = {
-      ...formData,
-      original_price: price,
-      discount: discount,
-      discounted_price,
-      stock: parseInt(formData.stock) || 0,
-      weight: parseFloat(formData.weight) || null,
-      images: formData.images.filter(img => img.trim() !== ''),
-      tags: formData.tags.filter(tag => tag.trim() !== ''),
-      category_id: formData.category_id || null,
-      subcategory_id: formData.subcategory_id || null,
-      gender: formData.gender || null,
-    };
+    try {
+      const price = parseFloat(formData.original_price) || 0;
+      const discount = parseFloat(formData.discount) || 0;
+      const discounted_price = discount > 0 ? price * (1 - discount / 100) : null;
+      
+      const productData = {
+        ...formData,
+        original_price: price,
+        discount: discount,
+        discounted_price,
+        stock: parseInt(formData.stock) || 0,
+        weight: parseFloat(formData.weight) || null,
+        images: formData.images.filter(img => img.trim() !== ''),
+        tags: formData.tags.filter(tag => tag.trim() !== ''),
+        category_id: formData.category_id || null,
+        subcategory_id: formData.subcategory_id || null,
+        gender: formData.gender || null,
+      };
 
-    if (product) {
-      await updateProduct.mutateAsync({ id: product.id, ...productData });
-    } else {
-      await createProduct.mutateAsync(productData);
+      if (product) {
+        await updateProduct.mutateAsync({ id: product.id, ...productData });
+      } else {
+        await createProduct.mutateAsync(productData);
+      }
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+    } finally {
+      setIsLoading(false);
     }
-    
-    onOpenChange(false);
   };
 
   return (
@@ -221,11 +229,23 @@ const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
           />
           
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
               Annuler
             </Button>
-            <Button type="submit">
-              {product ? 'Modifier' : 'Créer'}
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  {product ? 'Modification...' : 'Création...'}
+                </div>
+              ) : (
+                product ? 'Modifier' : 'Créer'
+              )}
             </Button>
           </div>
         </form>
