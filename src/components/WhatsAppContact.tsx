@@ -1,18 +1,25 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { WhatsAppIcon } from '@/components/WhatsAppIcon';
-import { useNavigate } from 'react-router-dom';
-import { useEmailAuth } from '@/hooks/useEmailAuth';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
+import WhatsAppConfirmationDialog from './WhatsAppConfirmationDialog';
 
 interface WhatsAppContactProps {
-  phoneNumber: string;
+  phoneNumber?: string; // Optionnel maintenant, sera remplacé par le numéro fixe
   message: string;
   className?: string;
   size?: 'default' | 'sm' | 'lg' | 'icon';
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   children?: React.ReactNode;
   onCustomClick?: () => void;
+  orderDetails?: {
+    customerName?: string;
+    customerPhone?: string;
+    customerAddress?: string;
+    productName?: string;
+    description?: string;
+    budget?: string;
+  };
 }
 
 const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
@@ -22,40 +29,48 @@ const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
   size = 'default',
   variant = 'default',
   children,
-  onCustomClick
+  onCustomClick,
+  orderDetails
 }) => {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useEmailAuth();
+  const {
+    showConfirmation,
+    orderDetails: hookOrderDetails,
+    sendWhatsAppMessage,
+    closeConfirmation
+  } = useWhatsApp();
 
   const handleClick = () => {
-    if (!isAuthenticated) {
-      navigate('/customer-auth', { state: { from: window.location.pathname } });
-      return;
-    }
-
     if (onCustomClick) {
       onCustomClick();
     } else {
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-      window.open(whatsappUrl, '_blank');
+      sendWhatsAppMessage(message, orderDetails);
     }
   };
 
   return (
-    <Button
-      onClick={handleClick}
-      className={`bg-green-600 hover:bg-green-700 text-white ${className}`}
-      size={size}
-      variant={variant}
-    >
-      {children || (
-        <>
-          <WhatsAppIcon className="mr-2 h-4 w-4" />
-          Envoyer via WhatsApp
-        </>
-      )}
-    </Button>
+    <>
+      <Button
+        onClick={handleClick}
+        className={`bg-green-600 hover:bg-green-700 text-white ${className}`}
+        size={size}
+        variant={variant}
+      >
+        {children || (
+          <>
+            <WhatsAppIcon className="mr-2 h-4 w-4" />
+            Commander via WhatsApp
+          </>
+        )}
+      </Button>
+
+      <WhatsAppConfirmationDialog
+        open={showConfirmation}
+        onOpenChange={() => closeConfirmation()}
+        orderDetails={hookOrderDetails}
+        message={message}
+        onClose={closeConfirmation}
+      />
+    </>
   );
 };
 

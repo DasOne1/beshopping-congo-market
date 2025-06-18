@@ -14,57 +14,64 @@ import { toast } from '@/hooks/use-toast';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import WhatsAppContact from '@/components/WhatsAppContact';
 import { useNavigate } from 'react-router-dom';
+import { useEmailAuth } from '@/hooks/useEmailAuth';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
+import { useCustomOrderForm } from '@/hooks/useCustomOrderForm';
+import WhatsAppConfirmationDialog from '@/components/WhatsAppConfirmationDialog';
 
 const CustomOrder = () => {
-  const { currentCustomer, isAuthenticated } = useCustomerAuth();
   const navigate = useNavigate();
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [orderDetails, setOrderDetails] = useState<any>(null);
-  const [formData, setFormData] = useState(() => {
-    // Récupérer les données sauvegardées du localStorage si elles existent
-    const savedData = localStorage.getItem('customOrderFormData');
-    return savedData ? JSON.parse(savedData) : {
-      name: '',
-      description: '',
-      budget: '',
-      contactInfo: '',
-      address: '',
-      images: [] as File[]
-    };
+  const { isAuthenticated, currentCustomer } = useEmailAuth();
+  const { 
+    showConfirmation: whatsappShowConfirmation, 
+    orderDetails: whatsappOrderDetails, 
+    sendWhatsAppMessage, 
+    closeConfirmation,
+    generateCustomOrderMessage 
+  } = useWhatsApp();
+
+  const {
+    isSubmitting,
+    showConfirmation,
+    orderDetails,
+    setShowConfirmation,
+    handleSubmit,
+    handleWhatsAppOrder,
+    validateForm
+  } = useCustomOrderForm({
+    currentCustomer,
+    onOrderComplete: () => {
+      // Réinitialiser seulement les champs de la commande, préserver les infos du client
+      setFormData(prev => ({
+        ...prev,
+        name: '',
+        description: '',
+        budget: '',
+        images: []
+        // contactInfo et address sont préservés
+      }));
+    }
+  });
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    budget: '',
+    contactInfo: '',
+    address: '',
+    images: [] as File[]
   });
 
-  // Sauvegarder les données du formulaire dans le localStorage à chaque modification
+  // Pré-remplir les informations si l'utilisateur est connecté
   useEffect(() => {
-    const dataToSave = {
-      ...formData,
-      images: [] // On ne sauvegarde pas les images car ce sont des objets File
-    };
-    localStorage.setItem('customOrderFormData', JSON.stringify(dataToSave));
-  }, [formData]);
-
-  // Pré-remplir les informations du client connecté
-  useEffect(() => {
-    if (currentCustomer) {
+    if (isAuthenticated && currentCustomer) {
       setFormData(prev => ({
-        ...prev,
-        contactInfo: currentCustomer.phone || currentCustomer.email || '',
-        address: typeof currentCustomer.address === 'string' 
-          ? currentCustomer.address 
-          : currentCustomer.address?.address || ''
+        ...prev, // Préserver toutes les informations existantes (nom, description, budget, images)
+        contactInfo: prev.contactInfo || currentCustomer.phone || currentCustomer.email || '',
+        address: prev.address || currentCustomer.address?.address || ''
       }));
     }
-  }, [currentCustomer]);
-
-  // Effacer les informations du compte lors de la déconnexion
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setFormData(prev => ({
-        ...prev,
-        contactInfo: '',
-        address: ''
-      }));
-    }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentCustomer]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -83,123 +90,65 @@ const CustomOrder = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleDirectOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isAuthenticated) {
       navigate('/customer-auth', { state: { from: '/custom-order' } });
       return;
     }
-    
-    if (!formData.name || !formData.description) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs requis",
-        variant: "destructive",
-      });
+
+    // Utiliser la validation du hook
+    if (!validateForm(formData)) {
       return;
     }
 
-    // Set order details for confirmation popup
-    setOrderDetails({
-      customerName: currentCustomer?.name || formData.contactInfo || 'Anonyme',
-      customerPhone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
-      customerAddress: currentCustomer?.address || formData.address || 'Non spécifiée',
-      productName: formData.name,
-      description: formData.description,
-      budget: formData.budget,
-      orderType: 'form'
-    });
-    
-    setShowConfirmation(true);
-
-    // For now, just show success message
-    toast({
-      title: "Commande personnalisée envoyée",
-      description: "Nous vous contactons bientôt pour discuter de votre projet",
-    });
+    // Enregistrer la commande en base de données
+    await handleSubmit(formData);
   };
 
   const handleConfirmationClose = () => {
     setShowConfirmation(false);
-    
-    // Ne réinitialiser que les champs de la commande, pas les informations du client
-    setFormData(prev => ({
-      ...prev,
-      name: '',
-      description: '',
-      budget: '',
-      images: []
-    }));
-    
-    // Mettre à jour le localStorage en conservant les informations du client
-    const dataToSave = {
-      name: '',
-      description: '',
-      budget: '',
-      contactInfo: formData.contactInfo,
-      address: formData.address,
-      images: []
-    };
-    localStorage.setItem('customOrderFormData', JSON.stringify(dataToSave));
+    closeConfirmation();
   };
 
-  const handleWhatsAppOrder = () => {
+  const handleWhatsAppOrderClick = () => {
     if (!isAuthenticated) {
       navigate('/customer-auth', { state: { from: '/custom-order' } });
       return;
     }
 
-    if (!formData.name || !formData.description) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez au moins remplir le nom du produit et la description",
-        variant: "destructive",
-      });
+    if (!validateForm(formData)) {
       return;
     }
 
-    // Set order details for confirmation popup
-    setOrderDetails({
+    const message = generateCustomOrderMessage(
+      formData.name,
+      formData.description,
+      formData.budget,
+      formData.contactInfo,
+      formData.address
+    );
+    
+    // Envoyer le message WhatsApp et créer la commande en arrière-plan
+    sendWhatsAppMessage(message, {
       customerName: currentCustomer?.name || formData.contactInfo || 'Client WhatsApp',
       customerPhone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
-      customerAddress: currentCustomer?.address || formData.address || 'Non spécifiée',
+      customerAddress: currentCustomer?.address?.address || formData.address || 'Non spécifiée',
       productName: formData.name,
       description: formData.description,
-      budget: formData.budget,
-      orderType: 'whatsapp'
+      budget: formData.budget
     });
-    
-    setShowConfirmation(true);
 
-    // Ouvrir WhatsApp immédiatement après avoir affiché la confirmation
-    const encodedMessage = encodeURIComponent(generateWhatsAppMessage());
-    const whatsappUrl = `https://wa.me/243978100940?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
-  const generateWhatsAppMessage = () => {
-    const message = `🛍️ *Commande Personnalisée - BeShopping Congo*
-
-👤 *Client:* ${currentCustomer?.name || formData.contactInfo || 'Anonyme'}
-📱 *Contact:* ${currentCustomer?.phone || formData.contactInfo || 'Non spécifié'}
-📍 *Adresse:* ${currentCustomer?.address || formData.address || 'Non spécifiée'}
-
-🎯 *Produit souhaité:* ${formData.name}
-
-📝 *Description détaillée:*
-${formData.description}
-
-💰 *Budget approximatif:* ${formData.budget ? formData.budget + ' FC' : 'À discuter'}
-
-📅 *Date de demande:* ${new Date().toLocaleDateString('fr-FR')}
-
-${formData.images.length > 0 ? `\n📸 *Images de référence:* ${formData.images.length} image(s) téléchargée(s)
-*Note:* Veuillez envoyer les images séparément dans le chat WhatsApp après l'envoi de ce message.` : ''}
-
-Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
-    
-    return message;
+    // Créer la commande en arrière-plan
+    handleWhatsAppOrder(formData).catch(error => {
+      console.error('Erreur lors de la création de la commande WhatsApp:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création de la commande WhatsApp.",
+        variant: "destructive",
+      });
+    });
   };
 
   return (
@@ -230,7 +179,7 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
                 )}
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <form onSubmit={handleDirectOrder} className="space-y-8">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
                       <Label htmlFor="name" className="text-base font-semibold">Nom du produit souhaité *</Label>
@@ -337,7 +286,7 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
                     <div className="text-center mb-6">
                       <h3 className="text-lg font-semibold mb-2">Choisissez votre méthode de validation</h3>
                       <p className="text-sm text-muted-foreground">
-                        Vous pouvez envoyer votre commande via le formulaire ou directement par WhatsApp
+                        Vous pouvez enregistrer votre commande ou l'envoyer directement par WhatsApp
                       </p>
                     </div>
 
@@ -346,21 +295,23 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
                         type="submit" 
                         size="lg" 
                         className="h-14"
+                        disabled={isSubmitting}
                       >
                         <Send className="h-5 w-5 mr-2" />
-                        Passer la commande
+                        {isSubmitting ? 'Enregistrement...' : 'Passer la commande'}
                       </Button>
                       
-                      <WhatsAppContact
-                        phoneNumber="+243978100940"
-                        message={generateWhatsAppMessage()}
-                        className="h-14 bg-green-600 hover:bg-green-700 text-white"
+                      <Button
+                        type="button"
+                        variant="outline"
                         size="lg"
-                        onCustomClick={handleWhatsAppOrder}
+                        className="h-14 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                        onClick={handleWhatsAppOrderClick}
+                        disabled={isSubmitting}
                       >
                         <MessageCircle className="h-5 w-5 mr-2" />
-                        Envoyer via WhatsApp
-                      </WhatsAppContact>
+                        Commander via WhatsApp
+                      </Button>
                     </div>
                   </div>
                 </form>
@@ -370,61 +321,27 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
         </motion.div>
       </main>
 
-      {/* Popup de confirmation */}
-      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-green-600">
-              <CheckCircle className="h-6 w-6" />
-              Commande Envoyée !
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg">
-              <p className="text-sm text-green-800 dark:text-green-200">
-                Votre commande personnalisée a été envoyée avec succès !
-              </p>
-            </div>
-            
-            {orderDetails && (
-              <div className="space-y-3">
-                <div>
-                  <span className="font-medium">Client:</span> {orderDetails.customerName}
-                </div>
-                <div>
-                  <span className="font-medium">Contact:</span> {orderDetails.customerPhone}
-                </div>
-                <div>
-                  <span className="font-medium">Adresse:</span> {orderDetails.customerAddress}
-                </div>
-                <div>
-                  <span className="font-medium">Produit:</span> {orderDetails.productName}
-                </div>
-                {orderDetails.budget && (
-                  <div>
-                    <span className="font-medium">Budget:</span> {orderDetails.budget} FC
-                  </div>
-                )}
-                <div className="text-sm text-muted-foreground">
-                  {orderDetails.orderType === 'whatsapp' 
-                    ? "Envoyé via WhatsApp - Vous allez être redirigé(e)"
-                    : "Nous vous contacterons bientôt pour discuter de votre projet"
-                  }
-                </div>
-              </div>
-            )}
-            
-            <Button 
-              onClick={handleConfirmationClose}
-              className="w-full"
-            >
-              Parfait !
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-      
       <Footer />
+
+      {/* Boîte de dialogue de confirmation centralisée */}
+      <WhatsAppConfirmationDialog
+        open={showConfirmation || whatsappShowConfirmation}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowConfirmation(false);
+            closeConfirmation();
+          }
+        }}
+        orderDetails={orderDetails || whatsappOrderDetails}
+        message={orderDetails?.orderType === 'whatsapp' ? generateCustomOrderMessage(
+          formData.name,
+          formData.description,
+          formData.budget,
+          formData.contactInfo,
+          formData.address
+        ) : undefined}
+        onClose={handleConfirmationClose}
+      />
     </div>
   );
 };

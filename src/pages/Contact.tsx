@@ -1,12 +1,14 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Phone, Mail, Clock, MessageCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppContact from '@/components/WhatsAppContact';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
 
 const Contact = () => {
+  const { generateGeneralInquiryMessage } = useWhatsApp();
+  
   const contactInfo = [
     {
       icon: <MapPin className="w-6 h-6" />,
@@ -91,8 +93,7 @@ const Contact = () => {
               <h3 className="text-xl font-semibold mb-4">Contact rapide</h3>
               
               <WhatsAppContact
-                phoneNumber="243978100940"
-                message="Bonjour! J'aimerais avoir plus d'informations sur vos produits."
+                message={generateGeneralInquiryMessage("J'aimerais avoir plus d'informations sur vos produits.")}
                 className="w-full justify-center"
               >
                 <MessageCircle className="mr-2 h-4 w-4" />
@@ -100,8 +101,7 @@ const Contact = () => {
               </WhatsAppContact>
 
               <WhatsAppContact
-                phoneNumber="243978100940"
-                message="Bonjour! J'aimerais passer une commande personnalisée."
+                message={generateGeneralInquiryMessage("J'aimerais passer une commande personnalisée.")}
                 variant="outline"
                 className="w-full justify-center"
               >

@@ -1,9 +1,11 @@
-
 import { Link } from 'react-router-dom';
 import WhatsAppContact from './WhatsAppContact';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
 import { Separator } from '@/components/ui/separator';
 
 const Footer = () => {
+  const { generateGeneralInquiryMessage } = useWhatsApp();
+  
   return (
     <footer className="bg-gray-50 dark:bg-gray-900/40 py-3 ">
       <div className="container">
@@ -30,8 +32,7 @@ const Footer = () => {
           </div>
           
           <WhatsAppContact 
-            phoneNumber="243978100940" 
-            message="Bonjour ! J'aimerais en savoir plus sur vos produits."
+            message={generateGeneralInquiryMessage("J'aimerais en savoir plus sur vos produits.")}
             variant="outline"
             size="sm"
             className="text-xs"

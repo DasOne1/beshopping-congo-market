@@ -1,27 +1,31 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '@/contexts/CartContext';
+import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShoppingCart, MessageCircle } from 'lucide-react';
-import { useProducts } from '@/hooks/useProducts';
-import OrderSummary from '@/components/OrderSummary';
-import { formatPrice } from '@/lib/utils';
-import { useOrderForm } from '@/hooks/useOrderForm';
+import { useCart } from '@/contexts/CartContext';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
-import { toast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useOrderForm } from '@/hooks/useOrderForm';
+import OrderSummary from '@/components/OrderSummary';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import OrderConfirmationDialog from '@/components/OrderConfirmationDialog';
+import { toast } from '@/hooks/use-toast';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
+import WhatsAppConfirmationDialog from '@/components/WhatsAppConfirmationDialog';
 import { WhatsAppIcon } from '@/components/WhatsAppIcon';
 import { Product } from '@/types';
+import { useOrders } from '@/hooks/useOrders';
+import { useProducts } from '@/hooks/useProducts';
+import { formatPrice } from '@/lib/utils';
 
 const Cart = () => {
-  const { cart, removeFromCart, updateQuantity } = useCart();
+  const { cart, updateQuantity, removeFromCart } = useCart();
   const { products } = useProducts();
   const { currentCustomer, isAuthenticated } = useCustomerAuth();
   const navigate = useNavigate();
+  const { sendWhatsAppMessage, closeConfirmation, showConfirmation: whatsappShowConfirmation, orderDetails: whatsappOrderDetails, generateCartOrderMessage } = useWhatsApp();
+  const { createOrder } = useOrders();
 
   // Get cart products with full product data
   const cartProducts = cart.map(cartItem => {
@@ -88,14 +92,55 @@ const Cart = () => {
     }
 
     try {
-      const formData = form.getValues();
-      await handleSubmit(formData);
+      // Utiliser les données du client connecté directement
+      const customerData = {
+        customerName: currentCustomer?.name || form.getValues().customerName || 'Anonyme',
+        customerPhone: currentCustomer?.phone || form.getValues().customerPhone || 'Non spécifié',
+        customerAddress: typeof currentCustomer?.address === 'string' 
+          ? currentCustomer.address 
+          : currentCustomer?.address?.address || form.getValues().customerAddress || 'Non spécifiée'
+      };
+
+      // Créer la commande directement avec les données du client
+      const orderData = {
+        customer_id: currentCustomer?.id || null,
+        customer_name: customerData.customerName,
+        customer_phone: customerData.customerPhone,
+        customer_email: currentCustomer?.email || null,
+        shipping_address: { address: customerData.customerAddress },
+        total_amount: subtotal || 0,
+        subtotal: subtotal || 0,
+        status: 'pending' as const,
+      };
+
+      const orderItems = cartProducts.map(item => ({
+        product_id: item.productId,
+        product_name: item.product.name,
+        product_image: item.product.images?.[0] || '',
+        quantity: item.quantity,
+        unit_price: item.product.discounted_price || item.product.original_price,
+        total_price: (item.product.discounted_price || item.product.original_price) * item.quantity,
+      }));
+
+      // Utiliser la mutation directement
+      await createOrder.mutateAsync({ order: orderData, items: orderItems });
+
+      // Mettre à jour l'interface
+      setOrderDetails({
+        customerName: customerData.customerName,
+        customerPhone: customerData.customerPhone,
+        customerAddress: customerData.customerAddress,
+        total: formatPrice(subtotal),
+        orderType: 'form'
+      });
       setShowConfirmation(true);
+
       toast({
         title: "Commande enregistrée",
         description: "Votre commande a été enregistrée avec succès.",
       });
     } catch (error) {
+      console.error('Erreur lors de la création de la commande:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'enregistrement de la commande.",
@@ -110,29 +155,25 @@ const Cart = () => {
       return;
     }
 
-    // Construire l'URL WhatsApp correctement
-    const encodedMessage = encodeURIComponent(whatsappMessage);
-    const whatsappUrl = `https://wa.me/243978100940?text=${encodedMessage}`;
-    
-    // Ouvrir WhatsApp immédiatement
-    window.open(whatsappUrl, '_blank');
-
-    // Mettre à jour l'interface après l'ouverture de WhatsApp
-    const formData = form.getValues();
-    const customerAddress = typeof currentCustomer?.address === 'string' 
-      ? currentCustomer.address 
-      : currentCustomer?.address?.address || formData.customerAddress || 'Non spécifiée';
-
-    const orderData = {
-      customerName: currentCustomer?.name || formData.customerName || 'Anonyme',
-      customerPhone: currentCustomer?.phone || formData.customerPhone || 'Non spécifié',
-      customerAddress: customerAddress,
-      total: formatPrice(subtotal),
-      orderType: 'whatsapp'
+    const customerData = {
+      customerName: currentCustomer?.name || form.getValues().customerName || 'Anonyme',
+      customerPhone: currentCustomer?.phone || form.getValues().customerPhone || 'Non spécifié',
+      customerAddress: typeof currentCustomer?.address === 'string' 
+        ? currentCustomer.address 
+        : currentCustomer?.address?.address || form.getValues().customerAddress || 'Non spécifiée'
     };
 
-    setOrderDetails(orderData);
-    setShowConfirmation(true);
+    const message = generateCartOrderMessage(cartProducts, subtotal, customerData);
+
+    // Utiliser la logique centralisée du hook useWhatsApp
+    sendWhatsAppMessage(message, {
+      customerName: customerData.customerName,
+      customerPhone: customerData.customerPhone,
+      customerAddress: customerData.customerAddress,
+      productName: `Commande panier (${cartProducts.length} produits)`,
+      description: `Commande de ${cartProducts.length} produit(s) depuis le panier`,
+      budget: formatPrice(subtotal)
+    });
 
     // Enregistrer la commande en arrière-plan
     handleWhatsAppOrder().catch(error => {
@@ -254,10 +295,26 @@ const Cart = () => {
           </div>
         )}
 
-        <OrderConfirmationDialog
-          isOpen={showConfirmation}
-          onClose={() => setShowConfirmation(false)}
-          orderDetails={orderDetails}
+        <WhatsAppConfirmationDialog
+          open={showConfirmation || whatsappShowConfirmation}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowConfirmation(false);
+              closeConfirmation();
+            }
+          }}
+          orderDetails={orderDetails || whatsappOrderDetails}
+          message={orderDetails?.orderType === 'whatsapp' ? generateCartOrderMessage(cartProducts, subtotal, {
+            customerName: currentCustomer?.name || form.getValues().customerName || 'Anonyme',
+            customerPhone: currentCustomer?.phone || form.getValues().customerPhone || 'Non spécifié',
+            customerAddress: typeof currentCustomer?.address === 'string' 
+              ? currentCustomer.address 
+              : currentCustomer?.address?.address || form.getValues().customerAddress || 'Non spécifiée'
+          }) : undefined}
+          onClose={() => {
+            setShowConfirmation(false);
+            closeConfirmation();
+          }}
         />
       </main>
       <div className="pb-16 md:pb-0">

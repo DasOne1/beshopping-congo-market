@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Truck, Shield, ArrowRight, Star, TrendingUp, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState, useMemo } from 'react';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
 import './Index.css';
 
 const heroImages = [
@@ -39,6 +38,7 @@ const Index = () => {
   const { products, isLoading: productsLoading } = useProducts();
   const { categories, isLoading: categoriesLoading } = useCategories();
   const { trackEvent } = useAnalytics();
+  const { generateGeneralInquiryMessage } = useWhatsApp();
 
   const [currentHero, setCurrentHero] = useState(0);
   
@@ -237,7 +237,7 @@ const Index = () => {
       <MobileNavBar />
 
       {/* WhatsApp Contact Button */}
-      <WhatsAppContact phoneNumber="+243 978 100 940" message="Bonjour, je souhaite passer une commande" />
+      <WhatsAppContact message={generateGeneralInquiryMessage("je souhaite passer une commande")} />
     </div>
   );
 };

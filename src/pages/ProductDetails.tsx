@@ -7,9 +7,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
 import ProductImageCarousel from '@/components/ProductImageCarousel';
 import ProductAttributes from '@/components/ProductAttributes';
 import WhatsAppContact from '@/components/WhatsAppContact';
+import WhatsAppConfirmationDialog from '@/components/WhatsAppConfirmationDialog';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
@@ -20,6 +22,7 @@ const ProductDetails = () => {
   const { products, isLoading } = useProducts();
   const { addToCart, isInCart } = useCart();
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites();
+  const { generateProductOrderMessage } = useWhatsApp();
   
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState('');
@@ -289,16 +292,7 @@ const ProductDetails = () => {
                     </Button>
 
                     <WhatsAppContact
-                      phoneNumber="+243000000000"
-                      message={`Bonjour, je souhaite commander le produit suivant:
-
-Produit: ${product.name}
-Prix: ${price.toLocaleString()} CDF
-Quantité: ${quantity}
-${selectedColor ? `Couleur: ${selectedColor}` : ''}
-${selectedSize ? `Taille: ${selectedSize}` : ''}
-
-Pouvez-vous me confirmer la disponibilité et les modalités de livraison ?`}
+                      message={generateProductOrderMessage(product.name, price, quantity, selectedColor, selectedSize)}
                       className="w-full"
                       size="default"
                     >
