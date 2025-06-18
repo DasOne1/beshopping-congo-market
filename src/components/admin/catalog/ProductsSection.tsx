@@ -12,9 +12,10 @@ import ProductDialog from './ProductDialog';
 
 interface ProductsSectionProps {
   searchTerm: string;
+  showHidden?: boolean;
 }
 
-const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
+const ProductsSection = ({ searchTerm, showHidden = false }: ProductsSectionProps) => {
   const navigate = useNavigate();
   const { products, isLoading, deleteProduct, updateProduct } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -22,11 +23,14 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const filteredProducts = products?.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.brand?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  // Filtrer les produits selon le terme de recherche et le statut de visibilité
+  const filteredProducts = products?.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesVisibility = showHidden ? !product.is_visible : product.is_visible;
+    return matchesSearch && matchesVisibility;
+  }) || [];
 
   const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
@@ -67,7 +71,7 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
         <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            Produits ({filteredProducts.length})
+            {showHidden ? 'Produits masqués' : 'Produits'} ({filteredProducts.length})
           </CardTitle>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Button onClick={() => navigate('/admin/catalog/products/new')} className="w-full sm:w-auto">
@@ -79,7 +83,7 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
         <CardContent>
           {filteredProducts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Aucun produit trouvé
+              {showHidden ? 'Aucun produit masqué trouvé' : 'Aucun produit trouvé'}
             </div>
           ) : (
             <div className="overflow-x-auto">

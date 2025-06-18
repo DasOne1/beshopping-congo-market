@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Search, Package, Users, FolderOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, Package, Users, FolderOpen, EyeOff, Eye } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
 import { useCustomers } from '@/hooks/useCustomers';
@@ -13,6 +14,7 @@ import CustomersSection from '@/components/admin/catalog/CustomersSection';
 
 const AdminCatalog = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showHidden, setShowHidden] = useState(false);
   const { categories, isLoading: categoriesLoading } = useCategories();
   const { products, isLoading: productsLoading } = useProducts();
   const { customers, isLoading: customersLoading } = useCustomers();
@@ -36,15 +38,36 @@ const AdminCatalog = () => {
           </p>
         </div>
         
-        {/* Search */}
-        <div className="relative w-full sm:w-auto sm:min-w-[300px]">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Rechercher..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          {/* Bouton pour voir les éléments masqués */}
+          <Button
+            variant={showHidden ? "default" : "outline"}
+            onClick={() => setShowHidden(!showHidden)}
+            className="flex items-center gap-2"
+          >
+            {showHidden ? (
+              <>
+                <Eye className="h-4 w-4" />
+                Voir tout
+              </>
+            ) : (
+              <>
+                <EyeOff className="h-4 w-4" />
+                Voir masqués
+              </>
+            )}
+          </Button>
+          
+          {/* Search */}
+          <div className="relative w-full sm:w-auto sm:min-w-[300px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Rechercher..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
       </div>
 
@@ -99,11 +122,11 @@ const AdminCatalog = () => {
         </TabsList>
         
         <TabsContent value="categories">
-          <CategoriesSection searchTerm={searchTerm} />
+          <CategoriesSection searchTerm={searchTerm} showHidden={showHidden} />
         </TabsContent>
         
         <TabsContent value="products">
-          <ProductsSection searchTerm={searchTerm} />
+          <ProductsSection searchTerm={searchTerm} showHidden={showHidden} />
         </TabsContent>
         
         <TabsContent value="customers">
