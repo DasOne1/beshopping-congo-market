@@ -1,446 +1,358 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  BarChart3, 
-  ShoppingBag, 
-  Users, 
-  DollarSign, 
-  Package, 
-  TrendingUp, 
-  Calendar, 
-  MessageSquare
-} from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { mockProducts } from '@/data/mockData';
-import AdminLayout from '@/components/Admin/AdminLayout';
-import {
-  ResponsiveContainer,
-  AreaChart as RechartsAreaChart,
-  BarChart as RechartsBarChart,
-  Area,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { User, Package, Heart, ShoppingCart, Phone, Mail, MapPin, Calendar, Edit, LogOut, LogIn } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { useFavorites } from '@/contexts/FavoritesContext';
+import { useCart } from '@/contexts/CartContext';
+import { useProducts } from '@/hooks/useProducts';
+import ProductSkeleton from '@/components/ProductSkeleton';
+import { motion } from 'framer-motion';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { useOrders } from '@/hooks/useOrders';
+import OrderDashboard from '@/components/OrderDashboard';
+import { toast } from '@/components/ui/use-toast';
+import { Order } from '@/types';
 
-export default function AdminDashboard() {
-  const [timeRange, setTimeRange] = useState("7d");
-  
-  // Mock data for charts
-  const salesData = [
-    { name: "Jan", total: 1200 },
-    { name: "Feb", total: 1800 },
-    { name: "Mar", total: 2200 },
-    { name: "Apr", total: 2800 },
-    { name: "May", total: 3500 },
-    { name: "Jun", total: 3200 },
-    { name: "Jul", total: 4100 },
-  ];
-  
-  const topProducts = [...mockProducts]
-    .sort((a, b) => b.popular - a.popular)
-    .slice(0, 5);
-    
-  const recentOrders = [
-    {
-      id: "ORD-001",
-      customer: "Jean Mukendi",
-      date: "2023-07-15",
-      amount: 45000,
-      status: "delivered",
-    },
-    {
-      id: "ORD-002",
-      customer: "Marie Lutumba",
-      date: "2023-07-14",
-      amount: 32000,
-      status: "processing",
-    },
-    {
-      id: "ORD-003",
-      customer: "Joseph Mbaya",
-      date: "2023-07-14",
-      amount: 78000,
-      status: "pending",
-    },
-    {
-      id: "ORD-004",
-      customer: "Sylvie Katumba",
-      date: "2023-07-13",
-      amount: 24500,
-      status: "delivered",
-    },
-  ];
-  
-  const recentCustomers = [
-    {
-      id: 1,
-      name: "Marie Lutumba",
-      email: "marie@example.com",
-      spent: 78000,
-      orders: 3,
-    },
-    {
-      id: 2,
-      name: "Jean Mukendi",
-      email: "jean@example.com",
-      spent: 45000,
-      orders: 2,
-    },
-    {
-      id: 3,
-      name: "Joseph Mbaya",
-      email: "joseph@example.com",
-      spent: 120000,
-      orders: 5,
-    },
-  ];
-  
-  const recentMessages = [
-    {
-      id: 1,
-      name: "Marie Lutumba",
-      message: "When will my order be delivered?",
-      time: "10:30 AM",
-      unread: true,
-    },
-    {
-      id: 2,
-      name: "Jean Mukendi",
-      message: "Do you have this product in red color?",
-      time: "Yesterday",
-      unread: false,
-    },
-    {
-      id: 3,
-      name: "Joseph Mbaya",
-      message: "I want to order in bulk. Do you offer discounts?",
-      time: "Yesterday",
-      unread: true,
-    },
-  ];
-  
-  const stats = [
-    {
-      title: "Total Revenue",
-      value: "1.2M CDF",
-      description: "+20.1% from last month",
-      icon: DollarSign,
-      trend: "up",
-    },
-    {
-      title: "New Customers",
-      value: "32",
-      description: "+12% from last month",
-      icon: Users,
-      trend: "up",
-    },
-    {
-      title: "Total Orders",
-      value: "54",
-      description: "+8% from last month",
-      icon: ShoppingBag,
-      trend: "up",
-    },
-    {
-      title: "Products Sold",
-      value: "123",
-      description: "+15% from last month",
-      icon: Package,
-      trend: "up",
-    },
-  ];
+const Account = () => {
+  const navigate = useNavigate();
+  const { favorites } = useFavorites();
+  const { cart } = useCart();
+  const { products, isLoading } = useProducts();
+  const { 
+    currentCustomer, 
+    isAuthenticated, 
+    loading, 
+    signOut, 
+    updateProfile
+  } = useCustomerAuth();
+  const { orders: allOrders, isLoading: isLoadingOrders } = useOrders();
+
+  // Filtrer les commandes pour n'afficher que celles du client connecté
+  const orders = (isAuthenticated && currentCustomer
+    ? allOrders.filter(order => {
+        console.log('Order customer_id:', order.customer_id, 'Current customer id:', currentCustomer.id);
+        return order.customer_id === currentCustomer.id;
+      })
+    : []) as Order[];
+
+  console.log('All orders:', allOrders);
+  console.log('Filtered orders:', orders);
+  console.log('Current customer:', currentCustomer);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    password: '',
+    currentPassword: ''
+  });
+
+  // Update profile form when customer data changes
+  useEffect(() => {
+    if (currentCustomer) {
+      setProfileForm({
+        name: currentCustomer.name || '',
+        email: currentCustomer.email || '',
+        phone: currentCustomer.phone || '',
+        address: typeof currentCustomer.address === 'string' 
+          ? currentCustomer.address 
+          : currentCustomer.address?.address || '',
+        password: '',
+        currentPassword: ''
+      });
+    }
+  }, [currentCustomer]);
+
+  // Get favorite products
+  const favoriteProducts = products.filter(product => 
+    favorites.includes(product.id)
+  );
+
+  // Get cart products
+  const cartProducts = cart.map(cartItem => {
+    const product = products.find(p => p.id === cartItem.productId);
+    return {
+      ...cartItem,
+      product
+    };
+  }).filter(item => item.product);
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const hasChanges = 
+        profileForm.name !== currentCustomer.name ||
+        profileForm.email !== currentCustomer.email ||
+        profileForm.phone !== currentCustomer.phone ||
+        profileForm.address !== (typeof currentCustomer.address === 'string' 
+          ? currentCustomer.address 
+          : currentCustomer.address?.address || '');
+
+      if (!hasChanges && !profileForm.password) {
+        toast({
+          title: "Aucune modification",
+          description: "Vous n'avez effectué aucune modification",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Ne pas envoyer les champs password et currentPassword à updateProfile
+      const { password, currentPassword, ...profileData } = profileForm;
+      await updateProfile(profileData);
+      
+      setIsEditing(false);
+      setProfileForm({
+        ...profileForm,
+        password: '',
+        currentPassword: ''
+      });
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du profil:', error);
+    }
+  };
+
+  const handleSignInClick = () => {
+    navigate('/customer-auth', { state: { from: '/account' } });
+  };
+
+  const handleSignOut = () => {
+    signOut();
+    navigate('/');
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-20 md:pb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <h1 className="text-2xl md:text-3xl font-bold mb-4">Accès à votre compte</h1>
+            <p className="text-muted-foreground mb-8">
+              Connectez-vous pour accéder à votre espace personnel
+            </p>
+            <Button onClick={handleSignInClick} size="lg" className="flex items-center mx-auto">
+              <LogIn className="mr-2 h-5 w-5" />
+              Se connecter
+            </Button>
+          </motion.div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!currentCustomer) {
+    return null;
+  }
 
   return (
-    <AdminLayout>
-      <div className="flex flex-col gap-5">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <Tabs defaultValue="7d" onValueChange={setTimeRange} value={timeRange}>
-            <TabsList>
-              <TabsTrigger value="24h">24h</TabsTrigger>
-              <TabsTrigger value="7d">7d</TabsTrigger>
-              <TabsTrigger value="30d">30d</TabsTrigger>
-              <TabsTrigger value="90d">90d</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-        
-        {/* Stats Cards */}
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <main className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-20 md:pb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+          transition={{ duration: 0.6 }}
         >
-          {stats.map((stat, index) => (
-            <Card key={index} className="overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <div className={`p-2 rounded-full ${
-                  stat.trend === "up" 
-                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" 
-                    : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                }`}>
-                  <stat.icon className="h-4 w-4" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className={`text-xs ${
-                  stat.trend === "up" 
-                    ? "text-green-600 dark:text-green-400" 
-                    : "text-red-600 dark:text-red-400"
-                }`}>
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </motion.div>
-        
-        {/* Charts Section */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
-          {/* Sales Chart */}
-          <Card className="lg:col-span-4 overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm">
+          {/* En-tête avec titre et bouton de connexion */}
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center">
+              <User className="mr-2 h-6 w-6" />
+              Mon Compte
+            </h1>
+            <Button variant="outline" onClick={handleSignOut} className="flex items-center">
+              <LogOut className="mr-2 h-4 w-4" />
+              Se déconnecter
+            </Button>
+          </div>
+
+          {/* Tableau de bord des statistiques */}
+          <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Revenue Overview</CardTitle>
-              <CardDescription>Daily revenue for the past month</CardDescription>
+              <CardTitle className="flex items-center">
+                <Package className="mr-2 h-5 w-5" />
+                Tableau de Bord
+              </CardTitle>
+              <CardDescription>
+                Vue d'ensemble de votre activité
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsAreaChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Area 
-                      type="monotone" 
-                      dataKey="total" 
-                      stroke="rgb(var(--primary))" 
-                      fill="rgba(var(--primary), 0.2)" 
-                    />
-                  </RechartsAreaChart>
-                </ResponsiveContainer>
-              </div>
+              <OrderDashboard 
+                orders={orders} 
+                isLoading={isLoadingOrders}
+                cartCount={cart.length}
+                favoritesCount={favorites.length}
+              />
             </CardContent>
           </Card>
-          
-          {/* Top Products */}
-          <Card className="lg:col-span-3 overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm">
+
+          {/* Informations personnelles */}
+          <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Top Products</CardTitle>
-              <CardDescription>Your best selling products</CardDescription>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center">
+                  <User className="mr-2 h-5 w-5" />
+                  Informations Personnelles
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditing(!isEditing)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsBarChart
-                    data={topProducts.map(product => ({
-                      name: product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name,
-                      sales: product.popular * 10
-                    }))}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="sales" fill="rgb(var(--primary))" />
-                  </RechartsBarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Recent Orders & Recent Customers */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
-          {/* Recent Orders */}
-          <Card className="lg:col-span-4 overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="flex justify-between items-center">
-              <div>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Latest customer orders</CardDescription>
-              </div>
-              <Button variant="outline" size="sm">View All</Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentOrders.map((order) => (
-                  <div key={order.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-lg bg-background">
+              {isEditing ? (
+                <form onSubmit={handleProfileSubmit} className="space-y-4">
+                  <div className="space-y-4">
                     <div>
-                      <div className="font-medium">{order.customer}</div>
-                      <div className="text-sm text-muted-foreground">{order.id} • {new Date(order.date).toLocaleDateString()}</div>
+                      <Label htmlFor="edit-name">Nom complet</Label>
+                      <Input
+                        id="edit-name"
+                        value={profileForm.name}
+                        onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
+                        required
+                        placeholder="Votre nom complet"
+                      />
                     </div>
-                    <div className="flex items-center gap-3 mt-2 sm:mt-0">
-                      <div className="text-sm font-medium">{order.amount.toLocaleString()} CDF</div>
-                      <Badge variant={
-                        order.status === "delivered" 
-                          ? "default" 
-                          : order.status === "processing" 
-                          ? "secondary" 
-                          : "outline"
-                      }>
-                        {order.status}
-                      </Badge>
+                    <div>
+                      <Label htmlFor="edit-email">Email</Label>
+                      <Input
+                        id="edit-email"
+                        type="email"
+                        value={profileForm.email}
+                        onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                        placeholder="Votre email"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-phone">Téléphone</Label>
+                      <Input
+                        id="edit-phone"
+                        value={profileForm.phone}
+                        onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                        required
+                        placeholder="Votre numéro de téléphone"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-current-password">Mot de passe actuel</Label>
+                      <Input
+                        id="edit-current-password"
+                        type="password"
+                        value={profileForm.currentPassword}
+                        onChange={(e) => setProfileForm({...profileForm, currentPassword: e.target.value})}
+                        placeholder="Entrez votre mot de passe actuel pour confirmer les modifications"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-password">Nouveau mot de passe (optionnel)</Label>
+                      <Input
+                        id="edit-password"
+                        type="password"
+                        value={profileForm.password}
+                        onChange={(e) => setProfileForm({...profileForm, password: e.target.value})}
+                        placeholder="Laissez vide pour garder le même"
+                        minLength={4}
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Recent Customers */}
-          <Card className="lg:col-span-3 overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="flex justify-between items-center">
-              <div>
-                <CardTitle>Recent Customers</CardTitle>
-                <CardDescription>New customer registrations</CardDescription>
-              </div>
-              <Button variant="outline" size="sm">View All</Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentCustomers.map((customer) => (
-                  <div key={customer.id} className="flex items-center gap-3 p-3 rounded-lg bg-background">
-                    <Avatar>
-                      <AvatarFallback>
-                        {customer.name.split(' ').map(name => name[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium">{customer.name}</div>
-                      <div className="text-sm text-muted-foreground truncate">{customer.email}</div>
-                    </div>
-                    <div className="text-sm text-right">
-                      <div className="font-medium">{customer.spent.toLocaleString()} CDF</div>
-                      <div className="text-muted-foreground">{customer.orders} orders</div>
-                    </div>
+                  <div>
+                    <Label htmlFor="edit-address">Adresse</Label>
+                    <Textarea
+                      id="edit-address"
+                      value={profileForm.address}
+                      onChange={(e) => setProfileForm({...profileForm, address: e.target.value})}
+                      placeholder="Votre adresse complète"
+                    />
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Recent Messages & Calendar */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
-          {/* Recent Messages */}
-          <Card className="lg:col-span-4 overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="flex justify-between items-center">
-              <div>
-                <CardTitle>Recent Messages</CardTitle>
-                <CardDescription>Latest WhatsApp inquiries</CardDescription>
-              </div>
-              <Button variant="outline" size="sm">Open WhatsApp</Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentMessages.map((message) => (
-                  <div key={message.id} className="flex items-start gap-3 p-3 rounded-lg bg-background">
-                    <Avatar>
-                      <AvatarFallback>
-                        {message.name.split(' ').map(name => name[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center">
-                        <div className="font-medium flex items-center">
-                          {message.name}
-                          {message.unread && (
-                            <span className="ml-2 w-2 h-2 bg-primary rounded-full"></span>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground">{message.time}</div>
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={loading} className="relative">
+                      {loading ? (
+                        <>
+                          <span className="opacity-0">Sauvegarder</span>
+                          <span className="absolute inset-0 flex items-center justify-center">
+                            <span className="animate-spin mr-2">⟳</span>
+                            Mise à jour...
+                          </span>
+                        </>
+                      ) : (
+                        "Sauvegarder"
+                      )}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+                      Annuler
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Nom complet</p>
+                        <p className="font-medium">{currentCustomer?.name || 'Non renseigné'}</p>
                       </div>
-                      <div className="text-sm text-muted-foreground truncate mt-1">
-                        {message.message}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Téléphone</p>
+                        <p className="font-medium">{currentCustomer?.phone || 'Non renseigné'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Email</p>
+                        <p className="font-medium">{currentCustomer?.email || 'Non renseigné'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Adresse</p>
+                        <p className="font-medium">
+                          {typeof currentCustomer?.address === 'string' 
+                            ? currentCustomer.address 
+                            : currentCustomer?.address?.address || 'Non renseigné'}
+                        </p>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-              <Button variant="outline" className="w-full mt-4">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                View All Messages
-              </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
-          
-          {/* Upcoming Tasks */}
-          <Card className="lg:col-span-3 overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="flex justify-between items-center">
-              <div>
-                <CardTitle>Upcoming Tasks</CardTitle>
-                <CardDescription>Your schedule for today</CardDescription>
-              </div>
-              <Button variant="outline" size="icon">
-                <Calendar className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-3 rounded-lg bg-background">
-                  <div className="flex justify-between items-center">
-                    <Badge>10:00 AM</Badge>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <TrendingUp className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="font-medium mt-2">Weekly Sales Meeting</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Review sales performance with the team
-                  </div>
-                </div>
-                
-                <div className="p-3 rounded-lg bg-background">
-                  <div className="flex justify-between items-center">
-                    <Badge variant="secondary">2:00 PM</Badge>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <Package className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="font-medium mt-2">Inventory Check</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Verify new stock arrival and update system
-                  </div>
-                </div>
-                
-                <div className="p-3 rounded-lg bg-background">
-                  <div className="flex justify-between items-center">
-                    <Badge variant="outline">4:30 PM</Badge>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <MessageSquare className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="font-medium mt-2">Customer Follow-ups</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Send follow-up messages to recent customers
-                  </div>
-                </div>
-              </div>
-              <Button variant="outline" className="w-full mt-4">
-                <Calendar className="mr-2 h-4 w-4" />
-                View Full Schedule
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        </motion.div>
+      </main>
+
+      <div className="pb-16 md:pb-0">
+        <Footer />
       </div>
-    </AdminLayout>
+    </div>
   );
-}
+};
+
+export default Account;

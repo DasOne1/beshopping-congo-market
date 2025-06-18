@@ -1,412 +1,279 @@
 
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Heart, ShoppingBag, Share2 } from 'lucide-react';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import WhatsAppContact from '@/components/WhatsAppContact';
-import ProductCard from '@/components/ProductCard';
+import { ArrowLeft, ShoppingCart, Heart, Star, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { mockProducts } from '@/data/mockData';
-import { cn } from '@/lib/utils';
-import { Product, ProductVariant } from '@/types';
+import ProductImageCarousel from '@/components/ProductImageCarousel';
+import ProductAttributes from '@/components/ProductAttributes';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { motion } from 'framer-motion';
+import { toast } from '@/components/ui/use-toast';
 
 const ProductDetails = () => {
-  const { productId } = useParams<{ productId: string }>();
-  const { addToCart } = useCart();
-  const { isFavorite, addToFavorites, removeFromFavorites } = useFavorites();
-  const [product, setProduct] = useState<Product | null>(null);
+  const { id } = useParams<{ id: string }>();
+  const { products, isLoading } = useProducts();
+  const { addToCart, isInCart } = useCart();
+  const { favorites, addToFavorites, removeFromFavorites } = useFavorites();
+  
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [selectedVariants, setSelectedVariants] = useState<{[key: string]: string}>({});
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const favoriteStatus = product ? isFavorite(product.id) : false;
-  
-  // Similar products (from same category)
-  const similarProducts = product 
-    ? mockProducts
-        .filter(p => p.category === product.category && p.id !== product.id)
-        .slice(0, 4)
-    : [];
-  
-  // Format price to include thousands separator
-  const formatPrice = (price: number): string => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  };
-  
+
+  const product = products?.find(p => p.id === id);
+  const isFavorite = favorites.some(fav => fav === id);
+  const inCart = isInCart(id || '');
+
   useEffect(() => {
-    // In a real app, you would fetch the product from API
-    const foundProduct = mockProducts.find(p => p.id === productId);
-    
-    if (foundProduct) {
-      setProduct(foundProduct);
-      
-      // Initialize selected variants with first option of each variant
-      if (foundProduct.variants) {
-        const initialVariants: {[key: string]: string} = {};
-        foundProduct.variants.forEach(variant => {
-          if (variant.options.length > 0) {
-            initialVariants[variant.name] = variant.options[0];
-          }
-        });
-        setSelectedVariants(initialVariants);
+    if (product) {
+      if (product.colors && product.colors.length > 0) {
+        setSelectedColor(product.colors[0]);
+      }
+      if (product.sizes && product.sizes.length > 0) {
+        setSelectedSize(product.sizes[0]);
       }
     }
-  }, [productId]);
-  
-  if (!product) {
+  }, [product]);
+
+  if (isLoading) {
     return (
-      <div className="flex flex-col min-h-screen">
+      <>
         <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="h-16 w-16 mx-auto mb-4 loading-pulse bg-gray-200 rounded-lg"></div>
-            <h2 className="text-lg font-medium">Loading product...</h2>
-          </div>
-        </main>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
         <Footer />
-      </div>
+      </>
     );
   }
-  
-  const handleAddToCart = () => {
-    addToCart(product.id, quantity, selectedVariants);
-  };
-  
-  const handleVariantChange = (variantName: string, value: string) => {
-    setSelectedVariants(prev => ({
-      ...prev,
-      [variantName]: value
-    }));
-  };
-  
-  const whatsappMessage = `Hello! I'm interested in ${product.name} priced at ${formatPrice(product.discountedPrice || product.originalPrice)} FC. ${
-    Object.keys(selectedVariants).length > 0
-      ? `Selected options: ${Object.entries(selectedVariants).map(([key, value]) => `${key}: ${value}`).join(', ')}. `
-      : ''
-  }Can you provide more information?`;
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      
-      <main className="flex-1">
-        <div className="container py-6">
-          {/* Breadcrumb */}
-          <div className="text-sm breadcrumbs mb-4">
-            <ul className="flex items-center space-x-2">
-              <li><Link to="/" className="text-gray-500 hover:text-primary">Home</Link></li>
-              <li className="text-gray-500">/</li>
-              <li><Link to="/products" className="text-gray-500 hover:text-primary">Products</Link></li>
-              <li className="text-gray-500">/</li>
-              <li className="text-primary">{product.name}</li>
-            </ul>
-          </div>
-          
-          {/* Product Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Product Images */}
-            <div className="space-y-4">
-              <div className="relative rounded-lg overflow-hidden bg-gray-100 aspect-square">
-                <img 
-                  src={product.images[activeImageIndex]} 
-                  alt={product.name} 
-                  className="w-full h-full object-contain"
-                />
-                {product.discount && product.discount > 0 && (
-                  <div className="absolute top-2 left-2 bg-secondary text-secondary-foreground px-2 py-1 text-xs font-semibold rounded-full">
-                    -{product.discount}%
-                  </div>
-                )}
-              </div>
-              
-              {product.images.length > 1 && (
-                <div className="flex space-x-2 overflow-auto pb-2">
-                  {product.images.map((image, index) => (
-                    <button
-                      key={index}
-                      className={cn(
-                        "rounded-md overflow-hidden border-2 min-w-[60px] h-[60px]",
-                        activeImageIndex === index ? "border-primary" : "border-transparent"
-                      )}
-                      onClick={() => setActiveImageIndex(index)}
-                    >
-                      <img 
-                        src={image} 
-                        alt={`${product.name} - view ${index + 1}`} 
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            {/* Product Info */}
-            <div className="space-y-4">
-              <h1 className="text-2xl md:text-3xl font-bold">{product.name}</h1>
-              
-              {/* Price */}
-              <div className="flex items-baseline">
-                <span className="text-2xl font-bold text-primary">
-                  {formatPrice(product.discountedPrice || product.originalPrice)} FC
-                </span>
-                
-                {product.discountedPrice && (
-                  <span className="ml-2 text-gray-500 line-through">
-                    {formatPrice(product.originalPrice)} FC
-                  </span>
-                )}
-              </div>
-              
-              {/* Stock status */}
-              <div>
-                <span className={cn(
-                  "inline-block px-2 py-1 text-xs font-medium rounded-full",
-                  product.stock > 0 
-                    ? "bg-green-100 text-green-800" 
-                    : "bg-red-100 text-red-800"
-                )}>
-                  {product.stock > 0 ? `In Stock (${product.stock})` : "Out of Stock"}
-                </span>
-              </div>
-              
-              {/* Description */}
-              <p className="text-gray-600">{product.description}</p>
-              
-              {/* Variants */}
-              {product.variants && product.variants.map((variant: ProductVariant) => (
-                <div key={variant.id} className="space-y-2">
-                  <h3 className="font-medium">{variant.name}:</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {variant.options.map(option => (
-                      <Button
-                        key={option}
-                        type="button"
-                        variant={selectedVariants[variant.name] === option ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleVariantChange(variant.name, option)}
-                      >
-                        {option}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              
-              {/* Quantity */}
-              <div className="space-y-2">
-                <h3 className="font-medium">Quantity:</h3>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={product.stock <= 0}
-                  >
-                    -
-                  </Button>
-                  <span className="w-12 text-center">{quantity}</span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                    disabled={product.stock <= 0 || quantity >= product.stock}
-                  >
-                    +
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Actions */}
-              <div className="flex flex-wrap gap-3 pt-4">
-                <Button
-                  className="flex-1"
-                  onClick={handleAddToCart}
-                  disabled={product.stock <= 0}
-                >
-                  <ShoppingBag className="mr-2 h-4 w-4" />
-                  Add to Cart
-                </Button>
-                
-                <WhatsAppContact 
-                  phoneNumber="243123456789"
-                  message={whatsappMessage}
-                  variant="outline"
-                  className="flex-1 bg-whatsapp text-white hover:bg-whatsapp-dark"
-                >
-                  Ask via WhatsApp
-                </WhatsAppContact>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => favoriteStatus ? removeFromFavorites(product.id) : addToFavorites(product.id)}
-                  className={cn(favoriteStatus ? "text-red-500" : "text-gray-500")}
-                >
-                  <Heart className={cn("h-5 w-5", favoriteStatus ? "fill-current" : "")} />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    // Share functionality
-                    if (navigator.share) {
-                      navigator.share({
-                        title: product.name,
-                        text: product.description,
-                        url: window.location.href,
-                      });
-                    } else {
-                      navigator.clipboard.writeText(window.location.href);
-                      alert('Link copied to clipboard!');
-                    }
-                  }}
-                >
-                  <Share2 className="h-5 w-5" />
-                </Button>
-              </div>
-              
-              {/* Tags */}
-              {product.tags && product.tags.length > 0 && (
-                <div className="pt-2">
-                  <div className="flex flex-wrap gap-2">
-                    {product.tags.map(tag => (
-                      <Link
-                        key={tag}
-                        to={`/products?tag=${tag}`}
-                        className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full hover:bg-gray-200"
-                      >
-                        #{tag}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Additional Info Tabs */}
-          <div className="mt-12">
-            <Tabs defaultValue="description">
-              <TabsList className="w-full border-b flex justify-start mb-6">
-                <TabsTrigger value="description" className="pb-2">Description</TabsTrigger>
-                <TabsTrigger value="specification" className="pb-2">Specification</TabsTrigger>
-                <TabsTrigger value="shipping" className="pb-2">Shipping</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="description" className="text-gray-700">
-                <p>{product.description}</p>
-                <p className="mt-4">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla quam velit, vulputate eu pharetra nec, mattis ac neque. 
-                  Duis vulputate commodo lectus, ac blandit elit tincidunt id.
-                </p>
-              </TabsContent>
-              
-              <TabsContent value="specification" className="text-gray-700">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="font-medium mb-2">Product Specifications</h3>
-                      <ul className="space-y-2">
-                        <li className="flex justify-between">
-                          <span className="text-gray-600">Brand</span>
-                          <span>BeShop</span>
-                        </li>
-                        <li className="flex justify-between">
-                          <span className="text-gray-600">Material</span>
-                          <span>Premium Quality</span>
-                        </li>
-                        <li className="flex justify-between">
-                          <span className="text-gray-600">Warranty</span>
-                          <span>1 Year</span>
-                        </li>
-                      </ul>
-                    </div>
-                    
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="font-medium mb-2">Dimensions</h3>
-                      <ul className="space-y-2">
-                        <li className="flex justify-between">
-                          <span className="text-gray-600">Weight</span>
-                          <span>0.5 kg</span>
-                        </li>
-                        <li className="flex justify-between">
-                          <span className="text-gray-600">Height</span>
-                          <span>10 cm</span>
-                        </li>
-                        <li className="flex justify-between">
-                          <span className="text-gray-600">Width</span>
-                          <span>15 cm</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="shipping" className="text-gray-700">
-                <div className="space-y-4">
-                  <p>
-                    We offer fast and reliable shipping options throughout Congo. 
-                    Shipping time depends on your location and typically takes 1-3 business days in major cities.
-                  </p>
-                  
-                  <h3 className="font-medium">Shipping Rates:</h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Kinshasa: Free shipping on orders over 100,000 FC</li>
-                    <li>Other major cities: 5,000 FC</li>
-                    <li>Remote areas: 10,000 FC</li>
-                  </ul>
-                  
-                  <p className="mt-4">
-                    Contact our customer support via WhatsApp for more specific information about delivery to your area.
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-          
-          {/* Similar Products */}
-          {similarProducts.length > 0 && (
-            <div className="mt-16">
-              <h2 className="text-xl font-semibold mb-6">Similar Products</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {similarProducts.map(product => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* WhatsApp Contact Banner */}
-          <div className="mt-16 bg-whatsapp/10 rounded-lg p-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div>
-                <h3 className="font-semibold text-lg">Need help with this product?</h3>
-                <p className="text-gray-600">Our team is ready to assist you with any questions.</p>
-              </div>
-              <WhatsAppContact
-                phoneNumber="243123456789"
-                message={`Hello! I have a question about ${product.name}.`}
-                variant="default"
-                className="bg-whatsapp hover:bg-whatsapp-dark"
-              >
-                Chat with Us on WhatsApp
-              </WhatsAppContact>
-            </div>
+  if (!product) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Produit non trouvé</h1>
+            <Link to="/products">
+              <Button>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Retour aux produits
+              </Button>
+            </Link>
           </div>
         </div>
-      </main>
-      
+        <Footer />
+      </>
+    );
+  }
+
+  const handleAddToCart = () => {
+    addToCart(product.id);
+    toast({
+      title: "Produit ajouté au panier",
+      description: `${product.name} a été ajouté à votre panier.`,
+    });
+  };
+
+  const handleToggleFavorite = () => {
+    if (isFavorite) {
+      removeFromFavorites(product.id);
+      toast({
+        title: "Retiré des favoris",
+        description: `${product.name} a été retiré de vos favoris.`,
+      });
+    } else {
+      addToFavorites(product.id);
+      toast({
+        title: "Ajouté aux favoris",
+        description: `${product.name} a été ajouté à vos favoris.`,
+      });
+    }
+  };
+
+  const price = product.discounted_price || product.original_price;
+  const originalPrice = product.discounted_price ? product.original_price : null;
+  const discount = product.discount || 0;
+
+  return (
+    <>
+      <Header />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-6">
+          {/* Breadcrumb */}
+          <div className="mb-6">
+            <Link to="/products" className="inline-flex items-center text-muted-foreground hover:text-primary transition-colors">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour aux produits
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Images */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <ProductImageCarousel
+                images={product.images || []}
+                productName={product.name}
+              />
+            </motion.div>
+
+            {/* Product Info */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="space-y-6"
+            >
+              {/* Title and Brand */}
+              <div>
+                <div className="flex items-start justify-between mb-2">
+                  <h1 className="text-3xl font-bold text-foreground">{product.name}</h1>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleToggleFavorite}
+                    className="text-muted-foreground hover:text-red-500"
+                  >
+                    <Heart className={`w-6 h-6 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                  </Button>
+                </div>
+                {product.brand && (
+                  <p className="text-lg text-muted-foreground">{product.brand}</p>
+                )}
+              </div>
+
+              {/* Rating and Reviews */}
+              <div className="flex items-center space-x-2">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <span className="text-sm text-muted-foreground">(24 avis)</span>
+              </div>
+
+              {/* Price */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-3">
+                  <span className="text-3xl font-bold text-foreground">
+                    {price.toLocaleString()} CDF
+                  </span>
+                  {originalPrice && (
+                    <span className="text-xl text-muted-foreground line-through">
+                      {originalPrice.toLocaleString()} CDF
+                    </span>
+                  )}
+                  {discount > 0 && (
+                    <Badge variant="destructive">-{discount}%</Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Description */}
+              {product.description && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Description</h3>
+                  <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+                </div>
+              )}
+
+              {/* Attributes */}
+              <ProductAttributes
+                product={product}
+                selectedColor={selectedColor}
+                selectedSize={selectedSize}
+                onColorChange={setSelectedColor}
+                onSizeChange={setSelectedSize}
+              />
+
+              {/* Stock Status */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className="text-sm">
+                  {product.stock > 0 ? `${product.stock} en stock` : 'Rupture de stock'}
+                </span>
+              </div>
+
+              {/* Quantity and Add to Cart */}
+              <Card>
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Quantité:</span>
+                    <div className="flex items-center space-x-3">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        disabled={quantity <= 1}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <span className="w-12 text-center font-medium">{quantity}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setQuantity(quantity + 1)}
+                        disabled={quantity >= product.stock}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    onClick={handleAddToCart}
+                    disabled={product.stock === 0 || inCart}
+                  >
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    {inCart ? 'Déjà dans le panier' : 'Ajouter au panier'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Additional Info */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                {product.material && (
+                  <div>
+                    <span className="font-medium">Matériau:</span>
+                    <span className="ml-2 text-muted-foreground">{product.material}</span>
+                  </div>
+                )}
+                {product.gender && (
+                  <div>
+                    <span className="font-medium">Genre:</span>
+                    <span className="ml-2 text-muted-foreground">{product.gender}</span>
+                  </div>
+                )}
+                {product.collection && (
+                  <div>
+                    <span className="font-medium">Collection:</span>
+                    <span className="ml-2 text-muted-foreground">{product.collection}</span>
+                  </div>
+                )}
+                {product.season && (
+                  <div>
+                    <span className="font-medium">Saison:</span>
+                    <span className="ml-2 text-muted-foreground">{product.season}</span>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
       <Footer />
-    </div>
+    </>
   );
 };
 

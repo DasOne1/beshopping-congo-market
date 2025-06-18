@@ -2,120 +2,160 @@
 import { Product, Category } from '@/types';
 
 export const mockCategories: Category[] = [
-  { id: 'cat1', name: 'Electronics', slug: 'electronics', description: 'Latest gadgets and tech products' },
-  { id: 'cat2', name: 'Fashion', slug: 'fashion', description: 'Trendy clothes and accessories' },
-  { id: 'cat3', name: 'Home & Kitchen', slug: 'home-kitchen', description: 'Everything for your home' },
-  { id: 'cat4', name: 'Beauty & Health', slug: 'beauty-health', description: 'Beauty and personal care products' },
-  { id: 'cat5', name: 'Sports', slug: 'sports', description: 'Sports equipment and activewear' }
+  {
+    id: '1',
+    name: 'Électronique',
+    slug: 'electronique',
+    description: 'Découvrez nos produits électroniques',
+    is_visible: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '2',
+    name: 'Mode & Vêtements',
+    slug: 'mode-vetements',
+    description: 'Tendances mode pour tous',
+    is_visible: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '3',
+    name: 'Maison & Jardin',
+    slug: 'maison-jardin',
+    description: 'Tout pour votre maison',
+    is_visible: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '4',
+    name: 'Sport & Loisirs',
+    slug: 'sport-loisirs',
+    description: 'Équipements sportifs et loisirs',
+    is_visible: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '5',
+    name: 'Beauté & Santé',
+    slug: 'beaute-sante',
+    description: 'Produits de beauté et santé',
+    is_visible: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
 ];
 
 export const mockProducts: Product[] = [
   {
-    id: 'prod1',
-    name: 'Smartphone Pro X',
-    description: 'Latest smartphone with high-resolution camera and long battery life.',
-    originalPrice: 180000,
-    discountedPrice: 150000,
-    discount: 17,
-    images: ['https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=400&h=400'],
+    id: '1',
+    name: 'Smartphone Samsung Galaxy',
+    description: 'Dernier modèle Samsung avec écran AMOLED',
+    original_price: 450000,
+    discounted_price: 380000,
+    discount: 15,
+    images: ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9'],
     stock: 25,
-    category: 'cat1',
-    tags: ['smartphone', 'tech', 'camera'],
+    category_id: '1',
+    tags: ['smartphone', 'samsung', 'android'],
     featured: true,
-    popular: 85
+    popular: 95,
+    is_visible: true,
+    status: 'active',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   },
   {
-    id: 'prod2',
-    name: 'Wireless Earbuds',
-    description: 'High-quality wireless earbuds with noise cancellation.',
-    originalPrice: 45000,
-    discountedPrice: 35000,
-    discount: 22,
-    images: ['https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=400&h=400'],
-    stock: 50,
-    category: 'cat1',
-    tags: ['audio', 'wireless', 'tech'],
-    featured: false,
-    popular: 63
-  },
-  {
-    id: 'prod3',
-    name: 'Designer T-Shirt',
-    description: 'Premium quality cotton t-shirt with trendy design.',
-    originalPrice: 25000,
-    discountedPrice: 20000,
+    id: '2',
+    name: 'T-shirt Coton Bio',
+    description: 'T-shirt en coton biologique, doux et confortable',
+    original_price: 15000,
+    discounted_price: 12000,
     discount: 20,
-    images: ['https://images.unsplash.com/photo-1721322800607-8c38375eef04?auto=format&fit=crop&w=400&h=400'],
-    stock: 100,
-    category: 'cat2',
-    tags: ['fashion', 'clothing', 'casual'],
-    variants: [
-      {
-        id: 'var1',
-        name: 'Size',
-        options: ['S', 'M', 'L', 'XL']
-      },
-      {
-        id: 'var2',
-        name: 'Color',
-        options: ['Black', 'White', 'Red']
-      }
-    ],
-    featured: true,
-    popular: 92
-  },
-  {
-    id: 'prod4',
-    name: 'Kitchen Blender Pro',
-    description: 'Powerful blender for all your kitchen needs.',
-    originalPrice: 65000,
-    discountedPrice: 50000,
-    discount: 23,
-    images: ['https://images.unsplash.com/photo-1582562124811-c09040d0a901?auto=format&fit=crop&w=400&h=400'],
-    stock: 30,
-    category: 'cat3',
-    tags: ['kitchen', 'appliance', 'blender'],
-    featured: true,
-    popular: 45
-  },
-  {
-    id: 'prod5',
-    name: 'Organic Face Cream',
-    description: 'Rejuvenating face cream made with natural ingredients.',
-    originalPrice: 35000,
-    discountedPrice: 30000,
-    discount: 14,
-    images: ['https://images.unsplash.com/photo-1500673922987-e212871fec22?auto=format&fit=crop&w=400&h=400'],
-    stock: 75,
-    category: 'cat4',
-    tags: ['skincare', 'beauty', 'organic'],
+    images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab'],
+    stock: 50,
+    category_id: '2',
+    tags: ['t-shirt', 'coton', 'bio'],
     featured: false,
-    popular: 78
+    popular: 78,
+    is_visible: true,
+    status: 'active',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   },
   {
-    id: 'prod6',
-    name: 'Running Shoes',
-    description: 'Comfortable and durable running shoes for all terrains.',
-    originalPrice: 90000,
-    discountedPrice: 75000,
-    discount: 17,
-    images: ['https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=400&h=400'],
-    stock: 40,
-    category: 'cat5',
-    tags: ['shoes', 'sports', 'running'],
-    variants: [
-      {
-        id: 'var3',
-        name: 'Size',
-        options: ['39', '40', '41', '42', '43', '44']
-      },
-      {
-        id: 'var4',
-        name: 'Color',
-        options: ['Black', 'Blue', 'Red']
-      }
-    ],
+    id: '3',
+    name: 'Casque Audio Bluetooth',
+    description: 'Casque sans fil avec réduction de bruit',
+    original_price: 120000,
+    discounted_price: 95000,
+    discount: 21,
+    images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e'],
+    stock: 30,
+    category_id: '1',
+    tags: ['casque', 'audio', 'bluetooth'],
     featured: true,
-    popular: 58
+    popular: 88,
+    is_visible: true,
+    status: 'active',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '4',
+    name: 'Canapé 3 Places',
+    description: 'Canapé confortable en tissu pour salon',
+    original_price: 350000,
+    discounted_price: 280000,
+    discount: 20,
+    images: ['https://images.unsplash.com/photo-1586023492125-27b2c045efd7'],
+    stock: 8,
+    category_id: '3',
+    tags: ['canapé', 'salon', 'mobilier'],
+    featured: true,
+    popular: 72,
+    is_visible: true,
+    status: 'active',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '5',
+    name: 'Ballon de Football',
+    description: 'Ballon officiel pour matchs et entraînements',
+    original_price: 8000,
+    discounted_price: 6500,
+    discount: 19,
+    images: ['https://images.unsplash.com/photo-1575361204480-aadea25e6e68'],
+    stock: 100,
+    category_id: '4',
+    tags: ['football', 'sport', 'ballon'],
+    featured: false,
+    popular: 65,
+    is_visible: true,
+    status: 'active',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '6',
+    name: 'Crème Hydratante Visage',
+    description: 'Crème anti-âge pour tous types de peau',
+    original_price: 25000,
+    discounted_price: 20000,
+    discount: 20,
+    images: ['https://images.unsplash.com/photo-1556228720-195a672e8a03'],
+    stock: 75,
+    category_id: '5',
+    tags: ['crème', 'beauté', 'hydratante'],
+    featured: true,
+    popular: 82,
+    is_visible: true,
+    status: 'active',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   }
 ];

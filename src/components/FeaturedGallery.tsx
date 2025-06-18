@@ -1,38 +1,40 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from 'react';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
-import { mockProducts } from '@/data/mockData';
+import { useProducts } from '@/hooks/useProducts';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Bookmark, ShoppingCart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 export function FeaturedGallery() {
   const [api, setApi] = useState<any>();
   const [current, setCurrent] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
   
-  // Get the 5 most popular products
-  const featuredProducts = [...mockProducts]
-    .sort((a, b) => b.popular - a.popular)
-    .slice(0, 5);
+  // Utiliser les données en temps réel
+  useRealtimeSync();
+  const { products } = useProducts();
+  
+  // Filtrer uniquement les produits vedettes actifs
+  const displayedProducts = products?.filter(p => p.featured && p.status === 'active') || [];
   
   // Autoplay
   useEffect(() => {
-    if (!api || !autoplay) return;
+    if (!api || !autoplay || displayedProducts.length === 0) return;
     
     const interval = setInterval(() => {
       api.scrollNext();
-    }, 5000);
+    }, 4000);
     
     return () => clearInterval(interval);
-  }, [api, autoplay]);
+  }, [api, autoplay, displayedProducts.length]);
   
   useEffect(() => {
     if (!api) return;
@@ -47,19 +49,22 @@ export function FeaturedGallery() {
     };
   }, [api]);
 
+  if (displayedProducts.length === 0) {
+    return (
+      <section className="py-3 md:py-4 mb-4 md:mb-6">
+        <div className="container mx-auto px-4">
+          <div className="animate-pulse">
+            <div className="bg-gradient-to-r from-orange-400 to-orange-500 rounded-xl md:rounded-2xl h-40 md:h-48 mb-3"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="py-4 mb-6">
-      <div className="container px-2 sm:px-4">
-        <motion.h2 
-          className="text-xl md:text-2xl font-semibold mb-4 pl-1 border-l-4 border-primary"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          Explore New Fashion Trends
-        </motion.h2>
-        
-        <div className="relative" 
+    <section className="py-3 md:py-4 mb-4 md:mb-6 w-full overflow-hidden">
+      <div className="container mx-auto px-4">
+        <div className="relative w-full" 
           onMouseEnter={() => setAutoplay(false)}
           onMouseLeave={() => setAutoplay(true)}
         >
@@ -68,59 +73,69 @@ export function FeaturedGallery() {
             className="w-full"
             opts={{ loop: true }}
           >
-            <CarouselContent>
-              {featuredProducts.map((product) => (
-                <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3">
-                  <div className="p-1">
-                    <Link to={`/product/${product.id}`} className="block">
-                      <div className="glass-card overflow-hidden relative group rounded-2xl">
-                        <div className="absolute top-3 left-3 z-10 bg-white/80 dark:bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
-                          <span className="text-yellow-400 mr-1">★</span>
-                          <span className="text-sm font-medium">{(Math.random() * 2 + 3).toFixed(1)}</span>
-                        </div>
-                        
-                        <div className="absolute top-3 right-3 z-10">
-                          <div className="glass rounded-full p-2">
-                            <Bookmark size={16} className="text-primary" />
-                          </div>
-                        </div>
-                        
+            <CarouselContent className="ml-0">
+              {displayedProducts.map((product) => (
+                <CarouselItem key={product.id} className="pl-0">
+                  <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-orange-400 to-orange-500 h-40 md:h-48 lg:h-56 w-full">
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute top-3 md:top-4 right-3 md:right-4 w-20 md:w-32 h-20 md:h-32 border-2 border-white rounded-full"></div>
+                      <div className="absolute bottom-3 md:bottom-4 right-6 md:right-8 w-8 md:w-16 h-8 md:h-16 border border-white rounded-full"></div>
+                    </div>
+                    
+                    <div className="relative z-10 flex items-center justify-between h-full p-4 md:p-6">
+                      <div className="flex-1 text-white max-w-[60%] md:max-w-[65%]">
+                        <h3 className="text-base md:text-lg lg:text-2xl font-bold mb-1 md:mb-2">
+                          Produit Vedette !
+                        </h3>
+                        <p className="text-xs md:text-sm lg:text-base mb-3 md:mb-4 opacity-90 line-clamp-2">
+                          {product.name}
+                        </p>
+                        <Link to={`/product/${product.id}`}>
+                          <Button 
+                            variant="secondary" 
+                            size="sm"
+                            className="bg-white text-orange-500 hover:bg-white/90 text-xs md:text-sm px-3 md:px-4 py-1 md:py-2"
+                          >
+                            Acheter
+                            <ArrowRight className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                      
+                      <div className="relative flex-shrink-0">
                         <img 
                           src={product.images[0]} 
                           alt={product.name}
-                          className="w-full aspect-[4/3] object-cover transition-transform duration-300 group-hover:scale-105"
+                          className="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32 object-cover rounded-full border-2 md:border-4 border-white/30"
                         />
-                        <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/70 via-black/40 to-transparent text-white">
-                          <h3 className="font-medium truncate">{product.name}</h3>
-                          <p className="text-sm opacity-90">{product.originalPrice.toLocaleString()} CDF</p>
-                          
-                          <div className="absolute bottom-4 right-4 bg-white rounded-full p-2 shadow-lg">
-                            <ShoppingCart size={18} className="text-primary" />
-                          </div>
+                        <div className="absolute -top-1 md:-top-2 -right-1 md:-right-2 bg-green-500 text-white text-xs px-1 md:px-2 py-0.5 md:py-1 rounded-full font-bold">
+                          ${Math.floor((product.discounted_price || product.original_price) / 1000)}
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   </div>
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="absolute top-1/2 -left-4 -translate-y-1/2 hidden md:flex" />
-            <CarouselNext className="absolute top-1/2 -right-4 -translate-y-1/2 hidden md:flex" />
           </Carousel>
           
-          <div className="flex justify-center mt-4 gap-2">
-            {featuredProducts.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => api?.scrollTo(index)}
-                className={cn(
-                  "w-2 h-2 rounded-full transition-colors duration-300",
-                  current === index ? "bg-primary" : "bg-primary/30"
-                )}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
-          </div>
+          {/* Pagination points */}
+          {displayedProducts.length > 1 && (
+            <div className="flex justify-center mt-3 md:mt-4 gap-1 md:gap-2">
+              {displayedProducts.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => api?.scrollTo(index)}
+                  className={cn(
+                    "w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-300",
+                    current === index ? "bg-orange-500 w-4 md:w-6" : "bg-gray-300"
+                  )}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

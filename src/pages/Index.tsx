@@ -1,267 +1,245 @@
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from 'react';
+import { motion } from 'framer-motion';
+import { ShoppingBag, Truck, Shield, ArrowRight, Star, TrendingUp, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import ProductCard from '@/components/ProductCard';
-import WhatsAppContact from '@/components/WhatsAppContact';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ProductCard from '@/components/ProductCard';
+import ProductSkeleton from '@/components/ProductSkeleton';
+import CategoryCarousel from '@/components/CategoryCarousel';
 import { FeaturedGallery } from '@/components/FeaturedGallery';
-import { mockProducts, mockCategories } from '@/data/mockData';
-import { motion } from 'framer-motion';
+import WhatsAppContact from '@/components/WhatsAppContact';
+import { MobileNavBar } from '@/components/MobileNavBar';
+import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useMemo } from 'react';
+import './Index.css';
 
-const HomePage = () => {
-  const [activeTab, setActiveTab] = useState("featured");
+const heroImages = [
+  '/images/pic1.jpeg',
+  '/images/pic2.jpeg',
+  '/images/pic3.jpeg',
+  '/images/pic4.jpeg',
+  '/images/pic5.jpeg',
+  '/images/pic6.jpeg',
+];
+
+const Index = () => {
+  const navigate = useNavigate();
   
-  // Get featured products
-  const featuredProducts = mockProducts.filter(product => product.featured);
+  // Activer la synchronisation en temps réel
+  useRealtimeSync();
   
-  // Get most popular products
-  const popularProducts = [...mockProducts].sort((a, b) => b.popular - a.popular);
+  const { products, isLoading: productsLoading } = useProducts();
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { trackEvent } = useAnalytics();
 
-  const containerAnimation = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
+  const [currentHero, setCurrentHero] = useState(0);
+  
+  // Optimisation : mémoriser le changement d'image hero
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentHero((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const itemAnimation = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 }
+  // Optimisation : utiliser useMemo pour éviter le recalcul des produits groupés
+  const productsByCategory = useMemo(() => {
+    if (!categories || !products) return [];
+    
+    console.log('🔄 Regroupement des produits par catégorie...');
+    
+    return categories
+      ?.filter(category => category.is_visible)
+      .map(category => ({
+        category,
+        products: products
+          ?.filter(p => 
+            p.category_id === category.id && 
+            p.status === 'active' && 
+            p.is_visible === true
+          )
+          .slice(0, 6) || []
+      }))
+      .filter(group => group.products.length > 0) || [];
+  }, [categories, products]);
+
+  // Optimisation : tracking uniquement au premier chargement
+  useEffect(() => {
+    if (!productsLoading && !categoriesLoading) {
+      // Track page view seulement une fois que les données sont chargées
+      trackEvent.mutate({
+        event_type: 'view_product',
+        session_id: sessionStorage.getItem('session_id') || 'anonymous',
+        metadata: { page: 'home', products_count: products?.length || 0 }
+      });
     }
-  };
+  }, [productsLoading, categoriesLoading, products?.length]);
+
+  const isLoading = productsLoading || categoriesLoading;
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen bg-background">
+      {/* Header fixe qui reste toujours visible */}
       <Header />
       
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="bg-accent py-10">
-          <div className="container">
-            <motion.div 
-              className="text-center max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="text-3xl md:text-4xl font-bold mb-4">Welcome to BeShop Congo</h1>
-              <p className="text-lg mb-6">Your trusted online shopping destination in Congo</p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
-                  <Link to="/products">Browse Products</Link>
+      {/* Main content avec padding pour éviter que le contenu soit caché par le header fixe */}
+      <main className="pt-14 md:pt-16">
+        {/* Hero Section avec optimisation d'image */}
+        <section
+          className={`relative py-12 md:py-20 min-h-[420px] md:min-h-[480px] flex items-center bg-cover bg-center transition-all duration-700`}
+          style={{ 
+            backgroundImage: `url(${heroImages[currentHero]})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            willChange: 'background-image' // Optimisation CSS
+          }}
+        >
+          {/* Overlay pour lisibilité */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/70 via-background/80 to-secondary/70 opacity-80 z-0"></div>
+          <div className="container mx-auto px-4 relative z-10 flex items-center min-h-[350px] md:min-h-[400px]">
+            <div className="max-w-2xl space-y-4 md:space-y-6 py-6 md:py-8">
+              <Badge className="mb-2 px-3 md:px-4 py-1 text-sm md:text-base bg-primary/90 text-white shadow-lg">
+                Bienvenue sur BeShopping Congo
+              </Badge>
+              <h1 className="text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold leading-tight text-gray-900 dark:text-white drop-shadow-md">
+                Découvrez les
+                <span className="text-primary block">meilleurs produits</span>
+                du Congo
+              </h1>
+              <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-xl">
+                Une sélection soigneusement choisie des produits les plus recherchés,
+                livrés directement chez vous à Lubumbashi et dans tout le Congo.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-4 md:mt-6">
+                <Button 
+                  size="lg" 
+                  className="text-sm md:text-base lg:text-lg px-4 md:px-6 lg:px-8 shadow-md bg-primary hover:bg-primary/90 text-white"
+                  onClick={() => navigate('/products')}
+                >
+                  <ShoppingBag className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                  Explorer les produits
                 </Button>
-                <WhatsAppContact 
-                  phoneNumber="243978100940"
-                  message="Hello! I'm interested in shopping with BeShop."
-                  variant="outline"
+                <Button 
+                  variant="outline" 
                   size="lg"
+                  className="text-sm md:text-base lg:text-lg px-4 md:px-6 lg:px-8 border-primary text-primary hover:bg-primary/10"
+                  onClick={() => navigate('/custom-order')}
                 >
-                  Contact Support
-                </WhatsAppContact>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-        
-        {/* Featured Gallery Section */}
-        <FeaturedGallery />
-
-        {/* Categories Section */}
-        <section className="py-8">
-          <div className="container">
-            <motion.h2 
-              className="text-xl md:text-2xl font-semibold mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              Shop by Category
-            </motion.h2>
-            <ScrollArea className="w-full whitespace-nowrap">
-              <motion.div 
-                className="flex space-x-4 py-4"
-                variants={containerAnimation}
-                initial="hidden"
-                animate="visible"
-              >
-                {mockCategories.map((category, index) => (
-                  <motion.div
-                    key={category.id}
-                    variants={itemAnimation}
-                    custom={index}
-                  >
-                    <Link
-                      to={`/categories`}
-                      state={{ category: category.id }}
-                      className="flex flex-col items-center space-y-2 min-w-[100px]"
-                    >
-                      <div className="bg-accent hover:bg-accent/70 transition-colors rounded-full h-20 w-20 flex items-center justify-center shadow-sm">
-                        <div className="text-xl font-bold text-primary">{category.name.charAt(0)}</div>
-                      </div>
-                      <span className="text-sm font-medium">{category.name}</span>
-                    </Link>
-                  </motion.div>
-                ))}
-              </motion.div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          </div>
-        </section>
-
-        {/* Products Tabs Section */}
-        <section className="py-8">
-          <div className="container">
-            <Tabs defaultValue="featured" onValueChange={setActiveTab} value={activeTab}>
-              <div className="flex items-center justify-between mb-4">
-                <motion.h2 
-                  className="text-xl md:text-2xl font-semibold"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  Our Products
-                </motion.h2>
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <TabsList>
-                    <TabsTrigger value="featured">Featured</TabsTrigger>
-                    <TabsTrigger value="popular">Most Popular</TabsTrigger>
-                  </TabsList>
-                </motion.div>
-              </div>
-              
-              <TabsContent value="featured" className="space-y-4">
-                <motion.div 
-                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-                  variants={containerAnimation}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  {featuredProducts.map((product, index) => (
-                    <motion.div key={product.id} variants={itemAnimation} custom={index}>
-                      <ProductCard product={product} />
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </TabsContent>
-              
-              <TabsContent value="popular" className="space-y-4">
-                <motion.div 
-                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-                  variants={containerAnimation}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  {popularProducts.slice(0, 8).map((product, index) => (
-                    <motion.div key={product.id} variants={itemAnimation} custom={index}>
-                      <ProductCard product={product} />
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </TabsContent>
-              
-              <div className="mt-6 text-center">
-                <Button asChild variant="outline">
-                  <Link to="/products">View All Products</Link>
+                  <Palette className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                  Commande personnalisée
                 </Button>
               </div>
-            </Tabs>
-          </div>
-        </section>
-
-        {/* WhatsApp Support Banner */}
-        <section className="bg-whatsapp/10 py-8">
-          <div className="container">
-            <motion.div 
-              className="flex flex-col md:flex-row items-center justify-between gap-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="text-center md:text-left">
-                <h2 className="text-xl md:text-2xl font-semibold mb-2">Need Help Shopping?</h2>
-                <p className="text-gray-600 max-w-md">
-                  Our customer support team is ready to assist you through WhatsApp.
-                </p>
+              <div className="flex flex-wrap gap-3 md:gap-4 mt-4 md:mt-6">
+                <div className="flex items-center gap-2 text-primary font-medium text-sm md:text-base">
+                  <Truck className="h-4 w-4 md:h-5 md:w-5" /> 
+                  Livraison rapide
+                </div>
+                <div className="flex items-center gap-2 text-primary font-medium text-sm md:text-base">
+                  <Shield className="h-4 w-4 md:h-5 md:w-5" /> 
+                  Paiement sécurisé
+                </div>
+                <div className="flex items-center gap-2 text-primary font-medium text-sm md:text-base">
+                  <Star className="h-4 w-4 md:h-5 md:w-5" /> 
+                  Qualité garantie
+                </div>
               </div>
-              <WhatsAppContact
-                phoneNumber="243978100940"
-                message="Hello! I need assistance with shopping on BeShop."
-                className="bg-whatsapp hover:bg-whatsapp-dark"
-                size="lg"
-              >
-                Chat with Us on WhatsApp
-              </WhatsAppContact>
-            </motion.div>
+            </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section className="py-10">
-          <div className="container">
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-3 gap-6"
-              variants={containerAnimation}
-              initial="hidden"
-              animate="visible"
-            >
-              <motion.div variants={itemAnimation} className="bg-accent rounded-lg p-6 text-center">
-                <div className="bg-primary/10 rounded-full h-12 w-12 flex items-center justify-center mx-auto mb-4">
-                  <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h3 className="font-medium mb-2">Quality Products</h3>
-                <p className="text-sm text-gray-600">
-                  We ensure that all our products meet high quality standards.
-                </p>
-              </motion.div>
-              
-              <motion.div variants={itemAnimation} className="bg-accent rounded-lg p-6 text-center">
-                <div className="bg-primary/10 rounded-full h-12 w-12 flex items-center justify-center mx-auto mb-4">
-                  <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="font-medium mb-2">Fast Delivery</h3>
-                <p className="text-sm text-gray-600">
-                  Quick delivery service to get your products to you as soon as possible.
-                </p>
-              </motion.div>
-              
-              <motion.div variants={itemAnimation} className="bg-accent rounded-lg p-6 text-center">
-                <div className="bg-primary/10 rounded-full h-12 w-12 flex items-center justify-center mx-auto mb-4">
-                  <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-                  </svg>
-                </div>
-                <h3 className="font-medium mb-2">24/7 Support</h3>
-                <p className="text-sm text-gray-600">
-                  Our customer support team is always ready to assist you.
-                </p>
-              </motion.div>
-            </motion.div>
+        {/* Categories Carousel - Sticky mais en dessous du header fixe */}
+        <div className="sticky top-14 md:top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border/40">
+          <div className="w-full">
+            <CategoryCarousel />
           </div>
-        </section>
+        </div>
+
+        {/* Featured Products Carousel */}
+        <div className="w-full">
+          <FeaturedGallery />
+        </div>
+
+        {/* Products by Category - Optimisé pour le chargement */}
+        {isLoading ? (
+          <section className="py-4 md:py-6">
+            <div className="container mx-auto px-4">
+              <div className="mb-4 md:mb-6">
+                <div className="flex justify-between items-center mb-3 md:mb-4">
+                  <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+                  <div className="h-8 bg-gray-200 rounded w-20 animate-pulse"></div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+                <ProductSkeleton count={8} />
+              </div>
+            </div>
+          </section>
+        ) : (
+          productsByCategory.map(group => (
+            <section key={group.category.id} className="py-4 md:py-6">
+              <div className="container mx-auto px-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                  viewport={{ once: true }} // Optimisation : animer une seule fois
+                  className="mb-4 md:mb-6"
+                >
+                  <div className="flex justify-between items-center mb-3 md:mb-4">
+                    <h2 className="text-lg md:text-xl font-bold">{group.category.name}</h2>
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => navigate(`/products?category=${group.category.id}`)}
+                      className="text-xs md:text-sm"
+                    >
+                      Voir tout
+                    </Button>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }} // Optimisation : animer une seule fois
+                  className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6"
+                >
+                  {group.products.map((product, index) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.1 * Math.min(index, 3) }} // Limiter le délai
+                      viewport={{ once: true }}
+                    >
+                      <ProductCard product={product} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
+            </section>
+          ))
+        )}
       </main>
-      
+
+      {/* Footer */}
       <Footer />
+
+      {/* Mobile Navigation Bar */}
+      <MobileNavBar />
+
+      {/* WhatsApp Contact Button */}
+      <WhatsAppContact phoneNumber="+243 978 100 940" message="Bonjour, je souhaite passer une commande" />
     </div>
   );
 };
 
-export default HomePage;
+export default Index;

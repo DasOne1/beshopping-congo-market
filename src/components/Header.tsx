@@ -1,115 +1,260 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   ShoppingBag, 
   Heart, 
   Menu, 
   Search, 
   X,
-  User
+  User,
+  Wand2,
+  Home,
+  Package,
+  Layers,
+  Info,
+  Phone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Logo } from '@/components/Logo';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useProducts } from '@/hooks/useProducts';
+import Sidebar from './Sidebar';
 
 const Header = () => {
   const { getTotalQuantity } = useCart();
+  const { favorites } = useFavorites();
+  const { products } = useProducts();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
+  const toggleSearch = () => {
+    setIsSearchOpen(!isSearchOpen);
+    if (!isSearchOpen) {
+      setSearchQuery('');
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  // Vérifier si un lien est actif
+  const isActiveLink = (path: string) => {
+    if (path === '/' && location.pathname === '/') return true;
+    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    return false;
+  };
+
+  // Générer des suggestions basées sur la requête de recherche
+  useEffect(() => {
+    if (!searchQuery.trim() || searchQuery.length <= 1) {
+      if (suggestions.length !== 0) setSuggestions([]);
+      if (showSuggestions !== false) setShowSuggestions(false);
+      return;
+    }
+
+    const filtered = products.filter(product => 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    ).slice(0, 6);
+
+    if (JSON.stringify(filtered) !== JSON.stringify(suggestions)) {
+      setSuggestions(filtered);
+    }
+    if (!showSuggestions) setShowSuggestions(true);
+  }, [searchQuery, products]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle search query
-    console.log('Search for:', searchQuery);
-    setIsSearchOpen(false);
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false);
+      setShowSuggestions(false);
+    }
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+  };
+
+  const handleSuggestionClick = (product: any) => {
+    setSearchQuery(product.name);
+    navigate(`/products?search=${encodeURIComponent(product.name)}`);
+    setIsSearchOpen(false);
+    setShowSuggestions(false);
+  };
+
+  const cartQuantity = getTotalQuantity();
+  const favoriteQuantity = favorites.length;
+
   return (
-    <header className="sticky top-0 z-40 w-full bg-background shadow-sm backdrop-blur-sm border-b border-border/40">
-      <div className="container flex h-16 items-center justify-between">
-        {/* Mobile Menu Button */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="md:hidden"
-          onClick={toggleMenu}
-        >
-          <Menu className="h-6 w-6" />
-          <span className="sr-only">Menu</span>
-        </Button>
-
-        {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2">
-          <Logo size="small" asLink />
-          <span className="text-xl font-bold text-primary hidden sm:inline-block">BeShop</span>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
-            Home
-          </Link>
-          <Link to="/products" className="text-sm font-medium transition-colors hover:text-primary">
-            Products
-          </Link>
-          <Link to="/categories" className="text-sm font-medium transition-colors hover:text-primary">
-            Categories
-          </Link>
-          <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
-            About Us
-          </Link>
-          <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary">
-            Contact
-          </Link>
-        </nav>
-
-        {/* Right Icons */}
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon" onClick={toggleSearch}>
-            <Search className="h-5 w-5" />
-            <span className="sr-only">Search</span>
-          </Button>
-          
-          <ThemeToggle />
-          
-          <Link to="/favorites">
-            <Button variant="ghost" size="icon">
-              <Heart className="h-5 w-5" />
-              <span className="sr-only">Favorites</span>
+    <>
+      <header className="fixed top-0 left-0 right-0 z-50 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
+        <div className="container flex h-14 md:h-16 items-center">
+          {/* Menu Button et Logo - à gauche */}
+          <div className="flex items-center space-x-3">
+            {/* Mobile Menu Button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden"
+              onClick={toggleMenu}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Menu</span>
             </Button>
-          </Link>
-          
-          <Link to="/cart" className="relative">
-            <Button variant="ghost" size="icon">
-              <ShoppingBag className="h-5 w-5" />
-              {getTotalQuantity() > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {getTotalQuantity()}
+
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
+              <Link to="/">
+                <img src="/shopping-cart-logo.svg" alt="BeShopping Logo" className="h-10 w-10" />
+              </Link>
+              <Link to="/" className="hidden sm:block">
+                <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                  BeShopping
                 </span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Desktop Navigation - centré */}
+          <nav className="hidden md:flex items-center space-x-6 flex-1 ml-8">
+            <Link 
+              to="/" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
               )}
-              <span className="sr-only">Cart</span>
-            </Button>
-          </Link>
+            >
+              <Home className="h-4 w-4" />
+              Accueil
+            </Link>
+            <Link 
+              to="/products" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/products') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+              )}
+            >
+              <Package className="h-4 w-4" />
+              Produits
+            </Link>
+            <Link 
+              to="/categories" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/categories') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+              )}
+            >
+              <Layers className="h-4 w-4" />
+              Catégories
+            </Link>
+            <Link 
+              to="/custom-order" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/custom-order') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+              )}
+            >
+              <Wand2 className="h-4 w-4" />
+              Commande Perso
+            </Link>
+            <Link 
+              to="/about" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/about') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+              )}
+            >
+              <Info className="h-4 w-4" />
+              À Propos
+            </Link>
+            <Link 
+              to="/contact" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/contact') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+              )}
+            >
+              <Phone className="h-4 w-4" />
+              Contact
+            </Link>
+          </nav>
 
-          <Link to="/account">
-            <Button variant="ghost" size="icon" className="hidden sm:flex">
-              <User className="h-5 w-5" />
-              <span className="sr-only">Account</span>
+          {/* Right Icons - dans l'ordre spécifié */}
+          <div className="flex items-center space-x-1 md:space-x-2 ml-auto">
+            <Button variant="ghost" size="icon" onClick={toggleSearch}>
+              <Search className="h-5 w-5" />
+              <span className="sr-only">Recherche</span>
             </Button>
-          </Link>
+            
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
+            {/* Favorites */}
+            <Link to="/favorites" className="relative">
+              <Button variant="ghost" size="icon">
+                <Heart className="h-5 w-5" />
+                {favoriteQuantity > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {favoriteQuantity}
+                  </span>
+                )}
+                <span className="sr-only">Favoris</span>
+              </Button>
+            </Link>
+            
+            {/* Cart */}
+            <Link to="/cart" className="relative">
+              <Button variant="ghost" size="icon">
+                <ShoppingBag className="h-5 w-5" />
+                {cartQuantity > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartQuantity}
+                  </span>
+                )}
+                <span className="sr-only">Panier</span>
+              </Button>
+            </Link>
+
+            <Link to="/customer-auth" className="hidden sm:block">
+              <Button variant="ghost" size="icon">
+                <User className="h-5 w-5" />
+                <span className="sr-only">Compte</span>
+              </Button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Search Overlay */}
+      {/* Overlay avec effet de flou */}
       <AnimatePresence>
         {isSearchOpen && (
           <motion.div
@@ -117,138 +262,96 @@ const Header = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+            onClick={toggleSearch}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Search Bar avec suggestions */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/40 shadow-lg"
           >
             <div className="container py-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Search products</h2>
-                <Button variant="ghost" size="icon" onClick={toggleSearch}>
-                  <X className="h-5 w-5" />
-                  <span className="sr-only">Close</span>
-                </Button>
-              </div>
-              <form onSubmit={handleSearchSubmit}>
-                <div className="flex space-x-2">
-                  <Input
-                    placeholder="Search for products..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1"
-                    autoFocus
-                  />
-                  <Button type="submit">Search</Button>
+              <form onSubmit={handleSearchSubmit} className="relative max-w-md mx-auto">
+                <div className="flex items-center space-x-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Rechercher des produits..."
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      className="pl-10 pr-4"
+                      autoFocus
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleSearch}
+                    className="shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Fermer</span>
+                  </Button>
                 </div>
+
+                {/* Suggestions */}
+                <AnimatePresence>
+                  {showSuggestions && suggestions.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-md shadow-lg z-10"
+                    >
+                      {suggestions.map((product) => (
+                        <div
+                          key={product.id}
+                          onClick={() => handleSuggestionClick(product)}
+                          className="flex items-center p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                        >
+                          <div className="w-10 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0 mr-3">
+                            {product.images && product.images.length > 0 ? (
+                              <img 
+                                src={product.images[0]} 
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                <Search className="h-4 w-4 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{product.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {product.discounted_price ? product.discounted_price : product.original_price} €
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </form>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-            className="fixed inset-0 bg-background z-50 md:hidden"
-          >
-            <div className="flex flex-col h-full overflow-y-auto">
-              <div className="flex items-center justify-between p-4 border-b">
-                <Link to="/" className="flex items-center space-x-2" onClick={() => setIsMenuOpen(false)}>
-                  <Logo size="small" />
-                  <span className="text-xl font-bold text-primary">BeShop</span>
-                </Link>
-                <Button variant="ghost" size="icon" onClick={toggleMenu}>
-                  <X className="h-6 w-6" />
-                  <span className="sr-only">Close</span>
-                </Button>
-              </div>
-              <nav className="flex-1 p-4">
-                <ul className="space-y-4">
-                  <li>
-                    <Link 
-                      to="/" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Home
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/products" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      All Products
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/categories" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Categories
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/about" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      About Us
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/contact" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Contact
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/account" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Account
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/admin" 
-                      className="block py-2 text-lg font-medium hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Admin Dashboard
-                    </Link>
-                  </li>
-                </ul>
-                
-                <div className="mt-6 flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Switch theme:</span>
-                  <ThemeToggle />
-                </div>
-              </nav>
-              <div className="p-4 border-t">
-                <Button asChild className="w-full" variant="outline">
-                  <Link to="/contact" onClick={() => setIsMenuOpen(false)}>
-                    Contact via WhatsApp
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
+      {/* Sidebar for mobile navigation */}
+      <Sidebar isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+    </>
   );
 };
 

@@ -1,46 +1,60 @@
 
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { WhatsAppIcon } from './WhatsAppIcon';
+import { WhatsAppIcon } from '@/components/WhatsAppIcon';
+import { useNavigate } from 'react-router-dom';
+import { useEmailAuth } from '@/hooks/useEmailAuth';
 
 interface WhatsAppContactProps {
-  phoneNumber?: string;
-  message?: string;
-  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
+  phoneNumber: string;
+  message: string;
   className?: string;
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   children?: React.ReactNode;
-  useAlternate?: boolean;
+  onCustomClick?: () => void;
 }
 
-const PRIMARY_WHATSAPP = "243978100940";
-const SECONDARY_WHATSAPP = "243974984449";
-
-const WhatsAppContact = ({
+const WhatsAppContact: React.FC<WhatsAppContactProps> = ({
   phoneNumber,
-  message = '',
-  variant = 'default',
+  message,
+  className = '',
   size = 'default',
-  className,
+  variant = 'default',
   children,
-  useAlternate = false
-}: WhatsAppContactProps) => {
-  const whatsappNumber = phoneNumber || (useAlternate ? SECONDARY_WHATSAPP : PRIMARY_WHATSAPP);
-  
-  const handleWhatsAppClick = () => {
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+  onCustomClick
+}) => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useEmailAuth();
+
+  const handleClick = () => {
+    if (!isAuthenticated) {
+      navigate('/customer-auth', { state: { from: window.location.pathname } });
+      return;
+    }
+
+    if (onCustomClick) {
+      onCustomClick();
+    } else {
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+      window.open(whatsappUrl, '_blank');
+    }
   };
 
   return (
-    <Button 
-      className={className}
-      variant={variant} 
+    <Button
+      onClick={handleClick}
+      className={`bg-green-600 hover:bg-green-700 text-white ${className}`}
       size={size}
-      onClick={handleWhatsAppClick}
+      variant={variant}
     >
-      <WhatsAppIcon className="mr-2 h-4 w-4" />
-      {children || 'Contact via WhatsApp'}
+      {children || (
+        <>
+          <WhatsAppIcon className="mr-2 h-4 w-4" />
+          Envoyer via WhatsApp
+        </>
+      )}
     </Button>
   );
 };
