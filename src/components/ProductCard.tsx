@@ -1,13 +1,13 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingCart, Star, Package, Palette, Ruler } from 'lucide-react';
+import { Heart, ShoppingCart, Star, Package, Palette, Ruler, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { toast } from '@/components/ui/use-toast';
 import { Product } from '@/types';
 import ProductImageCarousel from './ProductImageCarousel';
 
@@ -41,6 +41,249 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const shareUrl = `${window.location.origin}/product/${product.id}`;
+    const shareText = `Découvrez ${product.name} sur BeShopping - ${product.discounted_price || product.original_price} CDF`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (error) {
+        console.log('Erreur lors du partage:', error);
+      }
+    } else {
+      // Fallback pour les navigateurs qui ne supportent pas l'API de partage
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+          toast({
+            title: "Lien copié",
+            description: "Le lien du produit a été copié dans le presse-papiers.",
+          });
+        } catch (error) {
+          console.error('Erreur lors de la copie:', error);
+          // Si la copie échoue, essayer d'exporter l'image
+          exportProductImage();
+        }
+      } else {
+        // Si clipboard n'est pas disponible, exporter l'image
+        exportProductImage();
+      }
+    }
+  };
+
+  const exportProductImage = () => {
+    try {
+      const shareUrl = `${window.location.origin}/product/${product.id}`;
+      
+      // Créer un canvas pour combiner l'image et les informations
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        toast({
+          title: "Erreur",
+          description: "Impossible d'exporter l'image.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Dimensions du canvas
+      canvas.width = 400;
+      canvas.height = 500;
+
+      // Fond blanc
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Charger l'image du produit
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        // Dessiner l'image (redimensionnée)
+        const imgWidth = 300;
+        const imgHeight = 300;
+        const imgX = (canvas.width - imgWidth) / 2;
+        const imgY = 20;
+        
+        ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+
+        // Ajouter les informations du produit
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        
+        // Nom du produit
+        const productName = product.name.length > 30 ? product.name.substring(0, 30) + '...' : product.name;
+        ctx.fillText(productName, canvas.width / 2, imgY + imgHeight + 30);
+
+        // Prix
+        ctx.font = 'bold 20px Arial';
+        const price = product.discounted_price || product.original_price;
+        ctx.fillText(`${price.toLocaleString()} CDF`, canvas.width / 2, imgY + imgHeight + 55);
+
+        // Lien du site
+        ctx.font = '12px Arial';
+        ctx.fillStyle = '#666666';
+        ctx.fillText('Découvrez sur BeShopping', canvas.width / 2, imgY + imgHeight + 80);
+        ctx.fillText(shareUrl, canvas.width / 2, imgY + imgHeight + 100);
+
+        // Partager l'image
+        canvas.toBlob((blob) => {
+          if (blob) {
+            shareImage(blob);
+          }
+        }, 'image/png');
+      };
+
+      img.onerror = () => {
+        // Si l'image ne peut pas être chargée, créer une image avec juste le texte
+        ctx.fillStyle = '#f3f4f6';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('BeShopping', canvas.width / 2, 100);
+        
+        ctx.font = '16px Arial';
+        const productName = product.name.length > 40 ? product.name.substring(0, 40) + '...' : product.name;
+        ctx.fillText(productName, canvas.width / 2, 150);
+        
+        ctx.font = 'bold 18px Arial';
+        const price = product.discounted_price || product.original_price;
+        ctx.fillText(`${price.toLocaleString()} CDF`, canvas.width / 2, 200);
+        
+        ctx.font = '12px Arial';
+        ctx.fillStyle = '#666666';
+        ctx.fillText(shareUrl, canvas.width / 2, 250);
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            shareImage(blob);
+          }
+        }, 'image/png');
+      };
+
+      // Utiliser la première image du produit ou une image par défaut
+      const imageUrl = product.images && product.images.length > 0 
+        ? product.images[0] 
+        : '/placeholder.svg';
+      
+      img.src = imageUrl;
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'export:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'exporter l'image du produit.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const shareImage = async (blob: Blob) => {
+    try {
+      const shareUrl = `${window.location.origin}/product/${product.id}`;
+      const shareText = `Découvrez ${product.name} sur BeShopping - ${product.discounted_price || product.original_price} CDF`;
+      
+      // Essayer d'abord le partage simple (plus compatible)
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: product.name,
+            text: shareText,
+            url: shareUrl
+          });
+          toast({
+            title: "Produit partagé",
+            description: "Le produit a été partagé avec succès.",
+          });
+          return;
+        } catch (shareError) {
+          console.log('Partage simple échoué, essai avec image...');
+        }
+      }
+
+      // Si le partage simple échoue, essayer avec l'image
+      if (navigator.share && navigator.canShare) {
+        try {
+          const file = new File([blob], `${product.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_beshopping.png`, { 
+            type: 'image/png' 
+          });
+          
+          const shareData = {
+            title: product.name,
+            text: shareText,
+            url: shareUrl,
+            files: [file]
+          };
+
+          if (navigator.canShare(shareData)) {
+            await navigator.share(shareData);
+            toast({
+              title: "Image partagée",
+              description: "L'image du produit a été partagée avec succès.",
+            });
+            return;
+          }
+        } catch (fileShareError) {
+          console.log('Partage avec fichiers échoué...');
+        }
+      }
+
+      // Fallback: copier le lien dans le presse-papiers
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        toast({
+          title: "Lien copié",
+          description: "Le lien du produit a été copié dans le presse-papiers.",
+        });
+      } else {
+        // Dernier recours: télécharger l'image
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${product.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_beshopping.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Image téléchargée",
+          description: "L'image a été téléchargée car le partage n'est pas disponible.",
+        });
+      }
+      
+    } catch (error) {
+      console.error('Erreur lors du partage:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de partager l'image.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Si on clique sur un bouton, ne pas déclencher le partage
+    if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('a')) {
+      return;
+    }
+    
+    // Sinon, partager le produit
+    handleShare(e);
+  };
+
   const formatPrice = (price: number): string => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
@@ -58,9 +301,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
       transition={{ duration: 0.2 }}
       className={cardClasses}
     >
-      <Card className={`group relative overflow-hidden border border-border/40 hover:border-border/80 hover:shadow-lg transition-all duration-300 bg-card ${isOutOfStock ? 'opacity-75' : ''}`}>
+      <Card 
+        className={`group relative overflow-hidden border border-border/40 hover:border-border/80 hover:shadow-lg transition-all duration-300 bg-card cursor-pointer ${isOutOfStock ? 'opacity-75' : ''}`}
+        onClick={handleCardClick}
+      >
         <div className="relative">
-          <Link to={`/product/${product.id}`}>
+          <Link to={`/product/${product.id}`} onClick={(e) => e.stopPropagation()}>
             <ProductImageCarousel
               images={product.images || []}
               productName={product.name}
@@ -77,7 +323,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           
           {/* Featured badge */}
           {product.featured && (
-            <Badge className="absolute top-2 right-12 bg-yellow-500 text-white z-10">
+            <Badge className="absolute top-2 right-16 bg-yellow-500 text-white z-10">
               Vedette
             </Badge>
           )}
@@ -91,21 +337,34 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </div>
           )}
           
-          {/* Favorite button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 bg-background/80 hover:bg-background z-10"
-            onClick={handleToggleFavorite}
-          >
-            <Heart 
-              className={`h-4 w-4 ${isFavorite(product.id) ? 'fill-red-500 text-red-500' : ''}`} 
-            />
-          </Button>
+          {/* Action buttons */}
+          <div className="absolute top-2 right-2 flex gap-1 z-10">
+            {/* Share button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-background/80 hover:bg-background h-8 w-8"
+              onClick={handleShare}
+            >
+              <Share2 className="h-3 w-3" />
+            </Button>
+            
+            {/* Favorite button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-background/80 hover:bg-background h-8 w-8"
+              onClick={handleToggleFavorite}
+            >
+              <Heart 
+                className={`h-3 w-3 ${isFavorite(product.id) ? 'fill-red-500 text-red-500' : ''}`} 
+              />
+            </Button>
+          </div>
         </div>
         
         <CardContent className="p-3">
-          <Link to={`/product/${product.id}`}>
+          <Link to={`/product/${product.id}`} onClick={(e) => e.stopPropagation()}>
             <h3 className="font-medium text-sm line-clamp-2 mb-2 text-foreground hover:text-primary transition-colors">
               {product.name}
             </h3>

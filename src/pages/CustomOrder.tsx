@@ -32,12 +32,12 @@ const CustomOrder = () => {
   const { createOrder } = useOrders();
 
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    budget: '',
-    contactInfo: '',
-    address: '',
-    images: [] as File[]
+      name: '',
+      description: '',
+      budget: '',
+      contactInfo: '',
+      address: '',
+      images: [] as File[]
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,7 +79,7 @@ const CustomOrder = () => {
       navigate('/customer-auth', { state: { from: '/custom-order' } });
       return;
     }
-
+    
     // Validation simple des champs requis
     if (!formData.name.trim() || !formData.description.trim()) {
       toast({
@@ -138,16 +138,16 @@ const CustomOrder = () => {
       await createOrder.mutateAsync({ order: orderData, items: orderItems });
 
       // Mettre à jour l'interface
-      setOrderDetails({
+    setOrderDetails({
         customerName: customerData.customerName,
         customerPhone: customerData.customerPhone,
         customerAddress: customerData.customerAddress,
-        productName: formData.name,
-        description: formData.description,
+      productName: formData.name,
+      description: formData.description,
         budget: formData.budget ? `${parseFloat(formData.budget).toLocaleString()} FC` : 'Non spécifié',
-        orderType: 'form'
-      });
-      setShowConfirmation(true);
+      orderType: 'form'
+    });
+    setShowConfirmation(true);
 
       toast({
         title: "Commande enregistrée",
@@ -155,11 +155,11 @@ const CustomOrder = () => {
       });
     } catch (error) {
       console.error('Erreur lors de la création de la commande:', error);
-      toast({
+    toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'enregistrement de la commande.",
         variant: "destructive",
-      });
+    });
     }
   };
 
