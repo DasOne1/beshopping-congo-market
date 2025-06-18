@@ -90,6 +90,7 @@ const AdminProductForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Soumission du formulaire produit...');
     setLoading(true);
     try {
       const price = parseFloat(formData.original_price) || 0;
@@ -110,11 +111,16 @@ const AdminProductForm = () => {
         gender: formData.gender || null,
       };
 
+      console.log('Données du produit:', productData);
+
       if (isEdit && id) {
+        console.log('Mise à jour du produit:', id);
         await updateProduct.mutateAsync({ id, ...productData });
       } else {
+        console.log('Création d\'un nouveau produit');
         await createProduct.mutateAsync(productData);
       }
+      console.log('Opération réussie, redirection...');
       navigate('/admin/catalog');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
@@ -162,7 +168,7 @@ const AdminProductForm = () => {
               {isEdit ? 'Modifier le produit' : 'Nouveau produit'}
             </h1>
           </div>
-          <Button type="submit" disabled={loading} className="flex items-center gap-2">
+          <Button type="submit" form="product-form" disabled={loading} className="flex items-center gap-2">
             {loading && <span className="loader mr-2" />}
             Sauvegarder
           </Button>

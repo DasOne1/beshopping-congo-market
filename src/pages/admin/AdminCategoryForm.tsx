@@ -47,6 +47,7 @@ const AdminCategoryForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Soumission du formulaire catégorie...');
     setLoading(true);
     try {
       const categoryData = {
@@ -55,11 +56,16 @@ const AdminCategoryForm = () => {
         parent_id: formData.parent_id === 'none' ? null : formData.parent_id
       };
 
+      console.log('Données de la catégorie:', categoryData);
+
       if (isEdit && id) {
+        console.log('Mise à jour de la catégorie:', id);
         await updateCategory.mutateAsync({ id, ...categoryData });
       } else {
+        console.log('Création d\'une nouvelle catégorie');
         await createCategory.mutateAsync(categoryData);
       }
+      console.log('Opération réussie, redirection...');
       navigate('/admin/catalog');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
@@ -88,7 +94,7 @@ const AdminCategoryForm = () => {
               {isEdit ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
             </h1>
           </div>
-          <Button type="submit" disabled={loading} className="flex items-center gap-2">
+          <Button type="submit" form="category-form" disabled={loading} className="flex items-center gap-2">
             {loading && <span className="loader mr-2" />}
             Sauvegarder
           </Button>
