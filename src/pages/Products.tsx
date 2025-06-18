@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Grid3X3, List, Filter, Search, RefreshCw } from 'lucide-react';

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useDataPreloader } from '@/hooks/useDataPreloader';
 import SplashScreen from '@/components/SplashScreen';
 import CategoryCarousel from '@/components/CategoryCarousel';
-import FeaturedGallery from '@/components/FeaturedGallery';
+import { FeaturedGallery } from '@/components/FeaturedGallery';
 import { useCachedCategories } from '@/hooks/useCachedCategories';
 import { useProducts } from '@/hooks/useProducts';
 
@@ -20,7 +20,7 @@ const Index = () => {
   }, []);
 
   if (isPreloading || categoriesLoading || productsLoading) {
-    return <SplashScreen />;
+    return <SplashScreen onComplete={() => {}} />;
   }
 
   // Filtrer les produits visibles et actifs
@@ -68,7 +68,7 @@ const Index = () => {
               <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
                 Nos Catégories
               </h2>
-              <CategoryCarousel categories={categories} />
+              <CategoryCarousel />
             </motion.div>
           </section>
         )}
@@ -85,7 +85,7 @@ const Index = () => {
               <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
                 Produits Vedettes
               </h2>
-              <FeaturedGallery products={featuredProducts} />
+              <FeaturedGallery />
             </motion.div>
           </section>
         )}
