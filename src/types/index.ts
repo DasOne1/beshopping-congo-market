@@ -38,6 +38,8 @@ export interface Category {
   slug: string;
   image?: string;
   parent_id?: string;
+  parent?: Category;
+  children?: Category[];
   is_visible: boolean;
   created_at: string;
   updated_at: string;

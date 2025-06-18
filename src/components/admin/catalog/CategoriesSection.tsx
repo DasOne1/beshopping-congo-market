@@ -16,12 +16,29 @@ interface CategoriesSectionProps {
 
 const CategoriesSection = ({ searchTerm, showHidden = false }: CategoriesSectionProps) => {
   const navigate = useNavigate();
-  const { categories, isLoading, deleteCategory, updateCategory } = useCategories();
+  const { categories: rawCategories, isLoading, deleteCategory, updateCategory } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
 
+  // Process categories to build parent/child relationships
+  const categories = rawCategories?.map(c => ({ ...c, children: [] })).reduce((acc, category) => {
+    acc[category.id] = category;
+    return acc;
+  }, {} as Record<string, any>);
+
+  if (categories) {
+    Object.values(categories).forEach(category => {
+      if (category.parent_id && categories[category.parent_id]) {
+        categories[category.parent_id].children.push(category);
+        category.parent = categories[category.parent_id];
+      }
+    });
+  }
+
+  const categoryList = categories ? Object.values(categories) : [];
+
   // Filtrer les catégories selon le terme de recherche et le statut de visibilité
-  const filteredCategories = categories?.filter(category => {
+  const filteredCategories = categoryList?.filter(category => {
     const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesVisibility = showHidden ? !category.is_visible : category.is_visible;
     return matchesSearch && matchesVisibility;
@@ -111,14 +128,14 @@ const CategoriesSection = ({ searchTerm, showHidden = false }: CategoriesSection
                         </div>
                       </TableCell>
                       <TableCell>
-                        {category.parent ? (
+                        {category.parent?.name ? (
                           <Badge variant="outline">{category.parent.name}</Badge>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        {category.children && category.children.length > 0 ? (
+                        {category.children?.length > 0 ? (
                           <Badge variant="secondary">
                             {category.children.length} enfant(s)
                           </Badge>
