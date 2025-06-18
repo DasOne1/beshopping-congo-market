@@ -1,7 +1,8 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   ShoppingBag, 
   Heart, 
@@ -38,6 +39,7 @@ const Header = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleSearch = () => {
@@ -47,6 +49,13 @@ const Header = () => {
       setSuggestions([]);
       setShowSuggestions(false);
     }
+  };
+
+  // Vérifier si un lien est actif
+  const isActiveLink = (path: string) => {
+    if (path === '/' && location.pathname === '/') return true;
+    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    return false;
   };
 
   // Générer des suggestions basées sur la requête de recherche
@@ -125,27 +134,75 @@ const Header = () => {
 
           {/* Desktop Navigation - centré */}
           <nav className="hidden md:flex items-center space-x-6 flex-1 ml-8">
-            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+            <Link 
+              to="/" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+              )}
+            >
               <Home className="h-4 w-4" />
               Accueil
             </Link>
-            <Link to="/products" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+            <Link 
+              to="/products" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/products') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+              )}
+            >
               <Package className="h-4 w-4" />
               Produits
             </Link>
-            <Link to="/categories" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+            <Link 
+              to="/categories" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/categories') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+              )}
+            >
               <Layers className="h-4 w-4" />
               Catégories
             </Link>
-            <Link to="/custom-order" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+            <Link 
+              to="/custom-order" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/custom-order') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+              )}
+            >
               <Wand2 className="h-4 w-4" />
               Commande Perso
             </Link>
-            <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+            <Link 
+              to="/about" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/about') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+              )}
+            >
               <Info className="h-4 w-4" />
               À Propos
             </Link>
-            <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
+            <Link 
+              to="/contact" 
+              className={cn(
+                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
+                isActiveLink('/contact') 
+                  ? "text-primary bg-primary/10 font-semibold" 
+                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+              )}
+            >
               <Phone className="h-4 w-4" />
               Contact
             </Link>
@@ -187,7 +244,7 @@ const Header = () => {
               </Button>
             </Link>
 
-            <Link to="/account" className="hidden sm:block">
+            <Link to="/customer-auth" className="hidden sm:block">
               <Button variant="ghost" size="icon">
                 <User className="h-5 w-5" />
                 <span className="sr-only">Compte</span>

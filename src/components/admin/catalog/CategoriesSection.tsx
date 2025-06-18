@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash2, Plus, FolderOpen } from 'lucide-react';
+import { Eye, Edit, Trash2, Plus, FolderOpen, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCachedCategories } from '@/hooks/useCachedCategories';
 import { useCategories } from '@/hooks/useCategories';
 import CategoryDetailDialog from './CategoryDetailDialog';
-import { Checkbox } from '@/components/ui/checkbox';
 
 interface CategoriesSectionProps {
   searchTerm: string;
@@ -32,7 +32,14 @@ const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
   };
   
   const handleVisibilityToggle = async (id: string, is_visible: boolean) => {
-    await updateCategory.mutateAsync({ id, is_visible: !is_visible });
+    try {
+      await updateCategory.mutateAsync({ 
+        id, 
+        is_visible: !is_visible 
+      });
+    } catch (error) {
+      console.error('Erreur lors du changement de visibilité:', error);
+    }
   };
 
   if (isLoading) {
@@ -77,7 +84,7 @@ const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
                     <TableHead>Nom</TableHead>
                     <TableHead>Parent</TableHead>
                     <TableHead>Enfants</TableHead>
-                    <TableHead>Visible</TableHead>
+                    <TableHead>Visibilité</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -118,11 +125,26 @@ const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Checkbox
-                          checked={category.is_visible}
-                          onCheckedChange={() => handleVisibilityToggle(category.id, category.is_visible)}
-                          aria-label="Toggle visibility"
-                        />
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant={category.is_visible ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleVisibilityToggle(category.id, category.is_visible)}
+                            className="flex items-center gap-1"
+                          >
+                            {category.is_visible ? (
+                              <>
+                                <Eye className="h-3 w-3" />
+                                <span className="text-xs">Visible</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="h-3 w-3" />
+                                <span className="text-xs">Masqué</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

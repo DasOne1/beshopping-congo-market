@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash2, Plus, Package } from 'lucide-react';
+import { Eye, Edit, Trash2, Plus, Package, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useProducts } from '@/hooks/useProducts';
 import ProductDetailDialog from './ProductDetailDialog';
 import ProductDialog from './ProductDialog';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 
 interface ProductsSectionProps {
   searchTerm: string;
@@ -16,7 +17,7 @@ interface ProductsSectionProps {
 
 const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
   const navigate = useNavigate();
-  const { products, isLoading, deleteProduct } = useProducts();
+  const { products, isLoading, deleteProduct, updateProduct } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -35,7 +36,14 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
   };
 
   const handleVisibilityToggle = async (id: string, currentVisibility: boolean) => {
-    // Implement the logic to toggle product visibility
+    try {
+      await updateProduct.mutateAsync({ 
+        id, 
+        is_visible: !currentVisibility 
+      });
+    } catch (error) {
+      console.error('Erreur lors du changement de visibilité:', error);
+    }
   };
 
   if (isLoading) {
@@ -63,13 +71,9 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
             Produits ({filteredProducts.length})
           </CardTitle>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Button onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto">
+            <Button onClick={() => navigate('/admin/catalog/products/new')} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
-              Nouveau produit (Dialog)
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/admin/catalog/products/new')} className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau produit (Page)
+              Nouveau produit
             </Button>
           </div>
         </CardHeader>
@@ -89,7 +93,7 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                     <TableHead>Stock</TableHead>
                     <TableHead>Caractéristiques</TableHead>
                     <TableHead>Statut</TableHead>
-                    <TableHead>Visible</TableHead>
+                    <TableHead>Visibilité</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -176,11 +180,26 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Checkbox
-                          checked={product.is_visible}
-                          onCheckedChange={() => handleVisibilityToggle(product.id, product.is_visible)}
-                          aria-label="Toggle visibility"
-                        />
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant={product.is_visible ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleVisibilityToggle(product.id, product.is_visible)}
+                            className="flex items-center gap-1"
+                          >
+                            {product.is_visible ? (
+                              <>
+                                <Eye className="h-3 w-3" />
+                                <span className="text-xs">Visible</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="h-3 w-3" />
+                                <span className="text-xs">Masqué</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -197,10 +216,7 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setSelectedProduct(product);
-                              setShowEditDialog(true);
-                            }}
+                            onClick={() => navigate(`/admin/catalog/products/${product.id}/edit`)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -229,22 +245,6 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
           onOpenChange={setShowDetailDialog}
         />
       )}
-
-      {selectedProduct && (
-        <ProductDialog
-          product={selectedProduct}
-          open={showEditDialog}
-          onOpenChange={(open) => {
-            setShowEditDialog(open);
-            if (!open) setSelectedProduct(null);
-          }}
-        />
-      )}
-
-      <ProductDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-      />
     </>
   );
 };
