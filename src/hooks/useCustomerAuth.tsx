@@ -1,13 +1,55 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { Customer } from '@/types';
 
 export const useCustomerAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingCustomer, setLoadingCustomer] = useState(false);
+
+  const fetchCustomerData = useCallback(async (userId: string) => {
+    if (!userId) {
+      setCurrentCustomer(null);
+      return;
+    }
+    setLoadingCustomer(true);
+    try {
+      console.log('👤 Fetching customer data for user ID:', userId);
+      const { data, error, status } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error && status !== 406) { // 406 is when no rows are found, which is fine
+        throw error;
+      }
+
+      if (data) {
+        console.log('✅ Customer data fetched:', data);
+        setCurrentCustomer(data as Customer);
+      } else {
+        console.log('ℹ️ No customer data found for user ID:', userId);
+        setCurrentCustomer(null);
+      }
+    } catch (error: any) {
+      console.error('❌ Error fetching customer data:', error);
+      setCurrentCustomer(null);
+      // Optional: Show a toast, but might be too noisy if user logs in and doesn't have a customer profile yet
+      // toast({
+      //   title: "Erreur de chargement du profil",
+      //   description: "Impossible de charger les informations du profil.",
+      //   variant: "destructive",
+      // });
+    } finally {
+      setLoadingCustomer(false);
+    }
+  }, []);
 
   useEffect(() => {
     console.log('🔄 Initialisation de l\'authentification client...');
@@ -17,9 +59,16 @@ export const useCustomerAuth = () => {
       async (event, session) => {
         console.log('🔐 Changement d\'état authentification client:', event, session?.user?.email);
         
+        const currentUser = session?.user ?? null;
         setSession(session);
-        setUser(session?.user ?? null);
+        setUser(currentUser);
         setLoading(false);
+
+        if (currentUser) {
+          fetchCustomerData(currentUser.id);
+        } else {
+          setCurrentCustomer(null);
+        }
 
         // Persister dans localStorage de manière sûre
         if (session) {
@@ -109,10 +158,12 @@ export const useCustomerAuth = () => {
     initializeAuth();
 
     return () => {
-      console.log('🧹 Nettoyage authentification cliente');
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (user) {
+      fetchCustomerData(user.id);
+    } else {
+      setCurrentCustomer(null);
+    }
+  }, [user, fetchCustomerData]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -198,6 +249,7 @@ export const useCustomerAuth = () => {
       // Nettoyer localStorage
       localStorage.removeItem('customer.auth.session');
       localStorage.removeItem('customer.auth.user');
+      setCurrentCustomer(null); // Clear customer data on sign out
       
       console.log('✅ Déconnexion client réussie');
       toast({
@@ -216,13 +268,63 @@ export const useCustomerAuth = () => {
     }
   };
 
+  const updateProfile = async (profileData: Partial<Customer>) => {
+    if (!user) {
+      toast({
+        title: "Utilisateur non connecté",
+        description: "Vous devez être connecté pour mettre à jour votre profil.",
+        variant: "destructive",
+      });
+      return { data: null, error: { message: "User not authenticated" } };
+    }
+
+    console.log('🔄 Mise à jour du profil client:', profileData);
+    setLoadingCustomer(true);
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .update(profileData)
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log('✅ Profil client mis à jour:', data);
+      toast({
+        title: "Profil mis à jour",
+        description: "Vos informations ont été enregistrées.",
+      });
+      // Refresh customer data
+      if (data) {
+        setCurrentCustomer(data as Customer);
+      } else {
+        // Fallback to refetch if select().single() didn't return data as expected
+        await fetchCustomerData(user.id);
+      }
+      return { data, error: null };
+    } catch (error: any) {
+      console.error('❌ Erreur mise à jour profil client:', error);
+      toast({
+        title: "Erreur de mise à jour",
+        description: error.message || "Un problème est survenu lors de la mise à jour de votre profil.",
+        variant: "destructive",
+      });
+      return { data: null, error };
+    } finally {
+      setLoadingCustomer(false);
+    }
+  };
+
   return {
     user,
     session,
-    loading,
+    currentCustomer,
+    loading: loading || loadingCustomer, // Combine general auth loading with customer data loading
     signIn,
     signUp,
     signOut,
+    updateProfile,
     isAuthenticated: !!user,
   };
 };
