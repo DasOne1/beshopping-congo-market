@@ -37,24 +37,9 @@ export const useCachedCategories = (includeHidden = false) => {
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Fonction pour obtenir tous les IDs de catégories (parent + enfants)
-  const getAllCategoryIds = (categoryId: string): string[] => {
-    if (!categories || categoryId === 'all') return [];
-    
-    const selectedCategory = categories.find(cat => cat.id === categoryId);
-    if (!selectedCategory) return [categoryId];
-    
-    // Si c'est une catégorie parent, inclure toutes ses sous-catégories
-    const subcategories = categories.filter(cat => cat.parent_id === categoryId);
-    const allIds = [categoryId, ...subcategories.map(sub => sub.id)];
-    
-    return allIds;
-  };
-
   return { 
     categories, 
     isLoading, 
-    refetch,
-    getAllCategoryIds
+    refetch 
   };
 };

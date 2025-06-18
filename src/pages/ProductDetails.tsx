@@ -171,6 +171,7 @@ const ProductDetails = () => {
             <ProductImageCarousel
               images={product.images || []}
               productName={product.name}
+              onImageSelect={setSelectedImage}
             />
           </div>
 
