@@ -2,16 +2,68 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import { Product } from '@/types';
 
 interface ProductAttributesProps {
   product: Product;
+  selectedColor?: string;
+  selectedSize?: string;
+  onColorChange?: (color: string) => void;
+  onSizeChange?: (size: string) => void;
   className?: string;
 }
 
-const ProductAttributes = ({ product, className = '' }: ProductAttributesProps) => {
+const ProductAttributes = ({ 
+  product, 
+  selectedColor = '',
+  selectedSize = '',
+  onColorChange,
+  onSizeChange,
+  className = '' 
+}: ProductAttributesProps) => {
   return (
     <div className={`space-y-4 ${className}`}>
+      {/* Couleurs disponibles */}
+      {product.colors && product.colors.length > 0 && (
+        <div>
+          <span className="text-sm font-medium text-muted-foreground block mb-2">Couleurs disponibles:</span>
+          <div className="flex flex-wrap gap-2">
+            {product.colors.map((color, index) => (
+              <Button
+                key={index}
+                variant={selectedColor === color ? "default" : "outline"}
+                size="sm"
+                onClick={() => onColorChange?.(color)}
+                className="text-xs"
+              >
+                {color}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tailles disponibles */}
+      {product.sizes && product.sizes.length > 0 && (
+        <div>
+          <span className="text-sm font-medium text-muted-foreground block mb-2">Tailles disponibles:</span>
+          <div className="flex flex-wrap gap-2">
+            {product.sizes.map((size, index) => (
+              <Button
+                key={index}
+                variant={selectedSize === size ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSizeChange?.(size)}
+                className="text-xs"
+              >
+                {size}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Informations de base */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {product.sku && (
@@ -42,34 +94,6 @@ const ProductAttributes = ({ product, className = '' }: ProductAttributesProps) 
           </div>
         )}
       </div>
-
-      {/* Couleurs disponibles */}
-      {product.colors && product.colors.length > 0 && (
-        <div>
-          <span className="text-sm font-medium text-muted-foreground block mb-2">Couleurs disponibles:</span>
-          <div className="flex flex-wrap gap-2">
-            {product.colors.map((color, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {color}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tailles disponibles */}
-      {product.sizes && product.sizes.length > 0 && (
-        <div>
-          <span className="text-sm font-medium text-muted-foreground block mb-2">Tailles disponibles:</span>
-          <div className="flex flex-wrap gap-2">
-            {product.sizes.map((size, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {size}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Collection et saison */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
