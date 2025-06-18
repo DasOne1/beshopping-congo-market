@@ -1,8 +1,7 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   ShoppingBag, 
   Heart, 
@@ -39,7 +38,6 @@ const Header = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleSearch = () => {
@@ -95,14 +93,6 @@ const Header = () => {
   const cartQuantity = getTotalQuantity();
   const favoriteQuantity = favorites.length;
 
-  // Fonction pour vérifier si un lien est actif
-  const isActiveLink = (path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(path);
-  };
-
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
@@ -135,63 +125,27 @@ const Header = () => {
 
           {/* Desktop Navigation - centré */}
           <nav className="hidden md:flex items-center space-x-6 flex-1 ml-8">
-            <Link 
-              to="/" 
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1",
-                isActiveLink('/') ? "text-primary font-semibold" : "text-muted-foreground"
-              )}
-            >
+            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
               <Home className="h-4 w-4" />
               Accueil
             </Link>
-            <Link 
-              to="/products" 
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1",
-                isActiveLink('/products') ? "text-primary font-semibold" : "text-muted-foreground"
-              )}
-            >
+            <Link to="/products" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
               <Package className="h-4 w-4" />
               Produits
             </Link>
-            <Link 
-              to="/categories" 
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1",
-                isActiveLink('/categories') ? "text-primary font-semibold" : "text-muted-foreground"
-              )}
-            >
+            <Link to="/categories" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
               <Layers className="h-4 w-4" />
               Catégories
             </Link>
-            <Link 
-              to="/custom-order" 
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1",
-                isActiveLink('/custom-order') ? "text-primary font-semibold" : "text-muted-foreground"
-              )}
-            >
+            <Link to="/custom-order" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
               <Wand2 className="h-4 w-4" />
               Commande Perso
             </Link>
-            <Link 
-              to="/about" 
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1",
-                isActiveLink('/about') ? "text-primary font-semibold" : "text-muted-foreground"
-              )}
-            >
+            <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
               <Info className="h-4 w-4" />
               À Propos
             </Link>
-            <Link 
-              to="/contact" 
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1",
-                isActiveLink('/contact') ? "text-primary font-semibold" : "text-muted-foreground"
-              )}
-            >
+            <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
               <Phone className="h-4 w-4" />
               Contact
             </Link>
