@@ -159,7 +159,7 @@ const Cart = () => {
       customerName: currentCustomer?.name || form.getValues().customerName || 'Anonyme',
       customerPhone: currentCustomer?.phone || form.getValues().customerPhone || 'Non spécifié',
       customerAddress: typeof currentCustomer?.address === 'string' 
-        ? currentCustomer.address 
+      ? currentCustomer.address 
         : currentCustomer?.address?.address || form.getValues().customerAddress || 'Non spécifiée'
     };
 

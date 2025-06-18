@@ -62,7 +62,6 @@ export const useCustomOrderForm = ({ onOrderComplete, currentCustomer }: UseCust
       quantity: 1,
       unit_price: parseFloat(formData.budget) || 0,
       total_price: parseFloat(formData.budget) || 0,
-      custom_description: formData.description,
     }];
 
     await createOrder.mutateAsync({ order: orderData, items: orderItems });

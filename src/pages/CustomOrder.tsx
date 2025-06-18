@@ -16,7 +16,7 @@ import WhatsAppContact from '@/components/WhatsAppContact';
 import { useNavigate } from 'react-router-dom';
 import { useEmailAuth } from '@/hooks/useEmailAuth';
 import { useWhatsApp } from '@/hooks/useWhatsApp';
-import { useCustomOrderForm } from '@/hooks/useCustomOrderForm';
+import { useOrders } from '@/hooks/useOrders';
 import WhatsAppConfirmationDialog from '@/components/WhatsAppConfirmationDialog';
 
 const CustomOrder = () => {
@@ -29,30 +29,8 @@ const CustomOrder = () => {
     closeConfirmation,
     generateCustomOrderMessage 
   } = useWhatsApp();
+  const { createOrder } = useOrders();
 
-  const {
-    isSubmitting,
-    showConfirmation,
-    orderDetails,
-    setShowConfirmation,
-    handleSubmit,
-    handleWhatsAppOrder,
-    validateForm
-  } = useCustomOrderForm({
-    currentCustomer,
-    onOrderComplete: () => {
-      // Réinitialiser seulement les champs de la commande, préserver les infos du client
-      setFormData(prev => ({
-        ...prev,
-        name: '',
-        description: '',
-        budget: '',
-        images: []
-        // contactInfo et address sont préservés
-      }));
-    }
-  });
-  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -61,6 +39,10 @@ const CustomOrder = () => {
     address: '',
     images: [] as File[]
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
 
   // Pré-remplir les informations si l'utilisateur est connecté
   useEffect(() => {
@@ -98,13 +80,87 @@ const CustomOrder = () => {
       return;
     }
 
-    // Utiliser la validation du hook
-    if (!validateForm(formData)) {
+    // Validation simple des champs requis
+    if (!formData.name.trim() || !formData.description.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires.",
+        variant: "destructive",
+      });
       return;
     }
 
-    // Enregistrer la commande en base de données
-    await handleSubmit(formData);
+    // Validation supplémentaire pour le budget
+    const budget = parseFloat(formData.budget);
+    if (formData.budget && (isNaN(budget) || budget < 0)) {
+      toast({
+        title: "Erreur",
+        description: "Le budget doit être un nombre positif valide.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Utiliser les données du client connecté directement (comme dans Cart)
+      const customerData = {
+        customerName: currentCustomer?.name || formData.contactInfo || 'Client personnalisé',
+        customerPhone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
+        customerAddress: typeof currentCustomer?.address === 'string' 
+          ? currentCustomer.address 
+          : currentCustomer?.address?.address || formData.address || 'Non spécifiée'
+      };
+
+      // Créer la commande directement avec les données du client (comme dans Cart)
+      const finalBudget = budget || 0;
+      
+      const orderData = {
+        customer_id: currentCustomer?.id || null,
+        customer_name: customerData.customerName,
+        customer_phone: customerData.customerPhone,
+        customer_email: currentCustomer?.email || null,
+        shipping_address: { address: customerData.customerAddress },
+        total_amount: finalBudget,
+        subtotal: finalBudget,
+        status: 'pending' as const,
+      };
+
+      const orderItems = [{
+        product_id: null,
+        product_name: formData.name,
+        product_image: '',
+        quantity: 1,
+        unit_price: finalBudget,
+        total_price: finalBudget,
+      }];
+
+      // Utiliser la mutation directement (comme dans Cart)
+      await createOrder.mutateAsync({ order: orderData, items: orderItems });
+
+      // Mettre à jour l'interface
+      setOrderDetails({
+        customerName: customerData.customerName,
+        customerPhone: customerData.customerPhone,
+        customerAddress: customerData.customerAddress,
+        productName: formData.name,
+        description: formData.description,
+        budget: formData.budget ? `${parseFloat(formData.budget).toLocaleString()} FC` : 'Non spécifié',
+        orderType: 'form'
+      });
+      setShowConfirmation(true);
+
+      toast({
+        title: "Commande enregistrée",
+        description: "Votre commande personnalisée a été enregistrée avec succès.",
+      });
+    } catch (error) {
+      console.error('Erreur lors de la création de la commande:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'enregistrement de la commande.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleConfirmationClose = () => {
@@ -118,7 +174,13 @@ const CustomOrder = () => {
       return;
     }
 
-    if (!validateForm(formData)) {
+    // Validation simple des champs requis
+    if (!formData.name.trim() || !formData.description.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -140,15 +202,50 @@ const CustomOrder = () => {
       budget: formData.budget
     });
 
-    // Créer la commande en arrière-plan
-    handleWhatsAppOrder(formData).catch(error => {
-      console.error('Erreur lors de la création de la commande WhatsApp:', error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la création de la commande WhatsApp.",
-        variant: "destructive",
-      });
-    });
+    // Créer la commande en arrière-plan (comme dans Cart)
+    const createWhatsAppOrder = async () => {
+      try {
+        const budget = parseFloat(formData.budget) || 0;
+        const customerData = {
+          customerName: currentCustomer?.name || formData.contactInfo || 'Client WhatsApp',
+          customerPhone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
+          customerAddress: typeof currentCustomer?.address === 'string' 
+            ? currentCustomer.address 
+            : currentCustomer?.address?.address || formData.address || 'Non spécifiée'
+        };
+
+        const orderData = {
+          customer_id: currentCustomer?.id || null,
+          customer_name: customerData.customerName,
+          customer_phone: customerData.customerPhone,
+          customer_email: currentCustomer?.email || null,
+          shipping_address: { address: customerData.customerAddress },
+          total_amount: budget,
+          subtotal: budget,
+          status: 'pending' as const,
+        };
+
+        const orderItems = [{
+          product_id: null,
+          product_name: formData.name,
+          product_image: '',
+          quantity: 1,
+          unit_price: budget,
+          total_price: budget,
+        }];
+
+        await createOrder.mutateAsync({ order: orderData, items: orderItems });
+      } catch (error) {
+        console.error('Erreur lors de la création de la commande WhatsApp:', error);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la création de la commande WhatsApp.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    createWhatsAppOrder();
   };
 
   return (
@@ -320,7 +417,7 @@ const CustomOrder = () => {
           </div>
         </motion.div>
       </main>
-
+      
       <Footer />
 
       {/* Boîte de dialogue de confirmation centralisée */}
