@@ -17,7 +17,7 @@ import { WhatsAppIcon } from '@/components/WhatsAppIcon';
 import { Product } from '@/types';
 import { useOrders } from '@/hooks/useOrders';
 import { useProducts } from '@/hooks/useProducts';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, formatCurrency } from '@/lib/utils';
 
 const Cart = () => {
   const { cart, updateQuantity, removeFromCart } = useCart();
@@ -249,7 +249,7 @@ const Cart = () => {
                         </Button>
                       </div>
                       <p className="font-semibold">
-                        {formatPrice((item.product.discounted_price || item.product.original_price) * item.quantity)}
+                        {formatCurrency((item.product.discounted_price || item.product.original_price) * item.quantity, item.product.currency || 'CDF')}
                       </p>
                     </div>
                   </CardContent>

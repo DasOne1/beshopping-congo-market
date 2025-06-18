@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Product } from '@/types';
+import { formatCurrency } from '@/lib/utils';
 
 interface CartProduct {
   product: Product;
@@ -33,7 +33,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               <p className="text-sm text-muted-foreground">Qté: {item.quantity}</p>
             </div>
             <p className="font-semibold">
-              {formatPrice((item.product.discounted_price || item.product.original_price) * item.quantity)}
+              {formatCurrency((item.product.discounted_price || item.product.original_price) * item.quantity, item.product.currency || 'CDF')}
             </p>
           </div>
         ))}
@@ -41,7 +41,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         <div className="border-t pt-4">
           <div className="flex justify-between items-center text-lg font-bold">
             <span>Total</span>
-            <span>{formatPrice(subtotal)}</span>
+            <span>{formatCurrency(subtotal, cartProducts[0]?.product.currency || 'CDF')}</span>
           </div>
         </div>
       </CardContent>

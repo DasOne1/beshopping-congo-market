@@ -29,6 +29,7 @@ export interface Product {
   care_instructions?: string;
   created_at: string;
   updated_at: string;
+  currency?: string;
 }
 
 export interface Category {
