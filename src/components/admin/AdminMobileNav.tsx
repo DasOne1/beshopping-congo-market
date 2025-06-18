@@ -1,67 +1,72 @@
-import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  BarChart3, 
-  TrendingUp,
-  Settings
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
-import { useIsMobile } from '@/hooks/use-mobile';
 
-const navigation = [
-  { href: '/admin/dashboard', icon: LayoutDashboard },
-  { href: '/admin/catalog', icon: Package },
-  { href: '/admin/orders', icon: ShoppingCart },
-  { href: '/admin/reports', icon: BarChart3 },
-  { href: '/admin/analytics', icon: TrendingUp },
-  { href: '/admin/settings', icon: Settings },
-];
+import React from "react";
+import { useLocation } from "react-router-dom";
+import {
+  BarChart3,
+  Package,
+  ShoppingCart,
+  Settings,
+  FileText,
+  User,
+} from "lucide-react";
 
 const AdminMobileNav = () => {
   const location = useLocation();
-  const isMobile = useIsMobile();
 
-  if (!isMobile) return null;
+  const items = [
+    {
+      title: "Dashboard",
+      url: "/admin",
+      icon: BarChart3,
+    },
+    {
+      title: "Catalogue",
+      url: "/admin/catalog",
+      icon: Package,
+    },
+    {
+      title: "Commandes",
+      url: "/admin/orders", 
+      icon: ShoppingCart,
+    },
+    {
+      title: "Analyses",
+      url: "/admin/analytics",
+      icon: BarChart3,
+    },
+    {
+      title: "Profil",
+      url: "/admin/profile",
+      icon: User,
+    },
+  ];
 
-  const isActive = (path: string) => location.pathname.startsWith(path);
+  const isActiveRoute = (url: string) => {
+    if (url === "/admin") {
+      return location.pathname === "/admin";
+    }
+    return location.pathname.startsWith(url);
+  };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 safe-area-pb">
-      <div className="bg-background/95 backdrop-blur-md shadow-lg border-t border-border/50 px-2 py-1">
-        <div className="flex justify-around items-center max-w-md mx-auto">
-          {navigation.map((item) => {
-            const active = isActive(item.href);
-            const ItemIcon = item.icon;
-            return (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  'relative flex items-center justify-center p-3 transition-all duration-200 rounded-xl',
-                  active ? 'text-primary' : 'text-foreground/60 hover:text-foreground/80'
-                )}
-                aria-label={item.href.replace('/admin/', '')}
-              >
-                {active && (
-                  <motion.div
-                    layoutId="admin-mobile-nav-bubble"
-                    className="absolute inset-0 bg-primary/20 dark:bg-primary/30 rounded-xl"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                <div className="relative flex items-center justify-center">
-                  <ItemIcon className="w-6 h-6" />
-                </div>
-              </NavLink>
-            );
-          })}
-        </div>
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-50 md:hidden">
+      <div className="flex justify-around items-center py-2">
+        {items.map((item) => (
+          <a
+            key={item.title}
+            href={item.url}
+            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+              isActiveRoute(item.url)
+                ? "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30"
+                : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+            }`}
+          >
+            <item.icon className="h-5 w-5 mb-1" />
+            <span className="text-xs font-medium">{item.title}</span>
+          </a>
+        ))}
       </div>
-    </div>
+    </nav>
   );
 };
 
