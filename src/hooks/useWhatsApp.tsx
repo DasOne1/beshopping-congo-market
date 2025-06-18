@@ -30,7 +30,8 @@ export const useWhatsApp = () => {
 
     // Ouvrir WhatsApp immédiatement
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER.replace('+', '')}?text=${encodedMessage}`;
+    const cleanNumber = WHATSAPP_NUMBER.replace(/[^0-9]/g, ''); // Supprimer tous les caractères non numériques
+    const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodedMessage}&app_absent=0`;
     window.open(whatsappUrl, '_blank');
 
     // Afficher la boîte de dialogue de confirmation après l'ouverture de WhatsApp
