@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash2, Plus, FolderOpen, EyeOff } from 'lucide-react';
+import { Eye, Edit, Trash2, Plus, FolderOpen, Power, PowerOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -125,26 +125,28 @@ const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant={category.is_visible ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handleVisibilityToggle(category.id, category.is_visible)}
-                            className="flex items-center gap-1"
-                          >
-                            {category.is_visible ? (
-                              <>
-                                <Eye className="h-3 w-3" />
-                                <span className="text-xs">Visible</span>
-                              </>
-                            ) : (
-                              <>
-                                <EyeOff className="h-3 w-3" />
-                                <span className="text-xs">Masqué</span>
-                              </>
-                            )}
-                          </Button>
-                        </div>
+                        <Button
+                          variant={category.is_visible ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleVisibilityToggle(category.id, category.is_visible)}
+                          className={`flex items-center gap-2 transition-all duration-200 ${
+                            category.is_visible 
+                              ? 'bg-green-600 hover:bg-green-700 text-white border-green-600' 
+                              : 'bg-gray-100 hover:bg-gray-200 text-gray-600 border-gray-300'
+                          }`}
+                        >
+                          {category.is_visible ? (
+                            <>
+                              <Power className="h-3 w-3" />
+                              <span className="text-xs font-medium">Visible</span>
+                            </>
+                          ) : (
+                            <>
+                              <PowerOff className="h-3 w-3" />
+                              <span className="text-xs font-medium">Masqué</span>
+                            </>
+                          )}
+                        </Button>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

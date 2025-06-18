@@ -64,17 +64,7 @@ const ProductDetails = () => {
   }
 
   const handleAddToCart = () => {
-    const cartItem = {
-      id: product.id,
-      name: product.name,
-      price: product.discounted_price || product.original_price,
-      image: product.images?.[0] || '',
-      quantity,
-      selectedColor,
-      selectedSize
-    };
-    
-    addToCart(cartItem);
+    addToCart(product.id);
     toast({
       title: "Produit ajouté au panier",
       description: `${product.name} a été ajouté à votre panier.`,
@@ -122,7 +112,6 @@ const ProductDetails = () => {
             <ProductImageCarousel
               images={product.images || []}
               productName={product.name}
-              onImageSelect={setSelectedImage}
             />
           </motion.div>
 
@@ -188,8 +177,7 @@ const ProductDetails = () => {
 
             {/* Attributes */}
             <ProductAttributes
-              colors={product.colors}
-              sizes={product.sizes}
+              product={product}
               selectedColor={selectedColor}
               selectedSize={selectedSize}
               onColorChange={setSelectedColor}
