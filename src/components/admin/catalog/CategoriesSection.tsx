@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Trash2, Plus, FolderOpen, Power, PowerOff } from 'lucide-react';
@@ -6,24 +5,25 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useCachedCategories } from '@/hooks/useCachedCategories';
 import { useCategories } from '@/hooks/useCategories';
 import CategoryDetailDialog from './CategoryDetailDialog';
 
 interface CategoriesSectionProps {
   searchTerm: string;
+  showHidden?: boolean;
 }
 
-const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
+const CategoriesSection = ({ searchTerm, showHidden = false }: CategoriesSectionProps) => {
   const navigate = useNavigate();
-  const { categories, isLoading } = useCachedCategories();
-  const { deleteCategory, updateCategory } = useCategories();
+  const { categories, isLoading, deleteCategory, updateCategory } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
 
-  const filteredCategories = categories?.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredCategories = categories?.filter(category => {
+    const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesVisibility = showHidden ? !category.is_visible : category.is_visible;
+    return matchesSearch && matchesVisibility;
+  }) || [];
 
   const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) {
@@ -64,7 +64,7 @@ const CategoriesSection = ({ searchTerm }: CategoriesSectionProps) => {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <FolderOpen className="h-5 w-5" />
-            Catégories ({filteredCategories.length})
+            {showHidden ? 'Catégories masquées' : 'Catégories visibles'} ({filteredCategories.length})
           </CardTitle>
           <Button onClick={() => navigate('/admin/catalog/categories/new')}>
             <Plus className="h-4 w-4 mr-2" />

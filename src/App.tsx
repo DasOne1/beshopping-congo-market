@@ -32,6 +32,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminProfile from "./pages/admin/AdminProfile";
 import AdminProductForm from "./pages/admin/AdminProductForm";
 import AdminCategoryForm from "./pages/admin/AdminCategoryForm";
+import AdminHiddenItems from '@/pages/admin/AdminHiddenItems';
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -73,6 +74,7 @@ function App() {
                       <Route path="/admin" element={<AdminLayout />}>
                         <Route path="dashboard" element={<AdminDashboard />} />
                         <Route path="catalog" element={<AdminCatalog />} />
+                        <Route path="catalog/hidden" element={<AdminHiddenItems />} />
                         <Route path="catalog/products/new" element={<AdminProductForm />} />
                         <Route path="catalog/products/:id/edit" element={<AdminProductForm />} />
                         <Route path="catalog/categories/new" element={<AdminCategoryForm />} />

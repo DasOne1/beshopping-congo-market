@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -8,7 +7,13 @@ import { useEffect } from 'react';
 type ProductInput = Omit<Product, 'id' | 'created_at' | 'updated_at'>;
 type ProductUpdate = Partial<ProductInput> & { id: string };
 
-export const useProducts = () => {
+interface UseProductsOptions {
+  includeHidden?: boolean;
+  includeInactive?: boolean;
+}
+
+export const useProducts = (options: UseProductsOptions = {}) => {
+  const { includeHidden = false, includeInactive = false } = options;
   const queryClient = useQueryClient();
 
   // Configuration de la synchronisation en temps réel pour les produits
@@ -41,15 +46,25 @@ export const useProducts = () => {
   }, [queryClient]);
 
   const { data: products = [], isLoading, refetch } = useQuery<Product[]>({
-    queryKey: ['products'],
+    queryKey: ['products', includeHidden, includeInactive],
     queryFn: async () => {
       console.log('📦 Récupération des produits depuis la base de données...');
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from('products')
         .select('*')
-        .eq('is_visible', true) // Filtrer seulement les produits visibles côté client
-        .eq('status', 'active') // Seulement les produits actifs
         .order('created_at', { ascending: false });
+
+      // Appliquer les filtres selon les options
+      if (!includeHidden) {
+        query = query.eq('is_visible', true);
+      }
+      
+      if (!includeInactive) {
+        query = query.eq('status', 'active');
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('❌ Erreur lors de la récupération des produits:', error);

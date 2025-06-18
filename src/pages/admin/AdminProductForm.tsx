@@ -23,8 +23,12 @@ const AdminProductForm = () => {
   const { id } = useParams();
   const isEdit = !!id;
   
-  const { products, createProduct, updateProduct } = useProducts();
-  const { categories } = useCategories();
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { products, createProduct, updateProduct } = useProducts({
+    includeHidden: true,
+    includeInactive: true
+  });
+  
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const { subcategories } = useSubcategories(selectedCategoryId);
   

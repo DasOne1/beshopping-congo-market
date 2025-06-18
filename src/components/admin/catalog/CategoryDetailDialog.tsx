@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Package, Eye, EyeOff } from 'lucide-react';
 
@@ -16,7 +17,11 @@ interface CategoryDetailDialogProps {
 }
 
 const CategoryDetailDialog = ({ category, open, onOpenChange }: CategoryDetailDialogProps) => {
-  const { products } = useProducts();
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { products } = useProducts({
+    includeHidden: true,
+    includeInactive: true
+  });
   
   const categoryProducts = products?.filter(product => product.category_id === category?.id) || [];
 

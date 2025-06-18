@@ -1,9 +1,10 @@
-
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Search, Package, Users, FolderOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, Package, Users, FolderOpen, Eye, EyeOff } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
 import { useCustomers } from '@/hooks/useCustomers';
@@ -12,15 +13,27 @@ import ProductsSection from '@/components/admin/catalog/ProductsSection';
 import CustomersSection from '@/components/admin/catalog/CustomersSection';
 
 const AdminCatalog = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const { categories, isLoading: categoriesLoading } = useCategories();
-  const { products, isLoading: productsLoading } = useProducts();
+  const { products, isLoading: productsLoading } = useProducts({
+    includeHidden: true,
+    includeInactive: true
+  });
   const { customers, isLoading: customersLoading } = useCustomers();
 
+  // Filtrer les éléments selon leur visibilité
+  const visibleCategories = categories?.filter(cat => cat.is_visible) || [];
+  const hiddenCategories = categories?.filter(cat => !cat.is_visible) || [];
+  const visibleProducts = products?.filter(prod => prod.is_visible) || [];
+  const hiddenProducts = products?.filter(prod => !prod.is_visible) || [];
+
   const stats = {
-    categories: categories?.length || 0,
-    products: products?.length || 0,
+    categories: visibleCategories.length,
+    products: visibleProducts.length,
     customers: customers?.length || 0,
+    hiddenCategories: hiddenCategories.length,
+    hiddenProducts: hiddenProducts.length,
   };
 
   return (
@@ -36,15 +49,32 @@ const AdminCatalog = () => {
           </p>
         </div>
         
-        {/* Search */}
-        <div className="relative w-full sm:w-auto sm:min-w-[300px]">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Rechercher..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex items-center gap-3">
+          {/* Hidden Items Button */}
+          {(stats.hiddenCategories > 0 || stats.hiddenProducts > 0) && (
+            <Button
+              variant="outline"
+              onClick={() => navigate('/admin/catalog/hidden')}
+              className="flex items-center gap-2"
+            >
+              <EyeOff className="h-4 w-4" />
+              Éléments masqués
+              <span className="ml-1 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded-full">
+                {stats.hiddenCategories + stats.hiddenProducts}
+              </span>
+            </Button>
+          )}
+          
+          {/* Search */}
+          <div className="relative w-full sm:w-auto sm:min-w-[300px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Rechercher..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
       </div>
 
@@ -58,7 +88,7 @@ const AdminCatalog = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats.categories}</div>
             <p className="text-xs text-muted-foreground">
-              Total des catégories
+              Catégories visibles
             </p>
           </CardContent>
         </Card>
@@ -71,7 +101,7 @@ const AdminCatalog = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats.products}</div>
             <p className="text-xs text-muted-foreground">
-              Produits en stock
+              Produits visibles
             </p>
           </CardContent>
         </Card>

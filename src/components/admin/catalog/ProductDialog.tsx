@@ -1,8 +1,9 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
 import { Product } from '@/types';
 import ProductBasicInfoForm from './ProductBasicInfoForm';
 import ProductPricingForm from './ProductPricingForm';
@@ -19,7 +20,11 @@ interface ProductDialogProps {
 }
 
 const ProductDialog = ({ product, open, onOpenChange }: ProductDialogProps) => {
-  const { createProduct, updateProduct } = useProducts();
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { createProduct, updateProduct } = useProducts({
+    includeHidden: true,
+    includeInactive: true
+  });
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   

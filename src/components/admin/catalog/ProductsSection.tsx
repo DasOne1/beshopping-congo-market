@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Trash2, Plus, Package, Power, PowerOff } from 'lucide-react';
@@ -12,21 +11,27 @@ import ProductDialog from './ProductDialog';
 
 interface ProductsSectionProps {
   searchTerm: string;
+  showHidden?: boolean;
 }
 
-const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
+const ProductsSection = ({ searchTerm, showHidden = false }: ProductsSectionProps) => {
   const navigate = useNavigate();
-  const { products, isLoading, deleteProduct, updateProduct } = useProducts();
+  const { products, isLoading, deleteProduct, updateProduct } = useProducts({
+    includeHidden: true,
+    includeInactive: true
+  });
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const filteredProducts = products?.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.brand?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredProducts = products?.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesVisibility = showHidden ? !product.is_visible : product.is_visible;
+    return matchesSearch && matchesVisibility;
+  }) || [];
 
   const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
@@ -67,7 +72,7 @@ const ProductsSection = ({ searchTerm }: ProductsSectionProps) => {
         <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            Produits ({filteredProducts.length})
+            {showHidden ? 'Produits masqués' : 'Produits visibles'} ({filteredProducts.length})
           </CardTitle>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Button onClick={() => navigate('/admin/catalog/products/new')} className="w-full sm:w-auto">

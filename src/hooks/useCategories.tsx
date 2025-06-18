@@ -1,14 +1,18 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Category } from '@/types';
 
+interface ExtendedCategory extends Category {
+  children?: ExtendedCategory[];
+  parent?: Category;
+}
+
 export const useCategories = () => {
   const queryClient = useQueryClient();
 
-  const { data: categories = [], isLoading } = useQuery({
+  const { data: categories = [], isLoading } = useQuery<ExtendedCategory[]>({
     queryKey: ['categories'],
     queryFn: async () => {
       console.log('Chargement des catégories depuis la base de données...');
@@ -18,8 +22,32 @@ export const useCategories = () => {
         .order('name', { ascending: true });
 
       if (error) throw error;
-      console.log('Catégories chargées:', data?.length);
-      return data as Category[];
+
+      // Organiser les catégories avec leurs relations parent/enfant
+      const categoriesMap = new Map<string, ExtendedCategory>();
+      const categoriesData = data as ExtendedCategory[];
+
+      // Première passe : créer la map
+      categoriesData.forEach(cat => {
+        categoriesMap.set(cat.id, { ...cat, children: [] });
+      });
+
+      // Deuxième passe : établir les relations
+      categoriesData.forEach(cat => {
+        const category = categoriesMap.get(cat.id)!;
+        
+        if (cat.parent_id) {
+          const parent = categoriesMap.get(cat.parent_id);
+          if (parent) {
+            category.parent = parent;
+            if (!parent.children) parent.children = [];
+            parent.children.push(category);
+          }
+        }
+      });
+
+      console.log('Catégories chargées avec relations:', categoriesMap.size);
+      return Array.from(categoriesMap.values());
     },
     retry: 1,
     retryDelay: 500,
@@ -44,11 +72,37 @@ export const useCategories = () => {
     onSuccess: (newCategory) => {
       console.log('Catégorie créée avec succès, mise à jour du cache...');
       
-      queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
-        return [newCategory, ...oldData];
+      queryClient.setQueryData(['categories'], (oldData: ExtendedCategory[] = []) => {
+        // Ajouter la nouvelle catégorie
+        const updatedData = [newCategory, ...oldData];
+
+        // Reconstruire les relations parent/enfant
+        const categoriesMap = new Map<string, ExtendedCategory>();
+        
+        // Première passe : créer la map
+        updatedData.forEach(cat => {
+          categoriesMap.set(cat.id, { ...cat, children: [] });
+        });
+
+        // Deuxième passe : établir les relations
+        updatedData.forEach(cat => {
+          const category = categoriesMap.get(cat.id)!;
+          
+          if (cat.parent_id) {
+            const parent = categoriesMap.get(cat.parent_id);
+            if (parent) {
+              category.parent = parent;
+              if (!parent.children) parent.children = [];
+              parent.children.push(category);
+            }
+          }
+        });
+
+        return Array.from(categoriesMap.values());
       });
 
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      // Invalider seulement le cache des relations
+      queryClient.invalidateQueries({ queryKey: ['categories-with-relationships'] });
       
       toast({
         title: "Catégorie créée",
@@ -81,13 +135,38 @@ export const useCategories = () => {
     onSuccess: (updatedCategory) => {
       console.log('Catégorie mise à jour avec succès, mise à jour du cache...');
       
-      queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
-        return oldData.map(category => 
-          category.id === updatedCategory.id ? updatedCategory : category
+      queryClient.setQueryData(['categories'], (oldData: ExtendedCategory[] = []) => {
+        // Mettre à jour la catégorie dans le cache
+        const updatedData = oldData.map(category => 
+          category.id === updatedCategory.id ? { ...category, ...updatedCategory } : category
         );
+
+        // Reconstruire les relations parent/enfant
+        const categoriesMap = new Map<string, ExtendedCategory>();
+        
+        // Première passe : créer la map
+        updatedData.forEach(cat => {
+          categoriesMap.set(cat.id, { ...cat, children: [] });
+        });
+
+        // Deuxième passe : établir les relations
+        updatedData.forEach(cat => {
+          const category = categoriesMap.get(cat.id)!;
+          
+          if (cat.parent_id) {
+            const parent = categoriesMap.get(cat.parent_id);
+            if (parent) {
+              category.parent = parent;
+              if (!parent.children) parent.children = [];
+              parent.children.push(category);
+            }
+          }
+        });
+
+        return Array.from(categoriesMap.values());
       });
 
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      // Invalider seulement le cache des relations, pas le cache principal
       queryClient.invalidateQueries({ queryKey: ['categories-with-relationships'] });
       
       toast({
@@ -119,11 +198,37 @@ export const useCategories = () => {
     onSuccess: (deletedId) => {
       console.log('Catégorie supprimée avec succès, mise à jour du cache...');
       
-      queryClient.setQueryData(['categories'], (oldData: Category[] = []) => {
-        return oldData.filter(category => category.id !== deletedId);
+      queryClient.setQueryData(['categories'], (oldData: ExtendedCategory[] = []) => {
+        // Supprimer la catégorie
+        const updatedData = oldData.filter(category => category.id !== deletedId);
+
+        // Reconstruire les relations parent/enfant
+        const categoriesMap = new Map<string, ExtendedCategory>();
+        
+        // Première passe : créer la map
+        updatedData.forEach(cat => {
+          categoriesMap.set(cat.id, { ...cat, children: [] });
+        });
+
+        // Deuxième passe : établir les relations
+        updatedData.forEach(cat => {
+          const category = categoriesMap.get(cat.id)!;
+          
+          if (cat.parent_id) {
+            const parent = categoriesMap.get(cat.parent_id);
+            if (parent) {
+              category.parent = parent;
+              if (!parent.children) parent.children = [];
+              parent.children.push(category);
+            }
+          }
+        });
+
+        return Array.from(categoriesMap.values());
       });
 
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      // Invalider seulement le cache des relations
+      queryClient.invalidateQueries({ queryKey: ['categories-with-relationships'] });
       
       toast({
         title: "Catégorie supprimée",
