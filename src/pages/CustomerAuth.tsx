@@ -1,30 +1,21 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useLocation, Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, User, Mail, Phone } from 'lucide-react';
+import { Home, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EmailAuthForm from '@/components/EmailAuthForm';
 import PhoneAuthForm from '@/components/PhoneAuthForm';
-import { useEmailAuth } from '@/hooks/useEmailAuth';
-import { usePhoneAuth } from '@/hooks/usePhoneAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 const CustomerAuth = () => {
   const location = useLocation();
-  const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
+  const { user } = useAuth();
   
-  // Utiliser les deux hooks d'authentification
-  const emailAuth = useEmailAuth();
-  const phoneAuth = usePhoneAuth();
-  
-  // Vérifier si l'utilisateur est connecté via l'une des méthodes
-  const isAuthenticated = emailAuth.isAuthenticated || phoneAuth.isAuthenticated;
-  const currentUser = emailAuth.currentCustomer || phoneAuth.currentCustomer;
-
   // Si l'utilisateur est déjà connecté, rediriger vers la destination ou la page d'accueil
-  if (isAuthenticated && currentUser) {
+  if (user) {
     const from = location.state?.from || '/';
     return <Navigate to={from} replace />;
   }
@@ -33,7 +24,7 @@ const CustomerAuth = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 flex items-center justify-center p-4">
       {/* Bouton retour à l'accueil */}
       <div className="absolute top-6 left-6">
-        <Button asChild variant="outline" className="flex items-center gap-2 bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-colors">
+        <Button asChild variant="outline" className="flex items-center gap-2 bg-white/80 backdrop-blur-sm">
           <Link to="/">
             <Home className="w-4 h-4" />
             Retour au shop
@@ -60,16 +51,10 @@ const CustomerAuth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={authMethod} onValueChange={(value) => setAuthMethod(value as 'email' | 'phone')} className="w-full">
+            <Tabs defaultValue="email" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="email" className="text-sm flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  Email
-                </TabsTrigger>
-                <TabsTrigger value="phone" className="text-sm flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  Téléphone
-                </TabsTrigger>
+                <TabsTrigger value="email" className="text-sm">Email</TabsTrigger>
+                <TabsTrigger value="phone" className="text-sm">Téléphone</TabsTrigger>
               </TabsList>
               
               <TabsContent value="email">

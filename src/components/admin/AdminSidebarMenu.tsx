@@ -1,101 +1,67 @@
 
 import React from "react";
-import { useLocation } from "react-router-dom";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
+import { useLocation, NavLink } from "react-router-dom";
+import { Package, LayoutDashboard, ShoppingCart, BarChart3, TrendingUp, Settings } from "lucide-react";
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarGroup, 
+  SidebarGroupContent, 
+  SidebarGroupLabel, 
+  SidebarMenu, 
+  SidebarMenuButton, 
   SidebarMenuItem,
-  SidebarHeader,
+  SidebarHeader
 } from "@/components/ui/sidebar";
-import {
-  BarChart3,
-  Package,
-  ShoppingCart,
-  Users,
-  Settings,
-  FileText,
-  User,
-} from "lucide-react";
+import { Logo } from "@/components/Logo";
 
-const AdminSidebarMenu = () => {
+const adminMenu = [
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "Catalogue", href: "/admin/catalog", icon: Package },
+  { name: "Commandes", href: "/admin/orders", icon: ShoppingCart },
+  { name: "Rapports", href: "/admin/reports", icon: BarChart3 },
+  { name: "Analytics", href: "/admin/analytics", icon: TrendingUp },
+  { name: "Paramètres", href: "/admin/settings", icon: Settings },
+];
+
+export default function AdminSidebarMenu() {
   const location = useLocation();
-
-  const items = [
-    {
-      title: "Tableau de bord",
-      url: "/admin",
-      icon: BarChart3,
-    },
-    {
-      title: "Catalogue",
-      url: "/admin/catalog",
-      icon: Package,
-    },
-    {
-      title: "Commandes",
-      url: "/admin/orders",
-      icon: ShoppingCart,
-    },
-    {
-      title: "Analyses",
-      url: "/admin/analytics",
-      icon: BarChart3,
-    },
-    {
-      title: "Rapports",
-      url: "/admin/reports",
-      icon: FileText,
-    },
-    {
-      title: "Paramètres",
-      url: "/admin/settings",
-      icon: Settings,
-    },
-    {
-      title: "Profil",
-      url: "/admin/profile",
-      icon: User,
-    },
-  ];
-
-  const isActiveRoute = (url: string) => {
-    if (url === "/admin") {
-      return location.pathname === "/admin";
-    }
-    return location.pathname.startsWith(url);
-  };
-
+  
   return (
-    <Sidebar className="w-64 border-r bg-white dark:bg-gray-800">
-      <SidebarHeader className="p-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-          Administration
-        </h2>
+    <Sidebar className="border-r">
+      <SidebarHeader className="border-b px-6 py-4">
+        <div className="flex items-center gap-3">
+          <Logo size="medium" className="h-8 w-8" />
+          <div>
+            <h2 className="text-lg font-semibold">BeShopping</h2>
+            <p className="text-xs text-muted-foreground">Administration</p>
+          </div>
+        </div>
       </SidebarHeader>
-      <SidebarContent>
+      
+      <SidebarContent className="px-3 py-4">
         <SidebarGroup>
-          <SidebarGroupLabel>Menu principal</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            Navigation
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
-                    className={isActiveRoute(item.url) ? 
-                      "bg-blue-100 text-blue-700 border-r-2 border-blue-700 dark:bg-blue-900 dark:text-blue-300" : 
-                      "hover:bg-gray-100 dark:hover:bg-gray-700"
-                    }
-                  >
-                    <a href={item.url} className="flex items-center gap-3 px-3 py-2">
-                      <item.icon className="h-5 w-5" />
-                      <span className="font-medium">{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
+            <SidebarMenu className="space-y-1">
+              {adminMenu.map((item) => (
+                <SidebarMenuItem key={item.name}>
+                  <NavLink to={item.href} end>
+                    {({ isActive }) => (
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        className="w-full justify-start gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent/50 data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="h-4 w-4" />
+                          <span className="font-medium">{item.name}</span>
+                        </div>
+                      </SidebarMenuButton>
+                    )}
+                  </NavLink>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -104,6 +70,4 @@ const AdminSidebarMenu = () => {
       </SidebarContent>
     </Sidebar>
   );
-};
-
-export default AdminSidebarMenu;
+}
