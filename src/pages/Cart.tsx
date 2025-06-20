@@ -1,12 +1,11 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCart } from '@/contexts/CartContext';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useNavigate } from 'react-router-dom';
-import { useOrderForm } from '@/hooks/useOrderForm';
 import OrderSummary from '@/components/OrderSummary';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -18,14 +17,19 @@ import { Product } from '@/types';
 import { useOrders } from '@/hooks/useOrders';
 import { useProducts } from '@/hooks/useProducts';
 import { formatPrice, formatCurrency } from '@/lib/utils';
+import CustomerInfoModal from '@/components/CustomerInfoModal';
 
 const Cart = () => {
   const { cart, updateQuantity, removeFromCart } = useCart();
   const { products } = useProducts();
-  const { currentCustomer, isAuthenticated } = useCustomerAuth();
   const navigate = useNavigate();
   const { sendWhatsAppMessage, closeConfirmation, showConfirmation: whatsappShowConfirmation, orderDetails: whatsappOrderDetails, generateCartOrderMessage } = useWhatsApp();
   const { createOrder } = useOrders();
+
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
 
   // Get cart products with full product data
   const cartProducts = cart.map(cartItem => {
@@ -67,47 +71,16 @@ const Cart = () => {
     return acc + (item.product.discounted_price || item.product.original_price) * item.quantity;
   }, 0);
 
-  const {
-    form,
-    isSubmitting,
-    showConfirmation,
-    orderDetails,
-    setShowConfirmation,
-    handleSubmit,
-    handleWhatsAppOrder,
-    validateForm,
-    whatsappMessage,
-    setOrderDetails
-  } = useOrderForm({
-    cartProducts,
-    subtotal,
-    formatPrice,
-    currentCustomer
-  });
-
-  const handleDirectOrder = async () => {
-    if (!isAuthenticated) {
-      navigate('/customer-auth', { state: { from: '/cart' } });
-      return;
-    }
-
+  const handleDirectOrder = async (customerInfo: any) => {
+    setIsSubmitting(true);
+    
     try {
-      // Utiliser les données du client connecté directement
-      const customerData = {
-        customerName: currentCustomer?.name || form.getValues().customerName || 'Anonyme',
-        customerPhone: currentCustomer?.phone || form.getValues().customerPhone || 'Non spécifié',
-        customerAddress: typeof currentCustomer?.address === 'string' 
-          ? currentCustomer.address 
-          : currentCustomer?.address?.address || form.getValues().customerAddress || 'Non spécifiée'
-      };
-
-      // Créer la commande directement avec les données du client
       const orderData = {
-        customer_id: currentCustomer?.id || null,
-        customer_name: customerData.customerName,
-        customer_phone: customerData.customerPhone,
-        customer_email: currentCustomer?.email || null,
-        shipping_address: { address: customerData.customerAddress },
+        customer_id: null,
+        customer_name: customerInfo.name,
+        customer_phone: customerInfo.phone,
+        customer_email: null,
+        shipping_address: { address: customerInfo.address },
         total_amount: subtotal || 0,
         subtotal: subtotal || 0,
         status: 'pending' as const,
@@ -122,17 +95,17 @@ const Cart = () => {
         total_price: (item.product.discounted_price || item.product.original_price) * item.quantity,
       }));
 
-      // Utiliser la mutation directement
       await createOrder.mutateAsync({ order: orderData, items: orderItems });
 
-      // Mettre à jour l'interface
       setOrderDetails({
-        customerName: customerData.customerName,
-        customerPhone: customerData.customerPhone,
-        customerAddress: customerData.customerAddress,
+        customerName: customerInfo.name,
+        customerPhone: customerInfo.phone,
+        customerAddress: customerInfo.address,
         total: formatPrice(subtotal),
         orderType: 'form'
       });
+      
+      setShowCustomerModal(false);
       setShowConfirmation(true);
 
       toast({
@@ -146,44 +119,59 @@ const Cart = () => {
         description: "Une erreur est survenue lors de l'enregistrement de la commande.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleWhatsAppOrderClick = () => {
-    if (!isAuthenticated) {
-      navigate('/customer-auth', { state: { from: '/cart' } });
-      return;
-    }
+  const handleWhatsAppOrder = async (customerInfo: any) => {
+    try {
+      const message = generateCartOrderMessage(cartProducts, subtotal, {
+        customerName: customerInfo.name,
+        customerPhone: customerInfo.phone,
+        customerAddress: customerInfo.address
+      });
 
-    const customerData = {
-      customerName: currentCustomer?.name || form.getValues().customerName || 'Anonyme',
-      customerPhone: currentCustomer?.phone || form.getValues().customerPhone || 'Non spécifié',
-      customerAddress: typeof currentCustomer?.address === 'string' 
-      ? currentCustomer.address 
-        : currentCustomer?.address?.address || form.getValues().customerAddress || 'Non spécifiée'
-    };
+      sendWhatsAppMessage(message, {
+        customerName: customerInfo.name,
+        customerPhone: customerInfo.phone,
+        customerAddress: customerInfo.address,
+        productName: `Commande panier (${cartProducts.length} produits)`,
+        description: `Commande de ${cartProducts.length} produit(s) depuis le panier`,
+        budget: formatPrice(subtotal)
+      });
 
-    const message = generateCartOrderMessage(cartProducts, subtotal, customerData);
+      // Enregistrer la commande en arrière-plan
+      const orderData = {
+        customer_id: null,
+        customer_name: customerInfo.name,
+        customer_phone: customerInfo.phone,
+        customer_email: null,
+        shipping_address: { address: customerInfo.address },
+        total_amount: subtotal || 0,
+        subtotal: subtotal || 0,
+        status: 'pending' as const,
+      };
 
-    // Utiliser la logique centralisée du hook useWhatsApp
-    sendWhatsAppMessage(message, {
-      customerName: customerData.customerName,
-      customerPhone: customerData.customerPhone,
-      customerAddress: customerData.customerAddress,
-      productName: `Commande panier (${cartProducts.length} produits)`,
-      description: `Commande de ${cartProducts.length} produit(s) depuis le panier`,
-      budget: formatPrice(subtotal)
-    });
+      const orderItems = cartProducts.map(item => ({
+        product_id: item.productId,
+        product_name: item.product.name,
+        product_image: item.product.images?.[0] || '',
+        quantity: item.quantity,
+        unit_price: item.product.discounted_price || item.product.original_price,
+        total_price: (item.product.discounted_price || item.product.original_price) * item.quantity,
+      }));
 
-    // Enregistrer la commande en arrière-plan
-    handleWhatsAppOrder().catch(error => {
+      await createOrder.mutateAsync({ order: orderData, items: orderItems });
+      setShowCustomerModal(false);
+    } catch (error) {
       console.error('Erreur lors de la création de la commande WhatsApp:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création de la commande WhatsApp.",
         variant: "destructive",
       });
-    });
+    }
   };
 
   return (
@@ -268,21 +256,11 @@ const Cart = () => {
                 <Button 
                   className="w-full" 
                   size="lg"
-                  onClick={handleDirectOrder}
+                  onClick={() => setShowCustomerModal(true)}
                   disabled={isSubmitting}
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {isSubmitting ? 'Commande en cours...' : 'Passer la commande'}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-                  onClick={handleWhatsAppOrderClick}
-                  disabled={isSubmitting}
-                >
-                  <WhatsAppIcon className="w-4 h-4 mr-2" />
-                  Commander via WhatsApp
+                  Passer la commande
                 </Button>
 
                 <Link to="/products" className="block">
@@ -295,6 +273,14 @@ const Cart = () => {
           </div>
         )}
 
+        <CustomerInfoModal
+          open={showCustomerModal}
+          onOpenChange={setShowCustomerModal}
+          onSubmit={handleDirectOrder}
+          onWhatsAppSubmit={handleWhatsAppOrder}
+          isSubmitting={isSubmitting}
+        />
+
         <WhatsAppConfirmationDialog
           open={showConfirmation || whatsappShowConfirmation}
           onOpenChange={(open) => {
@@ -305,11 +291,9 @@ const Cart = () => {
           }}
           orderDetails={orderDetails || whatsappOrderDetails}
           message={orderDetails?.orderType === 'whatsapp' ? generateCartOrderMessage(cartProducts, subtotal, {
-            customerName: currentCustomer?.name || form.getValues().customerName || 'Anonyme',
-            customerPhone: currentCustomer?.phone || form.getValues().customerPhone || 'Non spécifié',
-            customerAddress: typeof currentCustomer?.address === 'string' 
-              ? currentCustomer.address 
-              : currentCustomer?.address?.address || form.getValues().customerAddress || 'Non spécifiée'
+            customerName: orderDetails?.customerName || 'Anonyme',
+            customerPhone: orderDetails?.customerPhone || 'Non spécifié',
+            customerAddress: orderDetails?.customerAddress || 'Non spécifiée'
           }) : undefined}
           onClose={() => {
             setShowConfirmation(false);

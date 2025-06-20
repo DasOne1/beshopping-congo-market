@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from 'react';
 import { useOrders } from '@/hooks/useOrders';
 import { toast } from '@/hooks/use-toast';
@@ -14,10 +14,9 @@ interface CustomOrderData {
 
 interface UseCustomOrderFormProps {
   onOrderComplete?: () => void;
-  currentCustomer?: any;
 }
 
-export const useCustomOrderForm = ({ onOrderComplete, currentCustomer }: UseCustomOrderFormProps = {}) => {
+export const useCustomOrderForm = ({ onOrderComplete }: UseCustomOrderFormProps = {}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
@@ -40,16 +39,24 @@ export const useCustomOrderForm = ({ onOrderComplete, currentCustomer }: UseCust
       });
       return false;
     }
+    if (!formData.contactInfo.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Les informations de contact sont requises",
+        variant: "destructive",
+      });
+      return false;
+    }
     return true;
   };
 
   const createCustomOrderInDB = async (formData: CustomOrderData) => {
     const orderData = {
-      customer_id: currentCustomer?.id || null,
-      customer_name: currentCustomer?.name || formData.contactInfo || 'Client personnalisé',
-      customer_phone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
-      customer_email: currentCustomer?.email || null,
-      shipping_address: { address: currentCustomer?.address?.address || formData.address || 'Non spécifiée' },
+      customer_id: null,
+      customer_name: formData.contactInfo || 'Client personnalisé',
+      customer_phone: formData.contactInfo || 'Non spécifié',
+      customer_email: null,
+      shipping_address: { address: formData.address || 'Non spécifiée' },
       total_amount: parseFloat(formData.budget) || 0,
       subtotal: parseFloat(formData.budget) || 0,
       status: 'pending' as const,
@@ -74,11 +81,11 @@ export const useCustomOrderForm = ({ onOrderComplete, currentCustomer }: UseCust
     setIsSubmitting(true);
     
     try {
-      const orderDetailsData = await createCustomOrderInDB(formData);
+      await createCustomOrderInDB(formData);
       setOrderDetails({
-        customerName: currentCustomer?.name || formData.contactInfo || 'Client personnalisé',
-        customerPhone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
-        customerAddress: currentCustomer?.address?.address || formData.address || 'Non spécifiée',
+        customerName: formData.contactInfo || 'Client personnalisé',
+        customerPhone: formData.contactInfo || 'Non spécifié',
+        customerAddress: formData.address || 'Non spécifiée',
         productName: formData.name,
         description: formData.description,
         budget: formData.budget ? `${parseFloat(formData.budget).toLocaleString()} FC` : 'Non spécifié',
@@ -112,9 +119,9 @@ export const useCustomOrderForm = ({ onOrderComplete, currentCustomer }: UseCust
       await createCustomOrderInDB(formData);
       
       setOrderDetails({
-        customerName: currentCustomer?.name || formData.contactInfo || 'Client personnalisé',
-        customerPhone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
-        customerAddress: currentCustomer?.address?.address || formData.address || 'Non spécifiée',
+        customerName: formData.contactInfo || 'Client personnalisé',
+        customerPhone: formData.contactInfo || 'Non spécifié',
+        customerAddress: formData.address || 'Non spécifiée',
         productName: formData.name,
         description: formData.description,
         budget: formData.budget ? `${parseFloat(formData.budget).toLocaleString()} FC` : 'Non spécifié',

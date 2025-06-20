@@ -1,6 +1,5 @@
+
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useEmailAuth } from '@/hooks/useEmailAuth';
 import { Product } from '@/types';
 
 interface WhatsAppOrderDetails {
@@ -14,8 +13,6 @@ interface WhatsAppOrderDetails {
 }
 
 export const useWhatsApp = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated, currentCustomer } = useEmailAuth();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [orderDetails, setOrderDetails] = useState<WhatsAppOrderDetails | null>(null);
 
@@ -23,11 +20,6 @@ export const useWhatsApp = () => {
   const WHATSAPP_NUMBER = '+243978100940';
 
   const sendWhatsAppMessage = (message: string, orderDetails?: Partial<WhatsAppOrderDetails>) => {
-    if (!isAuthenticated) {
-      navigate('/customer-auth', { state: { from: window.location.pathname } });
-      return;
-    }
-
     // Ouvrir WhatsApp immédiatement
     const encodedMessage = encodeURIComponent(message);
     const cleanNumber = WHATSAPP_NUMBER.replace(/[^0-9]/g, ''); // Supprimer tous les caractères non numériques
@@ -37,9 +29,9 @@ export const useWhatsApp = () => {
     // Afficher la boîte de dialogue de confirmation après l'ouverture de WhatsApp
     if (orderDetails) {
       setOrderDetails({
-        customerName: currentCustomer?.name || orderDetails.customerName || 'Utilisateur',
-        customerPhone: currentCustomer?.phone || orderDetails.customerPhone || 'Non spécifié',
-        customerAddress: currentCustomer?.address || orderDetails.customerAddress,
+        customerName: orderDetails.customerName || 'Utilisateur',
+        customerPhone: orderDetails.customerPhone || 'Non spécifié',
+        customerAddress: orderDetails.customerAddress,
         productName: orderDetails.productName,
         description: orderDetails.description,
         budget: orderDetails.budget,
@@ -69,9 +61,9 @@ Pouvez-vous me confirmer la disponibilité et les modalités de livraison ?`;
   const generateCustomOrderMessage = (productName: string, description: string, budget?: string, contactInfo?: string, address?: string) => {
     return `🛍️ *Commande Personnalisée - BeShopping Congo*
 
-👤 *Client:* ${currentCustomer?.name || contactInfo || 'Anonyme'}
-📱 *Contact:* ${currentCustomer?.phone || contactInfo || 'Non spécifié'}
-📍 *Adresse:* ${currentCustomer?.address || address || 'Non spécifiée'}
+👤 *Client:* ${contactInfo || 'Anonyme'}
+📱 *Contact:* ${contactInfo || 'Non spécifié'}
+📍 *Adresse:* ${address || 'Non spécifiée'}
 
 🎯 *Produit souhaité:* ${productName}
 
@@ -116,8 +108,6 @@ Merci de me contacter pour plus de détails sur cette commande personnalisée.`;
 
   return {
     WHATSAPP_NUMBER,
-    isAuthenticated,
-    currentCustomer,
     showConfirmation,
     orderDetails,
     sendWhatsAppMessage,
