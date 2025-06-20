@@ -243,6 +243,8 @@ const ProductsSection = ({ searchTerm, showHidden = false }: ProductsSectionProp
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(product.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
