@@ -7,13 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import Logo from './Logo';
+import { Logo } from './Logo';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { items, getTotalItems } = useCart();
+  const { cartItems, getTotalItems } = useCart();
   const { favorites } = useFavorites();
   const navigate = useNavigate();
   const location = useLocation();
