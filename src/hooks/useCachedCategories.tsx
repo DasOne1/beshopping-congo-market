@@ -8,18 +8,24 @@ interface ExtendedCategory extends Category {
   parent?: Category;
 }
 
-export const useCachedCategories = () => {
+export const useCachedCategories = (includeHidden: boolean = false) => {
   const queryClient = useQueryClient();
 
   const { data: categories = [], isLoading } = useQuery<ExtendedCategory[]>({
-    queryKey: ['categories-with-relationships'],
+    queryKey: ['categories-with-relationships', includeHidden],
     queryFn: async () => {
       console.log('📂 Chargement des catégories avec relations...');
-      const { data, error } = await supabase
+      let query = supabase
         .from('categories')
         .select('*')
-        .eq('is_visible', true) // Filtrer seulement les catégories visibles côté client
         .order('name', { ascending: true });
+
+      // Filtrer par visibilité sauf si explicitement demandé
+      if (!includeHidden) {
+        query = query.eq('is_visible', true);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 

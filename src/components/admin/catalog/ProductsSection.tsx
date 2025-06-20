@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Trash2, Plus, Package, Power, PowerOff } from 'lucide-react';
@@ -7,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useProducts } from '@/hooks/useProducts';
 import ProductDetailDialog from './ProductDetailDialog';
-import ProductDialog from './ProductDialog';
+import { toast } from '@/hooks/use-toast';
 
 interface ProductsSectionProps {
   searchTerm: string;
@@ -22,8 +23,6 @@ const ProductsSection = ({ searchTerm, showHidden = false }: ProductsSectionProp
   });
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const filteredProducts = products?.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,8 +44,18 @@ const ProductsSection = ({ searchTerm, showHidden = false }: ProductsSectionProp
         id, 
         is_visible: !currentVisibility 
       });
+      
+      toast({
+        title: "Visibilité modifiée",
+        description: `Le produit est maintenant ${!currentVisibility ? 'visible' : 'masqué'}`,
+      });
     } catch (error) {
       console.error('Erreur lors du changement de visibilité:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du changement de visibilité",
+        variant: "destructive",
+      });
     }
   };
 

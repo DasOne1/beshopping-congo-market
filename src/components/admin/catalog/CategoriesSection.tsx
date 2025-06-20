@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Trash2, Plus, FolderOpen, Power, PowerOff } from 'lucide-react';
@@ -7,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCategories } from '@/hooks/useCategories';
 import CategoryDetailDialog from './CategoryDetailDialog';
+import { toast } from '@/hooks/use-toast';
 
 interface CategoriesSectionProps {
   searchTerm: string;
@@ -37,8 +39,18 @@ const CategoriesSection = ({ searchTerm, showHidden = false }: CategoriesSection
         id, 
         is_visible: !is_visible 
       });
+      
+      toast({
+        title: "Visibilité modifiée",
+        description: `La catégorie est maintenant ${!is_visible ? 'visible' : 'masquée'}`,
+      });
     } catch (error) {
       console.error('Erreur lors du changement de visibilité:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du changement de visibilité",
+        variant: "destructive",
+      });
     }
   };
 

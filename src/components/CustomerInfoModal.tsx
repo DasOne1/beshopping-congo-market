@@ -42,16 +42,7 @@ const CustomerInfoModal: React.FC<CustomerInfoModalProps> = ({
   const handleSubmit = (e: React.FormEvent, isWhatsApp = false) => {
     e.preventDefault();
     
-    // Validation
-    if (!customerInfo.name.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Le nom est requis",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+    // Validation - seuls le téléphone et l'adresse sont requis
     if (!customerInfo.phone.trim()) {
       toast({
         title: "Erreur",
@@ -70,10 +61,16 @@ const CustomerInfoModal: React.FC<CustomerInfoModalProps> = ({
       return;
     }
 
+    // Si le nom n'est pas fourni, utiliser "Client" par défaut
+    const finalCustomerInfo = {
+      ...customerInfo,
+      name: customerInfo.name.trim() || 'Client'
+    };
+
     if (isWhatsApp && onWhatsAppSubmit) {
-      onWhatsAppSubmit(customerInfo);
+      onWhatsAppSubmit(finalCustomerInfo);
     } else {
-      onSubmit(customerInfo);
+      onSubmit(finalCustomerInfo);
     }
   };
 
@@ -94,14 +91,13 @@ const CustomerInfoModal: React.FC<CustomerInfoModalProps> = ({
           <div className="space-y-2">
             <Label htmlFor="customer-name" className="flex items-center gap-2">
               <User className="w-4 h-4" />
-              Nom complet *
+              Nom complet (facultatif)
             </Label>
             <Input
               id="customer-name"
               value={customerInfo.name}
               onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
               placeholder="Votre nom complet"
-              required
             />
           </div>
           
