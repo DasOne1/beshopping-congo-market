@@ -1,13 +1,14 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash2, Plus, Package, Power, PowerOff } from 'lucide-react';
+import { Eye, Edit, Trash2, Plus, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useProducts } from '@/hooks/useProducts';
 import ProductDetailDialog from './ProductDetailDialog';
+import VisibilityToggleButton from './VisibilityToggleButton';
 import { toast } from '@/hooks/use-toast';
 
 interface ProductsSectionProps {
@@ -197,28 +198,10 @@ const ProductsSection = ({ searchTerm, showHidden = false }: ProductsSectionProp
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant={product.is_visible ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleVisibilityToggle(product.id, product.is_visible)}
-                          className={`flex items-center gap-2 transition-all duration-200 ${
-                            product.is_visible 
-                              ? 'bg-green-600 hover:bg-green-700 text-white border-green-600' 
-                              : 'bg-gray-100 hover:bg-gray-200 text-gray-600 border-gray-300'
-                          }`}
-                        >
-                          {product.is_visible ? (
-                            <>
-                              <Power className="h-3 w-3" />
-                              <span className="text-xs font-medium">Visible</span>
-                            </>
-                          ) : (
-                            <>
-                              <PowerOff className="h-3 w-3" />
-                              <span className="text-xs font-medium">Masqué</span>
-                            </>
-                          )}
-                        </Button>
+                        <VisibilityToggleButton
+                          isVisible={product.is_visible}
+                          onToggle={() => handleVisibilityToggle(product.id, product.is_visible)}
+                        />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

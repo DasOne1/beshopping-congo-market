@@ -1,13 +1,14 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash2, Plus, FolderOpen, Power, PowerOff } from 'lucide-react';
+import { Eye, Edit, Trash2, Plus, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCategories } from '@/hooks/useCategories';
 import CategoryDetailDialog from './CategoryDetailDialog';
+import VisibilityToggleButton from './VisibilityToggleButton';
 import { toast } from '@/hooks/use-toast';
 
 interface CategoriesSectionProps {
@@ -141,28 +142,10 @@ const CategoriesSection = ({ searchTerm, showHidden = false }: CategoriesSection
                         )}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant={category.is_visible ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleVisibilityToggle(category.id, category.is_visible)}
-                          className={`flex items-center gap-2 transition-all duration-200 ${
-                            category.is_visible 
-                              ? 'bg-green-600 hover:bg-green-700 text-white border-green-600' 
-                              : 'bg-gray-100 hover:bg-gray-200 text-gray-600 border-gray-300'
-                          }`}
-                        >
-                          {category.is_visible ? (
-                            <>
-                              <Power className="h-3 w-3" />
-                              <span className="text-xs font-medium">Visible</span>
-                            </>
-                          ) : (
-                            <>
-                              <PowerOff className="h-3 w-3" />
-                              <span className="text-xs font-medium">Masqué</span>
-                            </>
-                          )}
-                        </Button>
+                        <VisibilityToggleButton
+                          isVisible={category.is_visible}
+                          onToggle={() => handleVisibilityToggle(category.id, category.is_visible)}
+                        />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

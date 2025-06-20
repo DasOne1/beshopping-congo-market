@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -74,40 +75,48 @@ export const useProducts = (options: UseProductsOptions = {}) => {
       console.log('✅ Produits récupérés:', data?.length || 0);
       return data as Product[];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes - données considérées comme fraîches
-    gcTime: 1000 * 60 * 10, // 10 minutes - cache en mémoire
-    refetchOnWindowFocus: false, // Éviter les refetch inutiles
-    refetchOnMount: false, // Éviter les refetch inutiles au montage
-    retry: 3, // Retry automatique en cas d'erreur réseau
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const createProduct = useMutation({
     mutationFn: async (product: ProductInput) => {
+      // Nettoyer les IDs vides pour éviter les erreurs UUID
+      const cleanProduct = {
+        ...product,
+        category_id: product.category_id && product.category_id.trim() !== '' ? product.category_id : null,
+        subcategory_id: product.subcategory_id && product.subcategory_id.trim() !== '' ? product.subcategory_id : null,
+      };
+
       const productData = {
-        name: product.name,
-        description: product.description,
-        original_price: product.original_price,
-        discounted_price: product.discounted_price,
-        stock: product.stock,
-        category_id: product.category_id,
-        images: product.images || [],
-        tags: product.tags || [],
-        featured: product.featured || false,
-        weight: product.weight,
-        dimensions: product.dimensions,
-        sku: product.sku,
-        status: product.status || 'active',
-        discount: product.discount,
-        is_visible: product.is_visible ?? true,
-        colors: product.colors || [],
-        sizes: product.sizes || [],
-        gender: product.gender,
-        material: product.material,
-        brand: product.brand,
-        collection: product.collection,
-        season: product.season,
-        care_instructions: product.care_instructions,
+        name: cleanProduct.name,
+        description: cleanProduct.description,
+        original_price: cleanProduct.original_price,
+        discounted_price: cleanProduct.discounted_price,
+        stock: cleanProduct.stock,
+        category_id: cleanProduct.category_id,
+        subcategory_id: cleanProduct.subcategory_id,
+        images: cleanProduct.images || [],
+        tags: cleanProduct.tags || [],
+        featured: cleanProduct.featured || false,
+        weight: cleanProduct.weight,
+        dimensions: cleanProduct.dimensions,
+        sku: cleanProduct.sku,
+        status: cleanProduct.status || 'active',
+        discount: cleanProduct.discount,
+        is_visible: cleanProduct.is_visible ?? true,
+        colors: cleanProduct.colors || [],
+        sizes: cleanProduct.sizes || [],
+        gender: cleanProduct.gender,
+        material: cleanProduct.material,
+        brand: cleanProduct.brand,
+        collection: cleanProduct.collection,
+        season: cleanProduct.season,
+        care_instructions: cleanProduct.care_instructions,
       };
 
       const { data, error } = await supabase
@@ -120,7 +129,6 @@ export const useProducts = (options: UseProductsOptions = {}) => {
       return data as Product;
     },
     onSuccess: () => {
-      // Optimisation : mise à jour ciblée du cache
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['preload-data'] });
       toast({
@@ -139,9 +147,16 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
   const updateProduct = useMutation({
     mutationFn: async ({ id, ...updates }: ProductUpdate) => {
+      // Nettoyer les IDs vides pour éviter les erreurs UUID
+      const cleanUpdates = {
+        ...updates,
+        category_id: updates.category_id && updates.category_id.trim() !== '' ? updates.category_id : null,
+        subcategory_id: updates.subcategory_id && updates.subcategory_id.trim() !== '' ? updates.subcategory_id : null,
+      };
+
       const { data, error } = await supabase
         .from('products')
-        .update(updates)
+        .update(cleanUpdates)
         .eq('id', id)
         .select()
         .single();
@@ -150,7 +165,6 @@ export const useProducts = (options: UseProductsOptions = {}) => {
       return data as Product;
     },
     onSuccess: (updatedProduct) => {
-      // Optimisation : mise à jour ciblée plutôt qu'invalidation complète
       queryClient.setQueryData(['products'], (oldData: Product[] | undefined) => {
         if (!oldData) return oldData;
         return oldData.map(product => 
@@ -184,7 +198,6 @@ export const useProducts = (options: UseProductsOptions = {}) => {
       return id;
     },
     onSuccess: (deletedId) => {
-      // Optimisation : suppression ciblée du cache
       queryClient.setQueryData(['products'], (oldData: Product[] | undefined) => {
         if (!oldData) return oldData;
         return oldData.filter(product => product.id !== deletedId);
