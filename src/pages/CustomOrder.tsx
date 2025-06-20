@@ -1,7 +1,8 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, X, Send, User, MessageCircle, CheckCircle } from 'lucide-react';
+import { Upload, X, Send, MessageCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -9,51 +10,25 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
-import WhatsAppContact from '@/components/WhatsAppContact';
-import { useNavigate } from 'react-router-dom';
-import { useEmailAuth } from '@/hooks/useEmailAuth';
-import { useWhatsApp } from '@/hooks/useWhatsApp';
+import CustomerInfoModal from '@/components/CustomerInfoModal';
 import { useOrders } from '@/hooks/useOrders';
-import WhatsAppConfirmationDialog from '@/components/WhatsAppConfirmationDialog';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
 
 const CustomOrder = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated, currentCustomer } = useEmailAuth();
-  const { 
-    showConfirmation: whatsappShowConfirmation, 
-    orderDetails: whatsappOrderDetails, 
-    sendWhatsAppMessage, 
-    closeConfirmation,
-    generateCustomOrderMessage 
-  } = useWhatsApp();
+  const { generateCustomOrderMessage } = useWhatsApp();
   const { createOrder } = useOrders();
 
   const [formData, setFormData] = useState({
-      name: '',
-      description: '',
-      budget: '',
-      contactInfo: '',
-      address: '',
-      images: [] as File[]
+    name: '',
+    description: '',
+    budget: '',
+    images: [] as File[]
   });
 
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [orderType, setOrderType] = useState<'direct' | 'whatsapp'>('direct');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [orderDetails, setOrderDetails] = useState<any>(null);
-
-  // Pré-remplir les informations si l'utilisateur est connecté
-  useEffect(() => {
-    if (isAuthenticated && currentCustomer) {
-      setFormData(prev => ({
-        ...prev, // Préserver toutes les informations existantes (nom, description, budget, images)
-        contactInfo: prev.contactInfo || currentCustomer.phone || currentCustomer.email || '',
-        address: prev.address || currentCustomer.address?.address || ''
-      }));
-    }
-  }, [isAuthenticated, currentCustomer]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -72,25 +47,16 @@ const CustomOrder = () => {
     }));
   };
 
-  const handleDirectOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!isAuthenticated) {
-      navigate('/customer-auth', { state: { from: '/custom-order' } });
-      return;
-    }
-    
-    // Validation simple des champs requis
+  const validateForm = () => {
     if (!formData.name.trim() || !formData.description.trim()) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs obligatoires.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
-    // Validation supplémentaire pour le budget
     const budget = parseFloat(formData.budget);
     if (formData.budget && (isNaN(budget) || budget < 0)) {
       toast({
@@ -98,128 +64,56 @@ const CustomOrder = () => {
         description: "Le budget doit être un nombre positif valide.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
-    try {
-      // Utiliser les données du client connecté directement (comme dans Cart)
-      const customerData = {
-        customerName: currentCustomer?.name || formData.contactInfo || 'Client personnalisé',
-        customerPhone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
-        customerAddress: typeof currentCustomer?.address === 'string' 
-          ? currentCustomer.address 
-          : currentCustomer?.address?.address || formData.address || 'Non spécifiée'
-      };
-
-      // Créer la commande directement avec les données du client (comme dans Cart)
-      const finalBudget = budget || 0;
-      
-      const orderData = {
-        customer_id: currentCustomer?.id || null,
-        customer_name: customerData.customerName,
-        customer_phone: customerData.customerPhone,
-        customer_email: currentCustomer?.email || null,
-        shipping_address: { address: customerData.customerAddress },
-        total_amount: finalBudget,
-        subtotal: finalBudget,
-        status: 'pending' as const,
-      };
-
-      const orderItems = [{
-        product_id: null,
-        product_name: formData.name,
-        product_image: '',
-        quantity: 1,
-        unit_price: finalBudget,
-        total_price: finalBudget,
-      }];
-
-      // Utiliser la mutation directement (comme dans Cart)
-      await createOrder.mutateAsync({ order: orderData, items: orderItems });
-
-      // Mettre à jour l'interface
-    setOrderDetails({
-        customerName: customerData.customerName,
-        customerPhone: customerData.customerPhone,
-        customerAddress: customerData.customerAddress,
-      productName: formData.name,
-      description: formData.description,
-        budget: formData.budget ? `${parseFloat(formData.budget).toLocaleString()} FC` : 'Non spécifié',
-      orderType: 'form'
-    });
-    setShowConfirmation(true);
-
-      toast({
-        title: "Commande enregistrée",
-        description: "Votre commande personnalisée a été enregistrée avec succès.",
-      });
-    } catch (error) {
-      console.error('Erreur lors de la création de la commande:', error);
-    toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de l'enregistrement de la commande.",
-        variant: "destructive",
-    });
-    }
+    return true;
   };
 
-  const handleConfirmationClose = () => {
-    setShowConfirmation(false);
-    closeConfirmation();
+  const handleDirectOrder = () => {
+    if (!validateForm()) return;
+    setOrderType('direct');
+    setShowCustomerModal(true);
   };
 
-  const handleWhatsAppOrderClick = () => {
-    if (!isAuthenticated) {
-      navigate('/customer-auth', { state: { from: '/custom-order' } });
-      return;
-    }
+  const handleWhatsAppOrder = () => {
+    if (!validateForm()) return;
+    setOrderType('whatsapp');
+    setShowCustomerModal(true);
+  };
 
-    // Validation simple des champs requis
-    if (!formData.name.trim() || !formData.description.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const message = generateCustomOrderMessage(
-      formData.name,
-      formData.description,
-      formData.budget,
-      formData.contactInfo,
-      formData.address
-    );
+  const handleCustomerInfoSubmit = async (customerInfo: any) => {
+    setIsSubmitting(true);
     
-    // Envoyer le message WhatsApp et créer la commande en arrière-plan
-    sendWhatsAppMessage(message, {
-      customerName: currentCustomer?.name || formData.contactInfo || 'Client WhatsApp',
-      customerPhone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
-      customerAddress: currentCustomer?.address?.address || formData.address || 'Non spécifiée',
-      productName: formData.name,
-      description: formData.description,
-      budget: formData.budget
-    });
-
-    // Créer la commande en arrière-plan (comme dans Cart)
-    const createWhatsAppOrder = async () => {
-      try {
-        const budget = parseFloat(formData.budget) || 0;
-        const customerData = {
-          customerName: currentCustomer?.name || formData.contactInfo || 'Client WhatsApp',
-          customerPhone: currentCustomer?.phone || formData.contactInfo || 'Non spécifié',
-          customerAddress: typeof currentCustomer?.address === 'string' 
-            ? currentCustomer.address 
-            : currentCustomer?.address?.address || formData.address || 'Non spécifiée'
-        };
-
+    try {
+      const budget = parseFloat(formData.budget) || 0;
+      
+      if (orderType === 'whatsapp') {
+        // Commander via WhatsApp
+        const message = generateCustomOrderMessage(
+          formData.name,
+          formData.description,
+          formData.budget,
+          customerInfo.phone,
+          customerInfo.address
+        );
+        
+        const phoneNumber = "+243970284639";
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+        
+        toast({
+          title: "Redirection vers WhatsApp",
+          description: "Vous allez être redirigé vers WhatsApp pour finaliser votre commande.",
+        });
+      } else {
+        // Commande directe
         const orderData = {
-          customer_id: currentCustomer?.id || null,
-          customer_name: customerData.customerName,
-          customer_phone: customerData.customerPhone,
-          customer_email: currentCustomer?.email || null,
-          shipping_address: { address: customerData.customerAddress },
+          customer_id: null,
+          customer_name: customerInfo.name || 'Client',
+          customer_phone: customerInfo.phone,
+          customer_email: null,
+          shipping_address: { address: customerInfo.address },
           total_amount: budget,
           subtotal: budget,
           status: 'pending' as const,
@@ -235,17 +129,32 @@ const CustomOrder = () => {
         }];
 
         await createOrder.mutateAsync({ order: orderData, items: orderItems });
-      } catch (error) {
-        console.error('Erreur lors de la création de la commande WhatsApp:', error);
+
         toast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la création de la commande WhatsApp.",
-          variant: "destructive",
+          title: "Commande enregistrée",
+          description: "Votre commande personnalisée a été enregistrée avec succès.",
         });
       }
-    };
 
-    createWhatsAppOrder();
+      // Réinitialiser le formulaire
+      setFormData({
+        name: '',
+        description: '',
+        budget: '',
+        images: []
+      });
+      
+      setShowCustomerModal(false);
+    } catch (error) {
+      console.error('Erreur lors de la création de la commande:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'enregistrement de la commande.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -269,14 +178,9 @@ const CustomOrder = () => {
             <Card className="shadow-lg border-2">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
                 <CardTitle className="text-2xl">Détails de votre commande</CardTitle>
-                {isAuthenticated && (
-                  <p className="text-sm text-muted-foreground">
-                    Vos informations ont été pré-remplies depuis votre profil
-                  </p>
-                )}
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleDirectOrder} className="space-y-8">
+                <div className="space-y-8">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
                       <Label htmlFor="name" className="text-base font-semibold">Nom du produit souhaité *</Label>
@@ -314,30 +218,6 @@ const CustomOrder = () => {
                       required
                       className="mt-2"
                     />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <Label htmlFor="contact" className="text-base font-semibold">Informations de contact</Label>
-                      <Input
-                        id="contact"
-                        value={formData.contactInfo}
-                        onChange={(e) => setFormData(prev => ({ ...prev, contactInfo: e.target.value }))}
-                        placeholder="Téléphone ou email de contact"
-                        className="mt-2 h-12"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="address" className="text-base font-semibold">Adresse de livraison</Label>
-                      <Input
-                        id="address"
-                        value={formData.address}
-                        onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                        placeholder="Votre adresse de livraison"
-                        className="mt-2 h-12"
-                      />
-                    </div>
                   </div>
 
                   <div>
@@ -389,7 +269,7 @@ const CustomOrder = () => {
 
                     <div className="grid md:grid-cols-2 gap-4">
                       <Button 
-                        type="submit" 
+                        onClick={handleDirectOrder}
                         size="lg" 
                         className="h-14"
                         disabled={isSubmitting}
@@ -403,7 +283,7 @@ const CustomOrder = () => {
                         variant="outline"
                         size="lg"
                         className="h-14 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-                        onClick={handleWhatsAppOrderClick}
+                        onClick={handleWhatsAppOrder}
                         disabled={isSubmitting}
                       >
                         <MessageCircle className="h-5 w-5 mr-2" />
@@ -411,7 +291,7 @@ const CustomOrder = () => {
                       </Button>
                     </div>
                   </div>
-                </form>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -420,24 +300,13 @@ const CustomOrder = () => {
       
       <Footer />
 
-      {/* Boîte de dialogue de confirmation centralisée */}
-      <WhatsAppConfirmationDialog
-        open={showConfirmation || whatsappShowConfirmation}
-        onOpenChange={(open) => {
-          if (!open) {
-            setShowConfirmation(false);
-            closeConfirmation();
-          }
-        }}
-        orderDetails={orderDetails || whatsappOrderDetails}
-        message={orderDetails?.orderType === 'whatsapp' ? generateCustomOrderMessage(
-          formData.name,
-          formData.description,
-          formData.budget,
-          formData.contactInfo,
-          formData.address
-        ) : undefined}
-        onClose={handleConfirmationClose}
+      <CustomerInfoModal
+        open={showCustomerModal}
+        onOpenChange={setShowCustomerModal}
+        onSubmit={handleCustomerInfoSubmit}
+        title={orderType === 'whatsapp' ? "Commander via WhatsApp" : "Finaliser la commande"}
+        description="Veuillez remplir vos informations pour finaliser votre commande"
+        isSubmitting={isSubmitting}
       />
     </div>
   );

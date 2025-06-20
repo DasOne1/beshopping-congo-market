@@ -34,7 +34,11 @@ const ProductsSection = ({ searchTerm, showHidden = false }: ProductsSectionProp
 
   const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
-      await deleteProduct.mutateAsync(id);
+      try {
+        await deleteProduct.mutateAsync(id);
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+      }
     }
   };
 
@@ -239,8 +243,6 @@ const ProductsSection = ({ searchTerm, showHidden = false }: ProductsSectionProp
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(product.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

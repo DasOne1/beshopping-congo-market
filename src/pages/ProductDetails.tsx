@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Heart, Star, Minus, Plus, Share2, Package, Shield, Clock } from 'lucide-react';
@@ -11,8 +12,7 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { useWhatsApp } from '@/hooks/useWhatsApp';
 import ProductImageCarousel from '@/components/ProductImageCarousel';
 import ProductAttributes from '@/components/ProductAttributes';
-import WhatsAppContact from '@/components/WhatsAppContact';
-import WhatsAppConfirmationDialog from '@/components/WhatsAppConfirmationDialog';
+import CustomerInfoModal from '@/components/CustomerInfoModal';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
@@ -29,6 +29,7 @@ const ProductDetails = () => {
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
 
   const product = products?.find(p => p.id === id);
   const isFavorite = favorites.some(fav => fav === id);
@@ -99,6 +100,28 @@ const ProductDetails = () => {
         description: `${product.name} a été ajouté à vos favoris.`,
       });
     }
+  };
+
+  const handleWhatsAppOrder = (customerInfo: any) => {
+    const message = generateProductOrderMessage(
+      product.name, 
+      product.discounted_price || product.original_price, 
+      quantity, 
+      selectedColor, 
+      selectedSize
+    );
+    
+    // Ouvrir WhatsApp avec le message
+    const phoneNumber = "+243970284639";
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    
+    setShowCustomerModal(false);
+    
+    toast({
+      title: "Redirection vers WhatsApp",
+      description: "Vous allez être redirigé vers WhatsApp pour finaliser votre commande.",
+    });
   };
 
   const handleShare = async () => {
@@ -355,13 +378,13 @@ const ProductDetails = () => {
                           {inCart ? 'Déjà dans le panier' : 'Ajouter au panier'}
                         </Button>
 
-                        <WhatsAppContact
-                          message={generateProductOrderMessage(product.name, price, quantity, selectedColor, selectedSize)}
+                        <Button
+                          onClick={() => setShowCustomerModal(true)}
                           className="w-full h-10 bg-green-600 hover:bg-green-700"
                           size="default"
                         >
                           Commander via WhatsApp
-                        </WhatsAppContact>
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -399,6 +422,14 @@ const ProductDetails = () => {
       <div className="pb-16 md:pb-0">
         <Footer />
       </div>
+
+      <CustomerInfoModal
+        open={showCustomerModal}
+        onOpenChange={setShowCustomerModal}
+        onSubmit={handleWhatsAppOrder}
+        title="Commander via WhatsApp"
+        description="Remplissez vos informations pour commander ce produit via WhatsApp"
+      />
     </>
   );
 };

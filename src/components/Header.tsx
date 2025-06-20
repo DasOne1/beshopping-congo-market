@@ -1,357 +1,217 @@
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  ShoppingBag, 
-  Heart, 
-  Menu, 
-  Search, 
-  X,
-  User,
-  Wand2,
-  Home,
-  Package,
-  Layers,
-  Info,
-  Phone
-} from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { cn } from '@/lib/utils';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import Logo from './Logo';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useProducts } from '@/hooks/useProducts';
-import Sidebar from './Sidebar';
 
 const Header = () => {
-  const { getTotalQuantity } = useCart();
-  const { favorites } = useFavorites();
-  const { products } = useProducts();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const isMobile = useIsMobile();
+  const { items, getTotalItems } = useCart();
+  const { favorites } = useFavorites();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const toggleSearch = () => {
-    setIsSearchOpen(!isSearchOpen);
-    if (!isSearchOpen) {
-      setSearchQuery('');
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-  };
+  const totalItems = getTotalItems();
 
-  // Vérifier si un lien est actif
-  const isActiveLink = (path: string) => {
-    if (path === '/' && location.pathname === '/') return true;
-    if (path !== '/' && location.pathname.startsWith(path)) return true;
-    return false;
-  };
-
-  // Générer des suggestions basées sur la requête de recherche
   useEffect(() => {
-    if (!searchQuery.trim() || searchQuery.length <= 1) {
-      if (suggestions.length !== 0) setSuggestions([]);
-      if (showSuggestions !== false) setShowSuggestions(false);
-      return;
-    }
+    setIsMenuOpen(false);
+  }, [location]);
 
-    const filtered = products.filter(product => 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-    ).slice(0, 6);
-
-    if (JSON.stringify(filtered) !== JSON.stringify(suggestions)) {
-      setSuggestions(filtered);
-    }
-    if (!showSuggestions) setShowSuggestions(true);
-  }, [searchQuery, products]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-      setIsSearchOpen(false);
-      setShowSuggestions(false);
+      setSearchQuery('');
     }
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-  };
-
-  const handleSuggestionClick = (product: any) => {
-    setSearchQuery(product.name);
-    navigate(`/products?search=${encodeURIComponent(product.name)}`);
-    setIsSearchOpen(false);
-    setShowSuggestions(false);
-  };
-
-  const cartQuantity = getTotalQuantity();
-  const favoriteQuantity = favorites.length;
+  const navItems = [
+    { name: 'Accueil', path: '/' },
+    { name: 'Produits', path: '/products' },
+    { name: 'Catégories', path: '/categories' },
+    { name: 'À propos', path: '/about' },
+    { name: 'Contact', path: '/contact' },
+    { name: 'Commande personnalisée', path: '/custom-order' },
+  ];
 
   return (
-    <>
-      <header className="fixed top-0 left-0 right-0 z-50 w-full bg-background/95 shadow-sm backdrop-blur-md border-b border-border/40">
-        <div className="container flex h-14 md:h-16 items-center">
-          {/* Menu Button et Logo - à gauche */}
-          <div className="flex items-center space-x-3">
-            {/* Mobile Menu Button */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="md:hidden"
-              onClick={toggleMenu}
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Menu</span>
-            </Button>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-2">
+            <Logo />
+          </Link>
 
-            {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <Link to="/">
-                <img src="/shopping-cart-logo.svg" alt="BeShopping Logo" className="h-10 w-10" />
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center space-x-6">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  location.pathname === item.path
+                    ? 'text-primary'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {item.name}
               </Link>
-              <Link to="/" className="hidden sm:block">
-                <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                  BeShopping
-                </span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Desktop Navigation - centré */}
-          <nav className="hidden md:flex items-center space-x-6 flex-1 ml-8">
-            <Link 
-              to="/" 
-              className={cn(
-                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
-                isActiveLink('/') 
-                  ? "text-primary bg-primary/10 font-semibold" 
-                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
-              )}
-            >
-              <Home className="h-4 w-4" />
-              Accueil
-            </Link>
-            <Link 
-              to="/products" 
-              className={cn(
-                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
-                isActiveLink('/products') 
-                  ? "text-primary bg-primary/10 font-semibold" 
-                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
-              )}
-            >
-              <Package className="h-4 w-4" />
-              Produits
-            </Link>
-            <Link 
-              to="/categories" 
-              className={cn(
-                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
-                isActiveLink('/categories') 
-                  ? "text-primary bg-primary/10 font-semibold" 
-                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
-              )}
-            >
-              <Layers className="h-4 w-4" />
-              Catégories
-            </Link>
-            <Link 
-              to="/custom-order" 
-              className={cn(
-                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
-                isActiveLink('/custom-order') 
-                  ? "text-primary bg-primary/10 font-semibold" 
-                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
-              )}
-            >
-              <Wand2 className="h-4 w-4" />
-              Commande Perso
-            </Link>
-            <Link 
-              to="/about" 
-              className={cn(
-                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
-                isActiveLink('/about') 
-                  ? "text-primary bg-primary/10 font-semibold" 
-                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
-              )}
-            >
-              <Info className="h-4 w-4" />
-              À Propos
-            </Link>
-            <Link 
-              to="/contact" 
-              className={cn(
-                "text-sm font-medium transition-all duration-200 flex items-center gap-1 px-3 py-2 rounded-md",
-                isActiveLink('/contact') 
-                  ? "text-primary bg-primary/10 font-semibold" 
-                  : "text-muted-foreground hover:text-primary hover:bg-muted/50"
-              )}
-            >
-              <Phone className="h-4 w-4" />
-              Contact
-            </Link>
+            ))}
           </nav>
 
-          {/* Right Icons - dans l'ordre spécifié */}
-          <div className="flex items-center space-x-1 md:space-x-2 ml-auto">
-            <Button variant="ghost" size="icon" onClick={toggleSearch}>
-              <Search className="h-5 w-5" />
-              <span className="sr-only">Recherche</span>
-            </Button>
-            
-            {/* Theme Toggle */}
-            <ThemeToggle />
-            
-            {/* Favorites */}
-            <Link to="/favorites" className="relative">
-              <Button variant="ghost" size="icon">
-                <Heart className="h-5 w-5" />
-                {favoriteQuantity > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {favoriteQuantity}
-                  </span>
-                )}
-                <span className="sr-only">Favoris</span>
-              </Button>
-            </Link>
-            
-            {/* Cart */}
-            <Link to="/cart" className="relative">
-              <Button variant="ghost" size="icon">
-                <ShoppingBag className="h-5 w-5" />
-                {cartQuantity > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {cartQuantity}
-                  </span>
-                )}
-                <span className="sr-only">Panier</span>
-              </Button>
-            </Link>
+          {/* Search Bar - Desktop */}
+          <div className="hidden md:flex flex-1 max-w-sm mx-4">
+            <form onSubmit={handleSearch} className="flex w-full">
+              <div className="relative flex-1">
+                <Input
+                  type="search"
+                  placeholder="Rechercher des produits..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pr-10"
+                />
+                <Button 
+                  type="submit" 
+                  size="sm" 
+                  variant="ghost" 
+                  className="absolute right-0 top-0 h-full px-3"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+            </form>
+          </div>
 
-            <Link to="/customer-auth" className="hidden sm:block">
-              <Button variant="ghost" size="icon">
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-2">
+            {/* Search Button - Mobile */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => {
+                const query = prompt('Rechercher des produits...');
+                if (query?.trim()) {
+                  navigate(`/products?search=${encodeURIComponent(query.trim())}`);
+                }
+              }}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+
+            {/* Favorites */}
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/favorites" className="relative">
+                <Heart className="h-5 w-5" />
+                {favorites.length > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {favorites.length}
+                  </Badge>
+                )}
+              </Link>
+            </Button>
+
+            {/* Cart */}
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/cart" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                {totalItems > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {totalItems}
+                  </Badge>
+                )}
+              </Link>
+            </Button>
+
+            {/* Account */}
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/account">
                 <User className="h-5 w-5" />
-                <span className="sr-only">Compte</span>
-              </Button>
-            </Link>
+              </Link>
+            </Button>
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
           </div>
         </div>
-      </header>
 
-      {/* Overlay avec effet de flou */}
-      <AnimatePresence>
-        {isSearchOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
-            onClick={toggleSearch}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Search Bar avec suggestions */}
-      <AnimatePresence>
-        {isSearchOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/40 shadow-lg"
-          >
-            <div className="container py-4">
-              <form onSubmit={handleSearchSubmit} className="relative max-w-md mx-auto">
-                <div className="flex items-center space-x-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Rechercher des produits..."
-                      value={searchQuery}
-                      onChange={handleSearchChange}
-                      className="pl-10 pr-4"
-                      autoFocus
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleSearch}
-                    className="shrink-0"
-                  >
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Fermer</span>
-                  </Button>
-                </div>
-
-                {/* Suggestions */}
-                <AnimatePresence>
-                  {showSuggestions && suggestions.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-md shadow-lg z-10"
-                    >
-                      {suggestions.map((product) => (
-                        <div
-                          key={product.id}
-                          onClick={() => handleSuggestionClick(product)}
-                          className="flex items-center p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
-                        >
-                          <div className="w-10 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0 mr-3">
-                            {product.images && product.images.length > 0 ? (
-                              <img 
-                                src={product.images[0]} 
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                <Search className="h-4 w-4 text-gray-400" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{product.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {product.discounted_price ? product.discounted_price : product.original_price} €
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </form>
+        {/* Search Bar - Mobile */}
+        <div className="md:hidden pb-4">
+          <form onSubmit={handleSearch} className="flex">
+            <div className="relative flex-1">
+              <Input
+                type="search"
+                placeholder="Rechercher des produits..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pr-10"
+              />
+              <Button 
+                type="submit" 
+                size="sm" 
+                variant="ghost" 
+                className="absolute right-0 top-0 h-full px-3"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
             </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Mobile Navigation */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="lg:hidden border-t bg-background"
+          >
+            <nav className="container mx-auto px-4 py-4">
+              <div className="flex flex-col space-y-4">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`text-sm font-medium transition-colors hover:text-primary ${
+                      location.pathname === item.path
+                        ? 'text-primary'
+                        : 'text-muted-foreground'
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            </nav>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Sidebar for mobile navigation */}
-      <Sidebar isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-    </>
+    </header>
   );
 };
 

@@ -29,20 +29,24 @@ const CategoriesSection = ({ searchTerm, showHidden = false }: CategoriesSection
 
   const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) {
-      await deleteCategory.mutateAsync(id);
+      try {
+        await deleteCategory.mutateAsync(id);
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+      }
     }
   };
   
-  const handleVisibilityToggle = async (id: string, is_visible: boolean) => {
+  const handleVisibilityToggle = async (id: string, currentVisibility: boolean) => {
     try {
       await updateCategory.mutateAsync({ 
         id, 
-        is_visible: !is_visible 
+        is_visible: !currentVisibility 
       });
       
       toast({
         title: "Visibilité modifiée",
-        description: `La catégorie est maintenant ${!is_visible ? 'visible' : 'masquée'}`,
+        description: `La catégorie est maintenant ${!currentVisibility ? 'visible' : 'masquée'}`,
       });
     } catch (error) {
       console.error('Erreur lors du changement de visibilité:', error);
