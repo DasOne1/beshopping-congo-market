@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, ShoppingCart, Heart, User, Menu, X } from 'lucide-react';
@@ -13,12 +12,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { cartItems, getTotalItems } = useCart();
+  const { cart, getCartItemCount } = useCart();
   const { favorites } = useFavorites();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const totalItems = getTotalItems();
+  const totalItems = getCartItemCount();
 
   useEffect(() => {
     setIsMenuOpen(false);
